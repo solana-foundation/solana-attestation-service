@@ -34,6 +34,9 @@ pub fn process_create_credential(
     let name = args.name()?;
     let signers = args.signers()?;
 
+    // NOTE: this could be optimized further by removing the `solana-program` dependency
+    // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
+    // pubkey and associated bump (needed to be added as arg) is valid.
     let (credential_pda, credential_bump) = SolanaPubkey::find_program_address(
         &[CREDENTIAL_SEED, authority_info.key(), name],
         &SolanaPubkey::from(*program_id),
@@ -43,9 +46,6 @@ pub fn process_create_credential(
         // PDA was invalid
         return Err(AttestationServiceError::InvalidCredential.into());
     }
-    // TODO do we care if this does not use canonical bump? If so, we can use this check and pass bump
-    // from args
-    // pubkey::checked_create_program_address(seeds, program_id);
 
     // Calculate space of Credential: authorized_signers + len, authority, name + len
     let space = (4 + signers.len() * 32) + 32 + (4 + name.len());

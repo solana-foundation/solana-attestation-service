@@ -5,10 +5,9 @@ use alloc::vec::Vec;
 use pinocchio::pubkey::Pubkey;
 use shank::ShankInstruction;
 
-// TODO this isn't actually used anywhere. It may only be necessary
-// on client depending on how we decide to handle (de)serialization.
-
-/// Instructions for the Solana Attestation Service.
+/// Instructions for the Solana Attestation Service. This
+/// is currently not used in the program business logic, but
+/// we include it for IDL generation.
 #[repr(C, u8)]
 #[derive(Clone, Debug, PartialEq, ShankInstruction)]
 pub enum AttestationServiceInstruction {

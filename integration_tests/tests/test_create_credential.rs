@@ -1,6 +1,9 @@
 use borsh::BorshDeserialize;
-use helpers::{create_credential_instruction, program_test_context};
-use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transaction::Transaction};
+use helpers::program_test_context;
+use solana_attestation_service_client::instructions::CreateCredentialBuilder;
+use solana_sdk::{
+    pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
+};
 
 mod helpers;
 
@@ -21,12 +24,24 @@ async fn create_credential_success() {
 
     let authority = Keypair::new();
     let name = "test";
-    let ix = create_credential_instruction(
-        &ctx.payer.pubkey(),
-        &authority.pubkey(),
-        name.to_string(),
-        vec![authority.pubkey(), ctx.payer.pubkey()],
+
+    let (credential_pda, _bump) = Pubkey::find_program_address(
+        &[
+            b"credential",
+            &authority.pubkey().to_bytes(),
+            name.as_bytes(),
+        ],
+        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
     );
+
+    let ix = CreateCredentialBuilder::new()
+        .payer(ctx.payer.pubkey())
+        .credential(credential_pda)
+        .authority(authority.pubkey())
+        .system_program(system_program::ID)
+        .name(name.to_string())
+        .signers(vec![authority.pubkey(), ctx.payer.pubkey()])
+        .instruction();
 
     let transaction = Transaction::new_signed_with_payer(
         &[ix],
@@ -38,15 +53,6 @@ async fn create_credential_success() {
         .process_transaction(transaction)
         .await
         .unwrap();
-
-    let (credential_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority.pubkey().to_bytes(),
-            name.as_bytes(),
-        ],
-        &Pubkey::from(solana_attestation_service::ID),
-    );
 
     // Assert credential account
     let credential_account = ctx

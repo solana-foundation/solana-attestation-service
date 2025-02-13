@@ -3849,16 +3849,20 @@ dependencies = [
 name = "solana-attestation-service"
 version = "0.1.0"
 dependencies = [
- "borsh 1.5.5",
  "pinocchio",
  "pinocchio-log",
  "pinocchio-pubkey",
  "pinocchio-system",
  "shank",
  "solana-program",
- "solana-program-test",
- "solana-sdk",
- "tokio",
+]
+
+[[package]]
+name = "solana-attestation-service-client"
+version = "0.1.0"
+dependencies = [
+ "borsh 1.5.5",
+ "solana-program",
 ]
 
 [[package]]
@@ -6019,6 +6023,17 @@ name = "termtree"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f50febec83f5ee1df3015341d8bd429f2d1cc62bcba7ea2076759d315084683"
+
+[[package]]
+name = "tests-solana-attestation-service"
+version = "0.1.0"
+dependencies = [
+ "borsh 1.5.5",
+ "solana-attestation-service-client",
+ "solana-program-test",
+ "solana-sdk",
+ "tokio",
+]
 
 [[package]]
 name = "thiserror"
