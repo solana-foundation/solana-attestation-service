@@ -1,0 +1,24 @@
+[package]
+name = "solana-attestation-service"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+
+[dependencies]
+pinocchio = { workspace = true }
+pinocchio-log = { workspace = true }
+pinocchio-pubkey = { workspace = true }
+pinocchio-system = { workspace = true }
+shank = { workspace = true }
+solana-program = { workspace = true }
+
+[dev-dependencies]
+borsh = { workspace = true }
+solana-program-test = { workspace = true }
+solana-sdk = { workspace = true }
+tokio = { workspace = true }

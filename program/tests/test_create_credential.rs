@@ -10,7 +10,7 @@ pub struct Credential {
     /// Admin of this credential
     pub authority: Pubkey,
     /// Name of this credential
-    pub name: Vec<u8>,
+    pub name: String,
     /// List of signers that are allowed to "attest"
     pub authorized_signers: Vec<Pubkey>,
 }
@@ -57,7 +57,7 @@ async fn create_credential_success() {
         .expect("account not none");
     let credential = Credential::try_from_slice(&credential_account.data).unwrap();
     assert_eq!(credential.authority, authority.pubkey());
-    assert_eq!(credential.name, name.as_bytes());
+    assert_eq!(credential.name, name.to_string());
     assert_eq!(credential.authorized_signers[0], authority.pubkey());
     assert_eq!(credential.authorized_signers[1], ctx.payer.pubkey());
 }
