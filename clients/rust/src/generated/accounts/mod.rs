@@ -5,7 +5,6 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-  pub(crate) mod r#credential;
+pub(crate) mod r#credential;
 
-  pub use self::r#credential::*;
-
+pub use self::r#credential::*;
