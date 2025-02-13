@@ -13,8 +13,10 @@ use pinocchio::{
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
-    constants::CREDENTIAL_SEED, error::AttestationServiceError, processor::create_pda_account,
-    state::load_system_account,
+    constants::CREDENTIAL_SEED,
+    error::AttestationServiceError,
+    processor::create_pda_account,
+    state::{load_signer, load_system_account, load_system_program},
 };
 
 #[inline(always)]
@@ -23,12 +25,16 @@ pub fn process_create_credential(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let [payer_info, credential_info, authority_info, _system_program] = accounts else {
+    let [payer_info, credential_info, authority_info, system_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     // Validate: should be owned by system account, empty, and writable
     load_system_account(credential_info, true)?;
+    // Validate: authority should have signed
+    load_signer(authority_info, false)?;
+    // Validate: system program
+    load_system_program(system_program)?;
 
     let args = CreateCredentialArgs::try_from_bytes(instruction_data)?;
     let name = args.name()?;
@@ -79,6 +85,7 @@ pub fn process_create_credential(
         credential_data[next_offset..next_offset + 32].copy_from_slice(s);
         next_offset = next_offset + 32;
     });
+
     Ok(())
 }
 

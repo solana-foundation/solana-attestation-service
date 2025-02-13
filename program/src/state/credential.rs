@@ -8,6 +8,7 @@ use shank::ShankAccount;
 // PDA ["credential", authority, name]
 /// Tracks the authorized signers of for schemas and their attestations.
 #[derive(Clone, Debug, PartialEq, ShankAccount)]
+#[repr(C)]
 pub struct Credential {
     /// Admin of this credential
     pub authority: Pubkey,
