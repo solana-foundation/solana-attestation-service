@@ -13,8 +13,10 @@ use pinocchio::{
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
-    constants::CREDENTIAL_SEED, error::AttestationServiceError, processor::create_pda_account,
-    state::load_system_account,
+    constants::CREDENTIAL_SEED,
+    error::AttestationServiceError,
+    processor::create_pda_account,
+    state::{load_signer, load_system_account, load_system_program},
 };
 
 #[inline(always)]
@@ -23,17 +25,24 @@ pub fn process_create_credential(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let [payer_info, credential_info, authority_info, _system_program] = accounts else {
+    let [payer_info, credential_info, authority_info, system_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     // Validate: should be owned by system account, empty, and writable
     load_system_account(credential_info, true)?;
+    // Validate: authority should have signed
+    load_signer(authority_info, false)?;
+    // Validate: system program
+    load_system_program(system_program)?;
 
     let args = CreateCredentialArgs::try_from_bytes(instruction_data)?;
     let name = args.name()?;
     let signers = args.signers()?;
 
+    // NOTE: this could be optimized further by removing the `solana-program` dependency
+    // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
+    // pubkey and associated bump (needed to be added as arg) is valid.
     let (credential_pda, credential_bump) = SolanaPubkey::find_program_address(
         &[CREDENTIAL_SEED, authority_info.key(), name],
         &SolanaPubkey::from(*program_id),
@@ -43,9 +52,6 @@ pub fn process_create_credential(
         // PDA was invalid
         return Err(AttestationServiceError::InvalidCredential.into());
     }
-    // TODO do we care if this does not use canonical bump? If so, we can use this check and pass bump
-    // from args
-    // pubkey::checked_create_program_address(seeds, program_id);
 
     // Calculate space of Credential: authorized_signers + len, authority, name + len
     let space = (4 + signers.len() * 32) + 32 + (4 + name.len());
@@ -79,6 +85,7 @@ pub fn process_create_credential(
         credential_data[next_offset..next_offset + 32].copy_from_slice(s);
         next_offset = next_offset + 32;
     });
+
     Ok(())
 }
 

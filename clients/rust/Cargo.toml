@@ -1,0 +1,11 @@
+[package]
+name = "solana-attestation-service-client"
+description = "Generated client for SAS"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+borsh = {workspace = true }
+solana-program = { workspace = true }
+
+
