@@ -1,7 +1,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::pubkey::Pubkey;
+use pinocchio::{program_error::ProgramError, pubkey::Pubkey};
 use shank::ShankAccount;
 
 use super::VariableLenAccount;
@@ -21,6 +21,11 @@ pub struct Credential {
 }
 
 impl Credential {
+    pub fn try_from_bytes(_data: &[u8]) -> Result<Self, ProgramError> {
+        // TODO implement
+        Err(ProgramError::UnsupportedSysvar)
+    }
+
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut data = Vec::new();
         // Authority encoding

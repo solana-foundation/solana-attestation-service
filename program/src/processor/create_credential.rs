@@ -10,17 +10,13 @@ use pinocchio::{
     sysvars::{rent::Rent, Sysvar},
     ProgramResult,
 };
-use pinocchio_log::logger::Logger;
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::CREDENTIAL_SEED,
     error::AttestationServiceError,
     processor::create_pda_account,
-    state::{
-        credential, load_mut_unchecked, load_signer, load_system_account, load_system_program,
-        Credential,
-    },
+    state::{load_signer, load_system_account, load_system_program, Credential},
 };
 
 #[inline(always)]
@@ -77,7 +73,6 @@ pub fn process_create_credential(
         signer_seeds,
     )?;
 
-    // SAFETY: single mutable borrow to `mint_info` account data.
     let credential = Credential {
         authority: *authority_info.key(),
         name: name.to_vec(),

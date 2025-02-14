@@ -1,22 +1,13 @@
 use borsh::BorshDeserialize;
 use helpers::program_test_context;
-use solana_attestation_service_client::instructions::CreateCredentialBuilder;
+use solana_attestation_service_client::{
+    accounts::Credential, instructions::CreateCredentialBuilder,
+};
 use solana_sdk::{
     pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
 };
 
 mod helpers;
-
-// Copy of onchain `Credential` state, but with Borsh.
-#[derive(Clone, Debug, PartialEq, BorshDeserialize)]
-pub struct Credential {
-    /// Admin of this credential
-    pub authority: Pubkey,
-    /// Name of this credential
-    pub name: String,
-    /// List of signers that are allowed to "attest"
-    pub authorized_signers: Vec<Pubkey>,
-}
 
 #[tokio::test]
 async fn create_credential_success() {
@@ -61,9 +52,10 @@ async fn create_credential_success() {
         .await
         .expect("get_account")
         .expect("account not none");
+
     let credential = Credential::try_from_slice(&credential_account.data).unwrap();
     assert_eq!(credential.authority, authority.pubkey());
-    assert_eq!(credential.name, name.to_string());
+    assert_eq!(credential.name, name.as_bytes());
     assert_eq!(credential.authorized_signers[0], authority.pubkey());
     assert_eq!(credential.authorized_signers[1], ctx.payer.pubkey());
 }

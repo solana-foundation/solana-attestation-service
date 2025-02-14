@@ -56,7 +56,7 @@
           },
           {
             "name": "name",
-            "type": "string"
+            "type": "bytes"
           },
           {
             "name": "authorizedSigners",
