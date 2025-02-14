@@ -3866,6 +3866,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "solana-attestation-service-core"
+version = "0.1.0"
+dependencies = [
+ "solana-attestation-service-macros",
+]
+
+[[package]]
+name = "solana-attestation-service-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
+
+[[package]]
 name = "solana-banks-client"
 version = "2.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6030,6 +6046,7 @@ version = "0.1.0"
 dependencies = [
  "borsh 1.5.5",
  "solana-attestation-service-client",
+ "solana-attestation-service-macros",
  "solana-program-test",
  "solana-sdk",
  "tokio",

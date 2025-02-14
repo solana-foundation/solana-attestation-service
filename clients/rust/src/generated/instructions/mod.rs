@@ -6,5 +6,7 @@
 //!
 
 pub(crate) mod r#create_credential;
+pub(crate) mod r#create_schema;
 
 pub use self::r#create_credential::*;
+pub use self::r#create_schema::*;

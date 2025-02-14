@@ -12,13 +12,20 @@ use shank::ShankInstruction;
 #[derive(Clone, Debug, PartialEq, ShankInstruction)]
 pub enum AttestationServiceInstruction {
     /// Creates the Credential PDA account for an Issuer.
-    ///   0. `[w,s]` Payer that will fund the Credential account.
-    ///   1. `[w]` Credential account.
-    ///   2. `[s]` Credential authority.
-    ///   3. `[]` System Program.
     #[account(0, writable, signer, name = "payer")]
     #[account(1, writable, name = "credential")]
     #[account(2, signer, name = "authority")]
     #[account(3, name = "system_program")]
     CreateCredential { name: String, signers: Vec<Pubkey> },
+
+    /// Create a Schema for a Credential that can eventually be attested to.
+    #[account(0, writable, signer, name = "payer")]
+    #[account(1, name = "credential", desc = "Credential the Schema is associated with")]
+    #[account(2, writable, name = "schema")]
+    #[account(3, name = "system_program")]
+    CreateSchema {
+        name: String,
+        description: String,
+        data: Vec<u8>,
+    },
 }

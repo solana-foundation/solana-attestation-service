@@ -20,6 +20,8 @@ cargo install shank-cli
 Generate IDL
 ```
 shank idl -r program -o idl
+// OR
+yarn generate-idl
 ```
 
 ## Generating Clients

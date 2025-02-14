@@ -6,7 +6,8 @@
   "author": "Taylor123 <nftaylor11@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "generate-clients": "node ./scripts/generate-clients.js"
+    "generate-clients": "node ./scripts/generate-clients.js",
+    "generate-idl": "shank idl -r program -o idl"
   },
   "dependencies": {
     "@codama/nodes-from-anchor": "^1.1.5",
