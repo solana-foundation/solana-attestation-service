@@ -42,6 +42,52 @@
         "type": "u8",
         "value": 0
       }
+    },
+    {
+      "name": "CreateSchema",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Credential the Schema is associated with"
+          ]
+        },
+        {
+          "name": "schema",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
     }
   ],
   "accounts": [
@@ -63,6 +109,34 @@
             "type": {
               "vec": "publicKey"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Schema",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "credential",
+            "type": "publicKey"
+          },
+          {
+            "name": "name",
+            "type": "bytes"
+          },
+          {
+            "name": "description",
+            "type": "bytes"
+          },
+          {
+            "name": "dataSchema",
+            "type": "bytes"
+          },
+          {
+            "name": "isRevoked",
+            "type": "bool"
           }
         ]
       }

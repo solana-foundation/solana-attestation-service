@@ -3,7 +3,7 @@ use pinocchio::{
     ProgramResult,
 };
 
-use crate::processor::process_create_credential;
+use crate::processor::{process_create_credential, process_create_schema};
 
 entrypoint!(process_instruction);
 
@@ -18,6 +18,7 @@ pub fn process_instruction(
 
     match discriminator {
         0 => process_create_credential(program_id, accounts, instruction_data),
+        1 => process_create_schema(program_id, accounts, instruction_data),
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }
