@@ -4,8 +4,6 @@ use alloc::vec::Vec;
 use pinocchio::{program_error::ProgramError, pubkey::Pubkey};
 use shank::ShankAccount;
 
-use super::VariableLenAccount;
-
 // PDA ["credential", authority, name]
 /// Tracks the authorized signers of for schemas and their attestations.
 #[derive(Clone, Debug, PartialEq, ShankAccount)]
@@ -43,12 +41,4 @@ impl Credential {
 
         data
     }
-}
-
-impl VariableLenAccount for Credential {
-    /// Minimum length for Credential account data.
-    /// - 32 authority
-    /// - 4 len of name
-    /// - 4 len of authorized_signers
-    const MIN_LEN: usize = 32 + 4 + 4;
 }

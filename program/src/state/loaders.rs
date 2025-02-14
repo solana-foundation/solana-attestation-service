@@ -1,31 +1,5 @@
 use pinocchio::{account_info::AccountInfo, msg, program_error::ProgramError};
 
-pub trait VariableLenAccount {
-    /// The minimum length of the type.
-    ///
-    /// This must be equal to the minimum size of each individual field in the type.
-    const MIN_LEN: usize;
-
-    // fn from_bytes(data: &[u8]) -> Self;
-
-    // fn to_bytes()
-}
-
-/// Return a mutable `T` reference from the given bytes.
-///
-/// This function does not check if the data is initialized.
-///
-/// # Safety
-///
-/// The caller must ensure that `bytes` contains a valid representation of `T`.
-#[inline(always)]
-pub unsafe fn load_mut_unchecked<T: VariableLenAccount>(bytes: &mut [u8]) -> Result<&mut T, ProgramError> {
-    if bytes.len() < T::MIN_LEN {
-        return Err(ProgramError::InvalidAccountData);
-    }
-    Ok(&mut *(bytes.as_mut_ptr() as *mut T))
-}
-
 /// Loads the account as a signer, returning an error if it is not or if it is not writable while
 /// expected to be.
 ///
