@@ -80,7 +80,7 @@ pub fn process_create_schema(
         name: name.to_vec(),
         description: description.to_vec(),
         data_schema: data_schema.to_vec(),
-        is_revoked: false,
+        is_paused: false,
     };
     let mut schema_data = schema_info.try_borrow_mut_data()?;
     schema_data.copy_from_slice(&schema.to_bytes());

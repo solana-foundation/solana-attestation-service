@@ -135,7 +135,7 @@
             "type": "bytes"
           },
           {
-            "name": "isRevoked",
+            "name": "isPaused",
             "type": "bool"
           }
         ]

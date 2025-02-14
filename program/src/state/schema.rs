@@ -17,7 +17,7 @@ pub struct Schema {
     /// Encoding of the `CustomData` struct that needs to be asserted against?
     pub data_schema: Vec<u8>,
     /// Whether or not this schema is still valid
-    pub is_revoked: bool,
+    pub is_paused: bool,
 }
 
 impl Schema {
@@ -39,7 +39,7 @@ impl Schema {
         data.extend_from_slice(&(self.data_schema.len() as u32).to_le_bytes());
         data.extend_from_slice(self.data_schema.as_ref());
 
-        data.extend_from_slice(&[self.is_revoked as u8]);
+        data.extend_from_slice(&[self.is_paused as u8]);
 
         data
     }

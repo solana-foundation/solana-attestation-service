@@ -95,6 +95,6 @@ async fn create_schema_success() {
     assert_eq!(schema.credential, credential_pda);
     assert_eq!(schema.data_schema, schema_data);
     assert_eq!(schema.description, description.as_bytes());
-    assert_eq!(schema.is_revoked, false);
+    assert_eq!(schema.is_paused, false);
     assert_eq!(schema.name, schema_name.as_bytes());
 }

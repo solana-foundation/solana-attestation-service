@@ -20,7 +20,7 @@ pub struct Schema {
     pub name: Vec<u8>,
     pub description: Vec<u8>,
     pub data_schema: Vec<u8>,
-    pub is_revoked: bool,
+    pub is_paused: bool,
 }
 
 impl Schema {
