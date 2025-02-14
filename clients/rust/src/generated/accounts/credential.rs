@@ -17,7 +17,7 @@ pub struct Credential {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub authority: Pubkey,
-    pub name: String,
+    pub name: Vec<u8>,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>")

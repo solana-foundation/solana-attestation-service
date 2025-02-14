@@ -16,7 +16,7 @@ use crate::{
     constants::CREDENTIAL_SEED,
     error::AttestationServiceError,
     processor::create_pda_account,
-    state::{load_signer, load_system_account, load_system_program},
+    state::{load_signer, load_system_account, load_system_program, Credential},
 };
 
 #[inline(always)]
@@ -73,18 +73,13 @@ pub fn process_create_credential(
         signer_seeds,
     )?;
 
+    let credential = Credential {
+        authority: *authority_info.key(),
+        name: name.to_vec(),
+        authorized_signers: signers,
+    };
     let mut credential_data = credential_info.try_borrow_mut_data()?;
-    credential_data[..32].copy_from_slice(authority_info.key());
-    credential_data[32..36].copy_from_slice(&(name.len() as u32).to_le_bytes());
-    let mut next_offset = 36 + name.len();
-    credential_data[36..next_offset].copy_from_slice(name);
-    credential_data[next_offset..next_offset + 4]
-        .copy_from_slice(&(signers.len() as u32).to_le_bytes());
-    next_offset = next_offset + 4;
-    signers.iter().for_each(|s| {
-        credential_data[next_offset..next_offset + 32].copy_from_slice(s);
-        next_offset = next_offset + 32;
-    });
+    credential_data.copy_from_slice(&credential.to_bytes());
 
     Ok(())
 }
