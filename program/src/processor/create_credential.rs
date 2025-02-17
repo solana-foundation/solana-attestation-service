@@ -123,7 +123,7 @@ impl CreateCredentialArgs<'_> {
         unsafe {
             // use length of name to determine offset of Vec<Pubkey>
             let name_offset_including_length = *(self.raw as *const u32) + 4; // add for the length field
-            // Length of Vec<Pubkey>
+                                                                              // Length of Vec<Pubkey>
             let signers_length =
                 *(self.raw.add(name_offset_including_length as usize) as *const u32);
 

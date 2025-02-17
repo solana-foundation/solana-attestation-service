@@ -21,9 +21,33 @@ pub struct Schema {
 }
 
 impl Schema {
-    pub fn try_from_bytes(_data: &[u8]) -> Result<Self, ProgramError> {
-        // TODO implement
-        Err(ProgramError::UnsupportedSysvar)
+    pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
+        let mut offset: usize = 0;
+
+        let credential: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        offset += 32;
+
+        let name_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+        let name = data[offset..(offset + 4 + name_len)].to_vec();
+        offset += 4 + name_len;
+
+        let desc_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+        let description = data[offset..(offset + 4 + desc_len)].to_vec();
+        offset += 4 + desc_len;
+
+        let schema_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+        let data_schema = data[offset..(offset + 4 + schema_len)].to_vec();
+        offset += 4 + schema_len;
+
+        let is_paused = data[offset] == 1;
+
+        Ok(Self {
+            credential,
+            name,
+            description,
+            data_schema,
+            is_paused,
+        })
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
