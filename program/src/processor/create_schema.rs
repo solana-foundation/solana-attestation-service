@@ -13,10 +13,9 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
+    processor::{create_pda_account, to_serialized_vec},
     state::{load_system_account, load_system_program, Schema},
 };
-
-use super::create_pda_account;
 
 #[inline(always)]
 pub fn process_create_schema(
@@ -77,9 +76,9 @@ pub fn process_create_schema(
 
     let schema = Schema {
         credential: *credential_info.key(),
-        name: name.to_vec(),
-        description: description.to_vec(),
-        data_schema: data_schema.to_vec(),
+        name: to_serialized_vec(name),
+        description: to_serialized_vec(description),
+        data_schema: to_serialized_vec(data_schema),
         is_paused: false,
     };
     let mut schema_data = schema_info.try_borrow_mut_data()?;
