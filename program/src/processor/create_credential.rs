@@ -16,7 +16,7 @@ use crate::{
     constants::CREDENTIAL_SEED,
     error::AttestationServiceError,
     processor::{create_pda_account, to_serialized_vec},
-    state::{load_signer, load_system_account, load_system_program, Credential},
+    state::{verify_signer, verify_system_account, verify_system_program, Credential},
 };
 
 #[inline(always)]
@@ -30,11 +30,11 @@ pub fn process_create_credential(
     };
 
     // Validate: should be owned by system account, empty, and writable
-    load_system_account(credential_info, true)?;
+    verify_system_account(credential_info, true)?;
     // Validate: authority should have signed
-    load_signer(authority_info, false)?;
+    verify_signer(authority_info, false)?;
     // Validate: system program
-    load_system_program(system_program)?;
+    verify_system_program(system_program)?;
 
     let args = CreateCredentialArgs::try_from_bytes(instruction_data)?;
     let name = args.name()?;

@@ -7,7 +7,7 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::{CREDENTIAL_SEED, SCHEMA_SEED},
-    state::{load_signer, verify_owner_mutability, Credential, Schema},
+    state::{verify_owner_mutability, verify_signer, Credential, Schema},
 };
 
 #[inline(always)]
@@ -21,7 +21,7 @@ pub fn process_change_schema_status(
     };
 
     // Validate: authority should have signed
-    load_signer(authority_info, false)?;
+    verify_signer(authority_info, false)?;
 
     // Verify program ownership, mutability and PDAs.
     verify_owner_mutability(credential_info, program_id, false)?;
