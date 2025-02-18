@@ -17,4 +17,4 @@ pinocchio-pubkey = { workspace = true }
 pinocchio-system = { workspace = true }
 shank = { workspace = true }
 solana-program = { workspace = true }
-bs58 = "0.4"
+bs58 = { workspace = true }
