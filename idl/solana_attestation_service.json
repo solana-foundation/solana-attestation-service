@@ -90,7 +90,7 @@
       }
     },
     {
-      "name": "PauseSchema",
+      "name": "ChangeSchemaStatus",
       "accounts": [
         {
           "name": "authority",
@@ -114,7 +114,12 @@
           ]
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "isPaused",
+          "type": "bool"
+        }
+      ],
       "discriminant": {
         "type": "u8",
         "value": 2

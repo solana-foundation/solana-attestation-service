@@ -46,5 +46,5 @@ pub enum AttestationServiceInstruction {
         name = "schema",
         desc = "Credential the Schema is associated with"
     )]
-    PauseSchema {},
+    ChangeSchemaStatus { is_paused: bool },
 }

@@ -19,7 +19,7 @@ pub fn process_instruction(
     match discriminator {
         0 => process_create_credential(program_id, accounts, instruction_data),
         1 => process_create_schema(program_id, accounts, instruction_data),
-        2 => process_pause_schema(program_id, accounts),
+        2 => process_change_schema_status(program_id, accounts, instruction_data),
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }

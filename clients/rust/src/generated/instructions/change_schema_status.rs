@@ -10,7 +10,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 #[derive(Debug)]
-pub struct PauseSchema {
+pub struct ChangeSchemaStatus {
     pub authority: solana_program::pubkey::Pubkey,
     /// Credential the Schema is associated with
     pub credential: solana_program::pubkey::Pubkey,
@@ -18,13 +18,17 @@ pub struct PauseSchema {
     pub schema: solana_program::pubkey::Pubkey,
 }
 
-impl PauseSchema {
-    pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        self.instruction_with_remaining_accounts(&[])
+impl ChangeSchemaStatus {
+    pub fn instruction(
+        &self,
+        args: ChangeSchemaStatusInstructionArgs,
+    ) -> solana_program::instruction::Instruction {
+        self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
+        args: ChangeSchemaStatusInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
@@ -41,7 +45,9 @@ impl PauseSchema {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let data = borsh::to_vec(&PauseSchemaInstructionData::new()).unwrap();
+        let mut data = borsh::to_vec(&ChangeSchemaStatusInstructionData::new()).unwrap();
+        let mut args = borsh::to_vec(&args).unwrap();
+        data.append(&mut args);
 
         solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
@@ -53,23 +59,29 @@ impl PauseSchema {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PauseSchemaInstructionData {
+pub struct ChangeSchemaStatusInstructionData {
     discriminator: u8,
 }
 
-impl PauseSchemaInstructionData {
+impl ChangeSchemaStatusInstructionData {
     pub fn new() -> Self {
         Self { discriminator: 2 }
     }
 }
 
-impl Default for PauseSchemaInstructionData {
+impl Default for ChangeSchemaStatusInstructionData {
     fn default() -> Self {
         Self::new()
     }
 }
 
-/// Instruction builder for `PauseSchema`.
+#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct ChangeSchemaStatusInstructionArgs {
+    pub is_paused: bool,
+}
+
+/// Instruction builder for `ChangeSchemaStatus`.
 ///
 /// ### Accounts:
 ///
@@ -77,14 +89,15 @@ impl Default for PauseSchemaInstructionData {
 ///   1. `[]` credential
 ///   2. `[writable]` schema
 #[derive(Clone, Debug, Default)]
-pub struct PauseSchemaBuilder {
+pub struct ChangeSchemaStatusBuilder {
     authority: Option<solana_program::pubkey::Pubkey>,
     credential: Option<solana_program::pubkey::Pubkey>,
     schema: Option<solana_program::pubkey::Pubkey>,
+    is_paused: Option<bool>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl PauseSchemaBuilder {
+impl ChangeSchemaStatusBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -103,6 +116,11 @@ impl PauseSchemaBuilder {
     #[inline(always)]
     pub fn schema(&mut self, schema: solana_program::pubkey::Pubkey) -> &mut Self {
         self.schema = Some(schema);
+        self
+    }
+    #[inline(always)]
+    pub fn is_paused(&mut self, is_paused: bool) -> &mut Self {
+        self.is_paused = Some(is_paused);
         self
     }
     /// Add an additional account to the instruction.
@@ -125,18 +143,21 @@ impl PauseSchemaBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = PauseSchema {
+        let accounts = ChangeSchemaStatus {
             authority: self.authority.expect("authority is not set"),
             credential: self.credential.expect("credential is not set"),
             schema: self.schema.expect("schema is not set"),
         };
+        let args = ChangeSchemaStatusInstructionArgs {
+            is_paused: self.is_paused.clone().expect("is_paused is not set"),
+        };
 
-        accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
+        accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
     }
 }
 
-/// `pause_schema` CPI accounts.
-pub struct PauseSchemaCpiAccounts<'a, 'b> {
+/// `change_schema_status` CPI accounts.
+pub struct ChangeSchemaStatusCpiAccounts<'a, 'b> {
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
     pub credential: &'b solana_program::account_info::AccountInfo<'a>,
@@ -144,8 +165,8 @@ pub struct PauseSchemaCpiAccounts<'a, 'b> {
     pub schema: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `pause_schema` CPI instruction.
-pub struct PauseSchemaCpi<'a, 'b> {
+/// `change_schema_status` CPI instruction.
+pub struct ChangeSchemaStatusCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -154,18 +175,22 @@ pub struct PauseSchemaCpi<'a, 'b> {
     pub credential: &'b solana_program::account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
     pub schema: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The arguments for the instruction.
+    pub __args: ChangeSchemaStatusInstructionArgs,
 }
 
-impl<'a, 'b> PauseSchemaCpi<'a, 'b> {
+impl<'a, 'b> ChangeSchemaStatusCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: PauseSchemaCpiAccounts<'a, 'b>,
+        accounts: ChangeSchemaStatusCpiAccounts<'a, 'b>,
+        args: ChangeSchemaStatusInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
             authority: accounts.authority,
             credential: accounts.credential,
             schema: accounts.schema,
+            __args: args,
         }
     }
     #[inline(always)]
@@ -221,7 +246,9 @@ impl<'a, 'b> PauseSchemaCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let data = borsh::to_vec(&PauseSchemaInstructionData::new()).unwrap();
+        let mut data = borsh::to_vec(&ChangeSchemaStatusInstructionData::new()).unwrap();
+        let mut args = borsh::to_vec(&self.__args).unwrap();
+        data.append(&mut args);
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
@@ -245,7 +272,7 @@ impl<'a, 'b> PauseSchemaCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `PauseSchema` via CPI.
+/// Instruction builder for `ChangeSchemaStatus` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -253,17 +280,18 @@ impl<'a, 'b> PauseSchemaCpi<'a, 'b> {
 ///   1. `[]` credential
 ///   2. `[writable]` schema
 #[derive(Clone, Debug)]
-pub struct PauseSchemaCpiBuilder<'a, 'b> {
-    instruction: Box<PauseSchemaCpiBuilderInstruction<'a, 'b>>,
+pub struct ChangeSchemaStatusCpiBuilder<'a, 'b> {
+    instruction: Box<ChangeSchemaStatusCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> PauseSchemaCpiBuilder<'a, 'b> {
+impl<'a, 'b> ChangeSchemaStatusCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(PauseSchemaCpiBuilderInstruction {
+        let instruction = Box::new(ChangeSchemaStatusCpiBuilderInstruction {
             __program: program,
             authority: None,
             credential: None,
             schema: None,
+            is_paused: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -292,6 +320,11 @@ impl<'a, 'b> PauseSchemaCpiBuilder<'a, 'b> {
         schema: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.schema = Some(schema);
+        self
+    }
+    #[inline(always)]
+    pub fn is_paused(&mut self, is_paused: bool) -> &mut Self {
+        self.instruction.is_paused = Some(is_paused);
         self
     }
     /// Add an additional account to the instruction.
@@ -335,7 +368,14 @@ impl<'a, 'b> PauseSchemaCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let instruction = PauseSchemaCpi {
+        let args = ChangeSchemaStatusInstructionArgs {
+            is_paused: self
+                .instruction
+                .is_paused
+                .clone()
+                .expect("is_paused is not set"),
+        };
+        let instruction = ChangeSchemaStatusCpi {
             __program: self.instruction.__program,
 
             authority: self.instruction.authority.expect("authority is not set"),
@@ -343,6 +383,7 @@ impl<'a, 'b> PauseSchemaCpiBuilder<'a, 'b> {
             credential: self.instruction.credential.expect("credential is not set"),
 
             schema: self.instruction.schema.expect("schema is not set"),
+            __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -352,11 +393,12 @@ impl<'a, 'b> PauseSchemaCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct PauseSchemaCpiBuilderInstruction<'a, 'b> {
+struct ChangeSchemaStatusCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     credential: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     schema: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    is_paused: Option<bool>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
