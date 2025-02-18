@@ -18,7 +18,7 @@ struct TestData {
 }
 
 #[tokio::test]
-async fn pause_schema_success() {
+async fn pause_and_unpause_schema_success() {
     let ctx = program_test_context().await;
     let authority = Keypair::new();
     let credential_name = "test";
