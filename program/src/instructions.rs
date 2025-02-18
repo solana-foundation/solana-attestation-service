@@ -33,7 +33,7 @@ pub enum AttestationServiceInstruction {
         data: Vec<u8>,
     },
 
-    /// Sets Schema status to be paused.
+    /// Sets Schema is_paused status
     #[account(0, signer, name = "authority")]
     #[account(
         1,
