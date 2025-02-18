@@ -53,16 +53,9 @@ impl Schema {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut data = Vec::new();
         data.extend_from_slice(self.credential.as_ref());
-
-        data.extend_from_slice(&(self.name.len() as u32).to_le_bytes());
         data.extend_from_slice(self.name.as_ref());
-
-        data.extend_from_slice(&(self.description.len() as u32).to_le_bytes());
         data.extend_from_slice(self.description.as_ref());
-
-        data.extend_from_slice(&(self.data_schema.len() as u32).to_le_bytes());
         data.extend_from_slice(self.data_schema.as_ref());
-
         data.extend_from_slice(&[self.is_paused as u8]);
 
         data

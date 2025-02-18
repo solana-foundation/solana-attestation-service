@@ -15,7 +15,7 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 use crate::{
     constants::CREDENTIAL_SEED,
     error::AttestationServiceError,
-    processor::create_pda_account,
+    processor::{create_pda_account, to_serialized_vec},
     state::{load_signer, load_system_account, load_system_program, Credential},
 };
 
@@ -75,7 +75,7 @@ pub fn process_create_credential(
 
     let credential = Credential {
         authority: *authority_info.key(),
-        name: name.to_vec(),
+        name: to_serialized_vec(name),
         authorized_signers: signers,
     };
     let mut credential_data = credential_info.try_borrow_mut_data()?;

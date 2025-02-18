@@ -52,7 +52,6 @@ impl Credential {
         data.extend_from_slice(self.authority.as_ref());
 
         // Name encoding
-        data.extend_from_slice(&(self.name.len() as u32).to_le_bytes());
         data.extend_from_slice(self.name.as_ref());
 
         // Authorized signers encoding
