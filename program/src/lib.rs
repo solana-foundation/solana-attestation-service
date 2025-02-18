@@ -4,6 +4,7 @@ pub mod constants;
 pub mod error;
 #[cfg(feature = "idl")]
 pub mod instructions;
+pub mod macros;
 pub mod processor;
 pub mod state;
 

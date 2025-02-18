@@ -15,8 +15,11 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 use crate::{
     constants::CREDENTIAL_SEED,
     error::AttestationServiceError,
-    processor::{create_pda_account, to_serialized_vec},
-    state::{verify_signer, verify_system_account, verify_system_program, Credential},
+    processor::{
+        create_pda_account, to_serialized_vec, verify_signer, verify_system_account,
+        verify_system_program,
+    },
+    state::Credential,
 };
 
 #[inline(always)]
