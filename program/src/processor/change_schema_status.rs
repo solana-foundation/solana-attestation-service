@@ -74,6 +74,7 @@ pub fn process_change_schema_status(
     }
 
     schema.is_paused = is_paused;
+    log!("Setting schema's is_paused to: {}", is_paused as u8);
     schema_data.copy_from_slice(&schema.to_bytes());
 
     Ok(())
