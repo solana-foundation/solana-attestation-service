@@ -88,6 +88,42 @@
         "type": "u8",
         "value": 1
       }
+    },
+    {
+      "name": "ChangeSchemaStatus",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Credential the Schema is associated with"
+          ]
+        },
+        {
+          "name": "schema",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Credential the Schema is associated with"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "isPaused",
+          "type": "bool"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
     }
   ],
   "accounts": [

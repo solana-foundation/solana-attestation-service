@@ -1,4 +1,6 @@
-use pinocchio::{account_info::AccountInfo, msg, program_error::ProgramError};
+use bs58;
+use pinocchio::{account_info::AccountInfo, msg, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio_log::log;
 
 /// Loads the account as a signer, returning an error if it is not or if it is not writable while
 /// expected to be.
@@ -61,6 +63,39 @@ pub fn load_system_program(info: &AccountInfo) -> Result<(), ProgramError> {
     if info.key().ne(&pinocchio_system::ID) {
         msg!("Account is not the system program");
         return Err(ProgramError::IncorrectProgramId);
+    }
+
+    Ok(())
+}
+
+/// Verifies account's owner and account mutability.
+///
+/// # Arguments
+/// * `info` - The account to verify.
+/// * `owner` - The expected owner of the account.
+/// * `is_writable` - Whether the account is expected to be writable.
+///
+/// # Returns
+/// * `Result<(), ProgramError>` - The result of the operation
+pub fn verify_owner_mutability(
+    info: &AccountInfo,
+    owner: &Pubkey,
+    is_writable: bool,
+) -> Result<(), ProgramError> {
+    if info.owner().ne(owner) {
+        log!(
+            "Owner of {} does not match {}",
+            bs58::encode(info.key()).into_string().as_str(),
+            bs58::encode(owner).into_string().as_str(),
+        );
+        return Err(ProgramError::InvalidAccountOwner);
+    }
+    if is_writable != info.is_writable() {
+        log!(
+            "{} does not have the right write access",
+            bs58::encode(info.key()).into_string().as_str()
+        );
+        return Err(ProgramError::InvalidAccountData);
     }
 
     Ok(())

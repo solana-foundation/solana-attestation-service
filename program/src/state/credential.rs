@@ -19,9 +19,31 @@ pub struct Credential {
 }
 
 impl Credential {
-    pub fn try_from_bytes(_data: &[u8]) -> Result<Self, ProgramError> {
-        // TODO implement
-        Err(ProgramError::UnsupportedSysvar)
+    pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
+        let mut offset: usize = 0;
+
+        let authority: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        offset += 32;
+
+        let name_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+        let name = data[offset..(offset + 4 + name_len)].to_vec();
+        offset += 4 + name_len;
+
+        let signers_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+        let mut authorized_signers: Vec<Pubkey> = Vec::new();
+
+        offset += 4;
+        for _ in 0..signers_len {
+            let signer: Pubkey = data[offset..offset + 32].try_into().unwrap();
+            authorized_signers.push(signer);
+            offset += 32;
+        }
+
+        Ok(Self {
+            authority,
+            name,
+            authorized_signers,
+        })
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
