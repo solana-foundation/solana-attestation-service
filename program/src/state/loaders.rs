@@ -68,6 +68,15 @@ pub fn load_system_program(info: &AccountInfo) -> Result<(), ProgramError> {
     Ok(())
 }
 
+/// Verifies account's owner and account mutability.
+///
+/// # Arguments
+/// * `info` - The account to verify.
+/// * `owner` - The expected owner of the account.
+/// * `is_writable` - Whether the account is expected to be writable.
+///
+/// # Returns
+/// * `Result<(), ProgramError>` - The result of the operation
 pub fn verify_owner_mutability(
     info: &AccountInfo,
     owner: &Pubkey,
