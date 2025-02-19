@@ -12,6 +12,8 @@ use borsh::BorshSerialize;
 #[derive(Debug)]
 pub struct CreateSchema {
     pub payer: solana_program::pubkey::Pubkey,
+
+    pub authority: solana_program::pubkey::Pubkey,
     /// Credential the Schema is associated with
     pub credential: solana_program::pubkey::Pubkey,
 
@@ -33,9 +35,13 @@ impl CreateSchema {
         args: CreateSchemaInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.authority,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.credential,
@@ -93,12 +99,14 @@ pub struct CreateSchemaInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer
-///   1. `[]` credential
-///   2. `[writable]` schema
-///   3. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   1. `[signer]` authority
+///   2. `[]` credential
+///   3. `[writable]` schema
+///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct CreateSchemaBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
+    authority: Option<solana_program::pubkey::Pubkey>,
     credential: Option<solana_program::pubkey::Pubkey>,
     schema: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -115,6 +123,11 @@ impl CreateSchemaBuilder {
     #[inline(always)]
     pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
+        self
+    }
+    #[inline(always)]
+    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.authority = Some(authority);
         self
     }
     /// Credential the Schema is associated with
@@ -171,6 +184,7 @@ impl CreateSchemaBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = CreateSchema {
             payer: self.payer.expect("payer is not set"),
+            authority: self.authority.expect("authority is not set"),
             credential: self.credential.expect("credential is not set"),
             schema: self.schema.expect("schema is not set"),
             system_program: self
@@ -190,6 +204,8 @@ impl CreateSchemaBuilder {
 /// `create_schema` CPI accounts.
 pub struct CreateSchemaCpiAccounts<'a, 'b> {
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
     pub credential: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -204,6 +220,8 @@ pub struct CreateSchemaCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
     pub credential: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -223,6 +241,7 @@ impl<'a, 'b> CreateSchemaCpi<'a, 'b> {
         Self {
             __program: program,
             payer: accounts.payer,
+            authority: accounts.authority,
             credential: accounts.credential,
             schema: accounts.schema,
             system_program: accounts.system_program,
@@ -262,9 +281,13 @@ impl<'a, 'b> CreateSchemaCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.authority.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -295,9 +318,10 @@ impl<'a, 'b> CreateSchemaCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(6 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.payer.clone());
+        account_infos.push(self.authority.clone());
         account_infos.push(self.credential.clone());
         account_infos.push(self.schema.clone());
         account_infos.push(self.system_program.clone());
@@ -318,9 +342,10 @@ impl<'a, 'b> CreateSchemaCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer
-///   1. `[]` credential
-///   2. `[writable]` schema
-///   3. `[]` system_program
+///   1. `[signer]` authority
+///   2. `[]` credential
+///   3. `[writable]` schema
+///   4. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct CreateSchemaCpiBuilder<'a, 'b> {
     instruction: Box<CreateSchemaCpiBuilderInstruction<'a, 'b>>,
@@ -331,6 +356,7 @@ impl<'a, 'b> CreateSchemaCpiBuilder<'a, 'b> {
         let instruction = Box::new(CreateSchemaCpiBuilderInstruction {
             __program: program,
             payer: None,
+            authority: None,
             credential: None,
             schema: None,
             system_program: None,
@@ -344,6 +370,14 @@ impl<'a, 'b> CreateSchemaCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
+        self
+    }
+    #[inline(always)]
+    pub fn authority(
+        &mut self,
+        authority: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.authority = Some(authority);
         self
     }
     /// Credential the Schema is associated with
@@ -441,6 +475,8 @@ impl<'a, 'b> CreateSchemaCpiBuilder<'a, 'b> {
 
             payer: self.instruction.payer.expect("payer is not set"),
 
+            authority: self.instruction.authority.expect("authority is not set"),
+
             credential: self.instruction.credential.expect("credential is not set"),
 
             schema: self.instruction.schema.expect("schema is not set"),
@@ -462,6 +498,7 @@ impl<'a, 'b> CreateSchemaCpiBuilder<'a, 'b> {
 struct CreateSchemaCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     credential: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     schema: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

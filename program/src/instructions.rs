@@ -20,13 +20,14 @@ pub enum AttestationServiceInstruction {
 
     /// Create a Schema for a Credential that can eventually be attested to.
     #[account(0, writable, signer, name = "payer")]
+    #[account(1, signer, name = "authority")]
     #[account(
-        1,
+        2,
         name = "credential",
         desc = "Credential the Schema is associated with"
     )]
-    #[account(2, writable, name = "schema")]
-    #[account(3, name = "system_program")]
+    #[account(3, writable, name = "schema")]
+    #[account(4, name = "system_program")]
     CreateSchema {
         name: String,
         description: String,

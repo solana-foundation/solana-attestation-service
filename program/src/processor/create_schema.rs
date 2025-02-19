@@ -14,9 +14,10 @@ use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
     processor::{
-        create_pda_account, to_serialized_vec, verify_system_account, verify_system_program,
+        create_pda_account, to_serialized_vec, verify_signer, verify_system_account,
+        verify_system_program,
     },
-    state::Schema,
+    state::{Credential, Schema},
 };
 
 #[inline(always)]
@@ -25,14 +26,23 @@ pub fn process_create_schema(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let [payer_info, credential_info, schema_info, system_program] = accounts else {
+    let [payer_info, authority_info, credential_info, schema_info, system_program] = accounts
+    else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
+    // Validate: authority should have signed
+    verify_signer(authority_info, false)?;
     // Validate: schema should be owned by system account, empty, and writable
     verify_system_account(schema_info, true)?;
     // Validate: system program
     verify_system_program(system_program)?;
+
+    let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
+    // Verify signer matches credential authority.
+    if credential.authority.ne(authority_info.key()) {
+        return Err(ProgramError::IncorrectAuthority);
+    }
 
     let args = CreateSchemaArgs::try_from_bytes(instruction_data)?;
     let name = args.name()?;

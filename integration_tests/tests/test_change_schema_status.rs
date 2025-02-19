@@ -65,6 +65,7 @@ async fn pause_and_unpause_schema_success() {
     );
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(ctx.payer.pubkey())
+        .authority(authority.pubkey())
         .credential(credential_pda)
         .schema(schema_pda)
         .system_program(system_program::ID)
@@ -75,7 +76,7 @@ async fn pause_and_unpause_schema_success() {
     let transaction = Transaction::new_signed_with_payer(
         &[create_schema_ix],
         Some(&ctx.payer.pubkey()),
-        &[&ctx.payer],
+        &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
     ctx.banks_client

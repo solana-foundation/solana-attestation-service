@@ -52,6 +52,11 @@
           "isSigner": true
         },
         {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
           "name": "credential",
           "isMut": false,
           "isSigner": false,
