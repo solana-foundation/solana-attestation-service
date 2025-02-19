@@ -7,7 +7,7 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     acc_info_as_str,
-    constants::{CREDENTIAL_SEED, SCHEMA_SEED},
+    constants::SCHEMA_SEED,
     processor::{verify_owner_mutability, verify_signer},
     state::{Credential, Schema},
 };
