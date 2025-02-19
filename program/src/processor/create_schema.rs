@@ -13,8 +13,10 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
-    processor::{create_pda_account, to_serialized_vec},
-    state::{load_system_account, load_system_program, Schema},
+    processor::{
+        create_pda_account, to_serialized_vec, verify_system_account, verify_system_program,
+    },
+    state::Schema,
 };
 
 #[inline(always)]
@@ -28,9 +30,9 @@ pub fn process_create_schema(
     };
 
     // Validate: schema should be owned by system account, empty, and writable
-    load_system_account(schema_info, true)?;
+    verify_system_account(schema_info, true)?;
     // Validate: system program
-    load_system_program(system_program)?;
+    verify_system_program(system_program)?;
 
     let args = CreateSchemaArgs::try_from_bytes(instruction_data)?;
     let name = args.name()?;

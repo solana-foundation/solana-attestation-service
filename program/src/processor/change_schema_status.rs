@@ -6,8 +6,10 @@ use pinocchio_log::log;
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
+    acc_info_as_str,
     constants::{CREDENTIAL_SEED, SCHEMA_SEED},
-    state::{load_signer, verify_owner_mutability, Credential, Schema},
+    processor::{verify_owner_mutability, verify_signer},
+    state::{Credential, Schema},
 };
 
 #[inline(always)]
@@ -21,7 +23,7 @@ pub fn process_change_schema_status(
     };
 
     // Validate: authority should have signed
-    load_signer(authority_info, false)?;
+    verify_signer(authority_info, false)?;
 
     // Verify program ownership, mutability and PDAs.
     verify_owner_mutability(credential_info, program_id, false)?;
@@ -43,10 +45,7 @@ pub fn process_change_schema_status(
         &SolanaPubkey::from(*program_id),
     );
     if credential_info.key().ne(&credential_pda.to_bytes()) {
-        log!(
-            "PDA Mismatch for {}",
-            bs58::encode(credential_info.key()).into_string().as_str(),
-        );
+        log!("PDA Mismatch for {}", acc_info_as_str!(credential_info));
         return Err(ProgramError::InvalidAccountData);
     }
 
@@ -66,10 +65,7 @@ pub fn process_change_schema_status(
         &SolanaPubkey::from(*program_id),
     );
     if schema_info.key().ne(&schema_pda.to_bytes()) {
-        log!(
-            "PDA Mismatch for {}",
-            bs58::encode(schema_info.key()).into_string().as_str()
-        );
+        log!("PDA Mismatch for {}", acc_info_as_str!(schema_info));
         return Err(ProgramError::InvalidAccountData);
     }
 
