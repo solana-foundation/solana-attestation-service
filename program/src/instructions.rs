@@ -48,4 +48,15 @@ pub enum AttestationServiceInstruction {
         desc = "Credential the Schema is associated with"
     )]
     ChangeSchemaStatus { is_paused: bool },
+
+    /// Sets Credential authorized_signers
+    #[account(0, writable, signer, name = "payer")]
+    #[account(1, signer, name = "authority")]
+    #[account(
+        2,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(3, name = "system_program")]
+    ChangeAuthorizedSigners { signers: Vec<Pubkey> },
 }
