@@ -14,8 +14,10 @@ pub struct Schema {
     pub name: Vec<u8>,
     /// Description of what schema does
     pub description: Vec<u8>,
-    /// Encoding of the `CustomData` struct that needs to be asserted against?
-    pub data_schema: Vec<u8>,
+    /// The schema layout where data will be encoded with.
+    pub layout: Vec<u8>,
+    /// Field names of schema.
+    pub field_names: Vec<u8>,
     /// Whether or not this schema is still valid
     pub is_paused: bool,
 }
@@ -35,9 +37,14 @@ impl Schema {
         let description = data[offset..(offset + 4 + desc_len)].to_vec();
         offset += 4 + desc_len;
 
-        let schema_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-        let data_schema = data[offset..(offset + 4 + schema_len)].to_vec();
-        offset += 4 + schema_len;
+        let layout_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+        let layout = data[offset..(offset + 4 + layout_len)].to_vec();
+        offset += 4 + layout_len;
+
+        let field_names_len =
+            u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+        let field_names: Vec<u8> = data[offset..(offset + 4 + field_names_len)].to_vec();
+        offset += 4 + field_names_len;
 
         let is_paused = data[offset] == 1;
 
@@ -45,7 +52,8 @@ impl Schema {
             credential,
             name,
             description,
-            data_schema,
+            layout,
+            field_names,
             is_paused,
         })
     }
@@ -55,7 +63,8 @@ impl Schema {
         data.extend_from_slice(self.credential.as_ref());
         data.extend_from_slice(self.name.as_ref());
         data.extend_from_slice(self.description.as_ref());
-        data.extend_from_slice(self.data_schema.as_ref());
+        data.extend_from_slice(self.layout.as_ref());
+        data.extend_from_slice(self.field_names.as_ref());
         data.extend_from_slice(&[self.is_paused as u8]);
 
         data
