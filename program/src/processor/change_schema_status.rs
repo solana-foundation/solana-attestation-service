@@ -36,18 +36,7 @@ pub fn process_change_schema_status(
         .eq(&1);
 
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
-    let (credential_pda, _credential_bump) = SolanaPubkey::find_program_address(
-        &[
-            CREDENTIAL_SEED,
-            authority_info.key(),
-            credential.name.get(4..).unwrap(), // Convert Vec<u8> to UTF8 Array
-        ],
-        &SolanaPubkey::from(*program_id),
-    );
-    if credential_info.key().ne(&credential_pda.to_bytes()) {
-        log!("PDA Mismatch for {}", acc_info_as_str!(credential_info));
-        return Err(ProgramError::InvalidAccountData);
-    }
+    credential.verify_pda(credential_info, program_id)?;
 
     // Verify signer matches credential authority.
     if credential.authority.ne(authority_info.key()) {
