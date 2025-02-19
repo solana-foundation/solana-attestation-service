@@ -177,11 +177,18 @@ impl CreateSchemaArgs<'_> {
             let offset = offset + 4 + description_len;
             let layout_len = *(self.raw.add(offset as usize) as *const u32);
             let offset = offset + 4 + layout_len;
-            // Len of field names
-            let len = *(self.raw.add(offset as usize) as *const u32);
+            // Number of field names.
+            let field_names_count = *(self.raw.add(offset as usize) as *const u32);
             let offset = offset + 4;
+
+            let mut byte_len = 0;
+            for _ in 0..field_names_count {
+                let len = *(self.raw.add((offset + byte_len) as usize) as *const u32);
+                byte_len += 4 + len
+            }
+
             let field_names_bytes =
-                core::slice::from_raw_parts(self.raw.add(offset as usize), len as usize);
+                core::slice::from_raw_parts(self.raw.add(offset as usize), byte_len as usize);
             Ok(field_names_bytes)
         }
     }
