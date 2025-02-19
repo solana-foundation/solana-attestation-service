@@ -42,7 +42,7 @@ impl ChangeAuthorizedSigners {
             self.authority,
             true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.credential,
             false,
         ));
@@ -93,7 +93,7 @@ pub struct ChangeAuthorizedSignersInstructionArgs {
 ///
 ///   0. `[writable, signer]` payer
 ///   1. `[signer]` authority
-///   2. `[]` credential
+///   2. `[writable]` credential
 ///   3. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct ChangeAuthorizedSignersBuilder {
@@ -256,7 +256,7 @@ impl<'a, 'b> ChangeAuthorizedSignersCpi<'a, 'b> {
             *self.authority.key,
             true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.credential.key,
             false,
         ));
@@ -304,7 +304,7 @@ impl<'a, 'b> ChangeAuthorizedSignersCpi<'a, 'b> {
 ///
 ///   0. `[writable, signer]` payer
 ///   1. `[signer]` authority
-///   2. `[]` credential
+///   2. `[writable]` credential
 ///   3. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct ChangeAuthorizedSignersCpiBuilder<'a, 'b> {

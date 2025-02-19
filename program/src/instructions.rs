@@ -54,6 +54,7 @@ pub enum AttestationServiceInstruction {
     #[account(1, signer, name = "authority")]
     #[account(
         2,
+        writable,
         name = "credential",
         desc = "Credential the Schema is associated with"
     )]

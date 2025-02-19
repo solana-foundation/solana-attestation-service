@@ -145,7 +145,7 @@
         },
         {
           "name": "credential",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Credential the Schema is associated with"
