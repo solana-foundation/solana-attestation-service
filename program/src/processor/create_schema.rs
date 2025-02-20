@@ -48,7 +48,7 @@ pub fn process_create_schema(
     let name = args.name()?;
     let description = args.description()?;
     let layout = args.layout()?;
-    let field_names = args.field_names()?;
+    let (field_names_count, field_names_bytes) = args.field_names()?;
 
     // NOTE: this could be optimized further by removing the `solana-program` dependency
     // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
@@ -67,7 +67,7 @@ pub fn process_create_schema(
         + (4 + name.len())
         + (4 + description.len())
         + (4 + layout.len())
-        + (4 + field_names.len())
+        + (4 + field_names_bytes.len())
         + 1;
     let rent = Rent::get()?;
     let bump_seed = [schema_bump];
@@ -91,9 +91,13 @@ pub fn process_create_schema(
         name: to_serialized_vec(name),
         description: to_serialized_vec(description),
         layout: to_serialized_vec(layout),
-        field_names: to_serialized_vec(field_names),
+        field_names: to_serialized_vec(field_names_bytes),
         is_paused: false,
     };
+
+    // Checks that layout and field names are valid.
+    schema.validate(field_names_count)?;
+
     let mut schema_data = schema_info.try_borrow_mut_data()?;
     schema_data.copy_from_slice(&schema.to_bytes());
 
@@ -168,7 +172,7 @@ impl CreateSchemaArgs<'_> {
     }
 
     #[inline]
-    pub fn field_names(&self) -> Result<&[u8], ProgramError> {
+    pub fn field_names(&self) -> Result<(u32, &[u8]), ProgramError> {
         // SAFETY: the `bytes` length was validated in `try_from_bytes`.
         unsafe {
             // name length + 4 for encoded len
@@ -189,7 +193,7 @@ impl CreateSchemaArgs<'_> {
 
             let field_names_bytes =
                 core::slice::from_raw_parts(self.raw.add(offset as usize), byte_len as usize);
-            Ok(field_names_bytes)
+            Ok((field_names_count, field_names_bytes))
         }
     }
 }
