@@ -1,8 +1,10 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::{program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
 use shank::ShankAccount;
+
+use super::discriminator::{AttestationAccountDiscriminators, Discriminator};
 
 // PDA ["schema", credential, name]
 #[derive(Clone, Debug, PartialEq, ShankAccount)]
@@ -20,9 +22,20 @@ pub struct Schema {
     pub is_paused: bool,
 }
 
+impl Discriminator for Schema {
+    const DISCRIMINATOR: u8 = AttestationAccountDiscriminators::SchemaDiscriminator as u8;
+}
+
 impl Schema {
     pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
-        let mut offset: usize = 0;
+        // Check discriminator
+        if data[0] != Self::DISCRIMINATOR {
+            msg!("Invalid Schema Data");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        // Start offset after Discriminator
+        let mut offset: usize = 1;
 
         let credential: Pubkey = data[offset..offset + 32].try_into().unwrap();
         offset += 32;
@@ -52,6 +65,8 @@ impl Schema {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut data = Vec::new();
+        // Discriminator
+        data.push(Self::DISCRIMINATOR);
         data.extend_from_slice(self.credential.as_ref());
         data.extend_from_slice(self.name.as_ref());
         data.extend_from_slice(self.description.as_ref());

@@ -63,12 +63,13 @@ pub fn process_create_schema(
     }
 
     // Account layout
+    // discriminator - 1
     // credential - 32
     // name - 4 + length
     // description - 4 + length
     // data_schema - 4 + length
     // is_revoked - 1
-    let space = 32 + (4 + name.len()) + (4 + description.len()) + (4 + data_schema.len()) + 1;
+    let space = 1 + 32 + (4 + name.len()) + (4 + description.len()) + (4 + data_schema.len()) + 1;
     let rent = Rent::get()?;
     let bump_seed = [schema_bump];
     let signer_seeds = [

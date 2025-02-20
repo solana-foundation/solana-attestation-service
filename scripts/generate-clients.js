@@ -9,6 +9,32 @@ const sasIdl = require(path.join(idlDir, "solana_attestation_service.json"));
 const rustClientsDir = path.join(__dirname, "..", "clients", "rust");
 
 const sasCodama = codama.createFromRoot(anchorIdl.rootNodeFromAnchor(sasIdl));
+sasCodama.update(
+  codama.bottomUpTransformerVisitor([
+    // add 1 byte discriminator
+    {
+      select: "[accountNode]",
+      transform: (node) => {
+        console.log('transform')
+        codama.assertIsNode(node, "accountNode");
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            fields: [
+              codama.structFieldTypeNode({
+                name: "discriminator",
+                type: codama.numberTypeNode("u8"),
+              }),
+              ...node.data.fields,
+            ],
+          },
+        };
+      },
+    },
+  ])
+);
 sasCodama.accept(
   renderers.renderRustVisitor(path.join(rustClientsDir, "src", "generated"), {
     formatCode: true,
