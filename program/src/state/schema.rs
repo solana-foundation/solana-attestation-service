@@ -8,7 +8,7 @@ use shank::ShankAccount;
 use crate::error::AttestationServiceError;
 
 #[repr(u8)]
-pub enum DataTypes {
+pub enum SchemaDataTypes {
     U8 = 0,
     U16 = 1,
     U32 = 2,
@@ -41,9 +41,9 @@ pub enum DataTypes {
     VecString = 29, // Max Value
 }
 
-impl DataTypes {
+impl SchemaDataTypes {
     pub fn max() -> u8 {
-        DataTypes::VecString as u8
+        SchemaDataTypes::VecString as u8
     }
 }
 
@@ -57,7 +57,7 @@ pub struct Schema {
     pub name: Vec<u8>,
     /// Description of what schema does, in UTF8-encoded byte string.
     pub description: Vec<u8>,
-    /// The schema layout where data will be encoded with, in array of DataTypes.
+    /// The schema layout where data will be encoded with, in array of SchemaDataTypes.
     pub layout: Vec<u8>,
     /// Field names of schema stored as serialized array of Strings.
     /// First 4 bytes are number of bytes in array.
@@ -71,13 +71,14 @@ impl Schema {
         let layout_len = self.layout.len().checked_sub(4).unwrap();
 
         for i in 4..(4 + layout_len) {
-            if self.layout[i] > DataTypes::max() {
-                return Err(AttestationServiceError::InvalidSchema.into());
+            if self.layout[i] > SchemaDataTypes::max() {
+                return Err(AttestationServiceError::InvalidSchemaDataType.into());
             }
         }
 
         // Expect number of field names to match number of fields in layout.
         if field_names_count != u32::try_from(layout_len).unwrap() {
+            log!("Field names does not match layout length");
             return Err(AttestationServiceError::InvalidSchema.into());
         }
         Ok(())
@@ -107,7 +108,6 @@ impl Schema {
         offset += 4 + field_names_byte_len;
 
         let is_paused = data[offset] == 1;
-        offset += 1;
 
         Ok(Self {
             credential,

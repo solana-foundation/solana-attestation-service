@@ -7,6 +7,8 @@ pub enum AttestationServiceError {
     InvalidCredential,
     // Incorrect Schema account
     InvalidSchema,
+    // Incorrect Schema data type
+    InvalidSchemaDataType,
 }
 
 impl From<AttestationServiceError> for ProgramError {
