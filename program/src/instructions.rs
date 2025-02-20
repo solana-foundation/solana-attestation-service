@@ -60,4 +60,21 @@ pub enum AttestationServiceInstruction {
     )]
     #[account(3, name = "system_program")]
     ChangeAuthorizedSigners { signers: Vec<Pubkey> },
+
+    /// Create an Attestation for a Schema by an authorized signer.
+    #[account(0, writable, signer, name = "payer")]
+    #[account(
+        1,
+        signer,
+        name = "authority",
+        desc = "Authorized signer of the Schema's Credential"
+    )]
+    #[account(2, name = "schema", desc = "Schema the Attestation is associated with")]
+    #[account(
+        3,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(4, writable, name = "attestation")]
+    CreateAttestation { data: Vec<u8> },
 }
