@@ -135,6 +135,46 @@
         "type": "u8",
         "value": 2
       }
+    },
+    {
+      "name": "ChangeAuthorizedSigners",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "credential",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Credential the Schema is associated with"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "signers",
+          "type": {
+            "vec": "publicKey"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 3
+      }
     }
   ],
   "accounts": [
