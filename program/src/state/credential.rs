@@ -8,7 +8,7 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{acc_info_as_str, constants::CREDENTIAL_SEED};
 
-use super::discriminator::{AttestationAccountDiscriminators, Discriminator};
+use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
 // PDA ["credential", authority, name]
 /// Tracks the authorized signers of for schemas and their attestations.
@@ -26,6 +26,25 @@ pub struct Credential {
 
 impl Discriminator for Credential {
     const DISCRIMINATOR: u8 = AttestationAccountDiscriminators::CredentialDiscriminator as u8;
+}
+
+impl AccountSerialize for Credential {
+    fn to_bytes_inner(&self) -> Vec<u8> {
+        let mut data = Vec::new();
+        // Authority encoding
+        data.extend_from_slice(self.authority.as_ref());
+
+        // Name encoding
+        data.extend_from_slice(self.name.as_ref());
+
+        // Authorized signers encoding
+        data.extend_from_slice(&(self.authorized_signers.len() as u32).to_le_bytes());
+        for signer in &self.authorized_signers {
+            data.extend_from_slice(signer.as_ref());
+        }
+
+        data
+    }
 }
 
 impl Credential {
@@ -81,24 +100,5 @@ impl Credential {
             name,
             authorized_signers,
         })
-    }
-
-    pub fn to_bytes(&self) -> Vec<u8> {
-        let mut data = Vec::new();
-        // Discriminator
-        data.push(Self::DISCRIMINATOR);
-        // Authority encoding
-        data.extend_from_slice(self.authority.as_ref());
-
-        // Name encoding
-        data.extend_from_slice(self.name.as_ref());
-
-        // Authorized signers encoding
-        data.extend_from_slice(&(self.authorized_signers.len() as u32).to_le_bytes());
-        for signer in &self.authorized_signers {
-            data.extend_from_slice(signer.as_ref());
-        }
-
-        data
     }
 }

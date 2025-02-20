@@ -4,7 +4,7 @@ use alloc::vec::Vec;
 use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
 use shank::ShankAccount;
 
-use super::discriminator::{AttestationAccountDiscriminators, Discriminator};
+use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
 // PDA ["schema", credential, name]
 #[derive(Clone, Debug, PartialEq, ShankAccount)]
@@ -24,6 +24,19 @@ pub struct Schema {
 
 impl Discriminator for Schema {
     const DISCRIMINATOR: u8 = AttestationAccountDiscriminators::SchemaDiscriminator as u8;
+}
+
+impl AccountSerialize for Schema {
+    fn to_bytes_inner(&self) -> Vec<u8> {
+        let mut data = Vec::new();
+        data.extend_from_slice(self.credential.as_ref());
+        data.extend_from_slice(self.name.as_ref());
+        data.extend_from_slice(self.description.as_ref());
+        data.extend_from_slice(self.data_schema.as_ref());
+        data.extend_from_slice(&[self.is_paused as u8]);
+
+        data
+    }
 }
 
 impl Schema {
@@ -61,18 +74,5 @@ impl Schema {
             data_schema,
             is_paused,
         })
-    }
-
-    pub fn to_bytes(&self) -> Vec<u8> {
-        let mut data = Vec::new();
-        // Discriminator
-        data.push(Self::DISCRIMINATOR);
-        data.extend_from_slice(self.credential.as_ref());
-        data.extend_from_slice(self.name.as_ref());
-        data.extend_from_slice(self.description.as_ref());
-        data.extend_from_slice(self.data_schema.as_ref());
-        data.extend_from_slice(&[self.is_paused as u8]);
-
-        data
     }
 }

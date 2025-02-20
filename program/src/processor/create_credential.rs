@@ -19,7 +19,7 @@ use crate::{
         create_pda_account, to_serialized_vec, verify_signer, verify_system_account,
         verify_system_program,
     },
-    state::Credential,
+    state::{discriminator::AccountSerialize, Credential},
 };
 
 #[inline(always)]
