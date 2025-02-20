@@ -20,6 +20,7 @@ pub fn process_instruction(
         0 => process_create_credential(program_id, accounts, instruction_data),
         1 => process_create_schema(program_id, accounts, instruction_data),
         2 => process_change_schema_status(program_id, accounts, instruction_data),
+        3 => process_change_authorized_signers(program_id, accounts, instruction_data),
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }
