@@ -20,7 +20,8 @@ pub struct Schema {
     pub credential: Pubkey,
     pub name: Vec<u8>,
     pub description: Vec<u8>,
-    pub data_schema: Vec<u8>,
+    pub layout: Vec<u8>,
+    pub field_names: Vec<u8>,
     pub is_paused: bool,
 }
 

@@ -31,7 +31,8 @@ pub enum AttestationServiceInstruction {
     CreateSchema {
         name: String,
         description: String,
-        data: Vec<u8>,
+        layout: Vec<u8>,
+        field_names: Vec<String>,
     },
 
     /// Sets Schema is_paused status

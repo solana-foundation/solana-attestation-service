@@ -85,8 +85,14 @@
           "type": "string"
         },
         {
-          "name": "data",
+          "name": "layout",
           "type": "bytes"
+        },
+        {
+          "name": "fieldNames",
+          "type": {
+            "vec": "string"
+          }
         }
       ],
       "discriminant": {
@@ -212,7 +218,11 @@
             "type": "bytes"
           },
           {
-            "name": "dataSchema",
+            "name": "layout",
+            "type": "bytes"
+          },
+          {
+            "name": "fieldNames",
             "type": "bytes"
           },
           {
