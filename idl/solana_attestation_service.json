@@ -212,6 +212,10 @@
         {
           "name": "data",
           "type": "bytes"
+        },
+        {
+          "name": "expiry",
+          "type": "i64"
         }
       ],
       "discriminant": {
@@ -221,6 +225,47 @@
     }
   ],
   "accounts": [
+    {
+      "name": "Attestation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "credential",
+            "type": "publicKey"
+          },
+          {
+            "name": "schema",
+            "type": "publicKey"
+          },
+          {
+            "name": "data",
+            "type": "bytes"
+          },
+          {
+            "name": "signer",
+            "type": "publicKey"
+          },
+          {
+            "name": "signature",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "isRevoked",
+            "type": "bool"
+          }
+        ]
+      }
+    },
     {
       "name": "Credential",
       "type": {

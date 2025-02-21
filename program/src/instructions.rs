@@ -69,12 +69,13 @@ pub enum AttestationServiceInstruction {
         name = "authority",
         desc = "Authorized signer of the Schema's Credential"
     )]
-    #[account(2, name = "schema", desc = "Schema the Attestation is associated with")]
     #[account(
-        3,
+        2,
         name = "credential",
         desc = "Credential the Schema is associated with"
     )]
+    #[account(3, name = "schema", desc = "Schema the Attestation is associated with")]
     #[account(4, writable, name = "attestation")]
-    CreateAttestation { data: Vec<u8> },
+    #[account(5, name = "system_program")]
+    CreateAttestation { data: Vec<u8>, expiry: i64 },
 }

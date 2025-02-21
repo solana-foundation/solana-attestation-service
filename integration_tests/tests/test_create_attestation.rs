@@ -1,7 +1,8 @@
-use borsh::BorshSerialize;
+use borsh::{BorshDeserialize, BorshSerialize};
 use helpers::program_test_context;
-use solana_attestation_service_client::instructions::{
-    CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder,
+use solana_attestation_service_client::{
+    accounts::Attestation,
+    instructions::{CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_sdk::{
@@ -79,6 +80,7 @@ async fn create_attestation_success() {
         name: "attest".to_string(),
         location: 11,
     };
+    let expiry: i64 = 1000;
     let mut serialized_attestation_data = Vec::new();
     attestation_data
         .serialize(&mut serialized_attestation_data)
@@ -99,7 +101,8 @@ async fn create_attestation_success() {
         .schema(schema_pda)
         .credential(credential_pda)
         .attestation(attestation_pda)
-        .data(serialized_attestation_data)
+        .data(serialized_attestation_data.clone())
+        .expiry(expiry)
         .instruction();
 
     let transaction = Transaction::new_signed_with_payer(
@@ -112,8 +115,22 @@ async fn create_attestation_success() {
         .process_transaction(transaction)
         .await
         .unwrap();
-      // TODO assert attestation
-}
 
+    // Assert attestation
+    let attestation_account = ctx
+        .banks_client
+        .get_account(attestation_pda)
+        .await
+        .unwrap()
+        .unwrap();
+    let attestation = Attestation::try_from_slice(&attestation_account.data).unwrap();
+    assert_eq!(attestation.data, serialized_attestation_data);
+    assert_eq!(attestation.credential, credential_pda);
+    assert_eq!(attestation.expiry, expiry);
+    assert_eq!(attestation.is_revoked, false);
+    assert_eq!(attestation.schema, schema_pda);
+    assert_eq!(attestation.signer, authority.pubkey());
+    // TODO assert signature
+}
 
 // TODO add failure case for validations?

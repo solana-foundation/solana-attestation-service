@@ -90,6 +90,7 @@ impl Default for CreateAttestationInstructionData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateAttestationInstructionArgs {
     pub data: Vec<u8>,
+    pub expiry: i64,
 }
 
 /// Instruction builder for `CreateAttestation`.
@@ -109,6 +110,7 @@ pub struct CreateAttestationBuilder {
     credential: Option<solana_program::pubkey::Pubkey>,
     attestation: Option<solana_program::pubkey::Pubkey>,
     data: Option<Vec<u8>>,
+    expiry: Option<i64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -149,6 +151,11 @@ impl CreateAttestationBuilder {
         self.data = Some(data);
         self
     }
+    #[inline(always)]
+    pub fn expiry(&mut self, expiry: i64) -> &mut Self {
+        self.expiry = Some(expiry);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -178,6 +185,7 @@ impl CreateAttestationBuilder {
         };
         let args = CreateAttestationInstructionArgs {
             data: self.data.clone().expect("data is not set"),
+            expiry: self.expiry.clone().expect("expiry is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -344,6 +352,7 @@ impl<'a, 'b> CreateAttestationCpiBuilder<'a, 'b> {
             credential: None,
             attestation: None,
             data: None,
+            expiry: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -393,6 +402,11 @@ impl<'a, 'b> CreateAttestationCpiBuilder<'a, 'b> {
         self.instruction.data = Some(data);
         self
     }
+    #[inline(always)]
+    pub fn expiry(&mut self, expiry: i64) -> &mut Self {
+        self.instruction.expiry = Some(expiry);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -436,6 +450,7 @@ impl<'a, 'b> CreateAttestationCpiBuilder<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let args = CreateAttestationInstructionArgs {
             data: self.instruction.data.clone().expect("data is not set"),
+            expiry: self.instruction.expiry.clone().expect("expiry is not set"),
         };
         let instruction = CreateAttestationCpi {
             __program: self.instruction.__program,
@@ -470,6 +485,7 @@ struct CreateAttestationCpiBuilderInstruction<'a, 'b> {
     credential: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     attestation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     data: Option<Vec<u8>>,
+    expiry: Option<i64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

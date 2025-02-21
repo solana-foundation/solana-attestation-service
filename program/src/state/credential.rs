@@ -43,6 +43,14 @@ impl Credential {
         Ok(())
     }
 
+    pub fn validate_authority(&self, authority: &Pubkey) -> Result<(), ProgramError> {
+        if self.authority.ne(authority) {
+            log!("Authority Mismatch");
+            return Err(ProgramError::InvalidAccountData);
+        }
+        Ok(())
+    }
+
     pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
         let mut offset: usize = 0;
 
