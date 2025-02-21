@@ -114,7 +114,7 @@ pub struct CreateSchemaArgs<'a> {
 impl CreateSchemaArgs<'_> {
     #[inline]
     pub fn try_from_bytes(bytes: &[u8]) -> Result<CreateSchemaArgs, ProgramError> {
-        // TODO: Is this needed? Checking dynamic vec sizes don't make sense.
+        // TODO: KIV for further refactoring to enforce better byte len checks.
         // The minimum expected size of the instruction data.
         // - name (5 bytes. 4 len, 1 char)
         // - description (5 bytes. 4 len, 1 char)

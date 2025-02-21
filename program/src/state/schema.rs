@@ -67,7 +67,7 @@ impl Schema {
         let size_offset = 4;
         let layout_len = self.layout.len().checked_sub(size_offset).unwrap();
 
-        for i in size_offset..(size_offset + layout_len) {
+        for i in size_offset..self.layout.len() {
             if self.layout[i] > SchemaDataTypes::max() {
                 return Err(AttestationServiceError::InvalidSchemaDataType.into());
             }
