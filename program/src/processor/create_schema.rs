@@ -47,7 +47,8 @@ pub fn process_create_schema(
     let args = CreateSchemaArgs::try_from_bytes(instruction_data)?;
     let name = args.name()?;
     let description = args.description()?;
-    let data_schema = args.data()?;
+    let layout = args.layout()?;
+    let (field_names_count, field_names_bytes) = args.field_names()?;
 
     // NOTE: this could be optimized further by removing the `solana-program` dependency
     // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
@@ -62,13 +63,12 @@ pub fn process_create_schema(
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
-    // Account layout
-    // credential - 32
-    // name - 4 + length
-    // description - 4 + length
-    // data_schema - 4 + length
-    // is_revoked - 1
-    let space = 32 + (4 + name.len()) + (4 + description.len()) + (4 + data_schema.len()) + 1;
+    let space = 32
+        + (4 + name.len())
+        + (4 + description.len())
+        + (4 + layout.len())
+        + (4 + field_names_bytes.len())
+        + 1;
     let rent = Rent::get()?;
     let bump_seed = [schema_bump];
     let signer_seeds = [
@@ -90,9 +90,14 @@ pub fn process_create_schema(
         credential: *credential_info.key(),
         name: to_serialized_vec(name),
         description: to_serialized_vec(description),
-        data_schema: to_serialized_vec(data_schema),
+        layout: to_serialized_vec(layout),
+        field_names: to_serialized_vec(field_names_bytes),
         is_paused: false,
     };
+
+    // Checks that layout and field names are valid.
+    schema.validate(field_names_count)?;
+
     let mut schema_data = schema_info.try_borrow_mut_data()?;
     schema_data.copy_from_slice(&schema.to_bytes());
 
@@ -109,11 +114,13 @@ pub struct CreateSchemaArgs<'a> {
 impl CreateSchemaArgs<'_> {
     #[inline]
     pub fn try_from_bytes(bytes: &[u8]) -> Result<CreateSchemaArgs, ProgramError> {
+        // TODO: KIV for further refactoring to enforce better byte len checks.
         // The minimum expected size of the instruction data.
         // - name (5 bytes. 4 len, 1 char)
         // - description (5 bytes. 4 len, 1 char)
-        // - data (5 bytes. 4 len, 1 field)
-        if bytes.len() < 15 {
+        // - layout (5 bytes. 4 len, 1 field)
+        // - field_names (5 bytes. 4 len, 1 field)
+        if bytes.len() < 20 {
             return Err(ProgramError::InvalidInstructionData);
         }
 
@@ -149,20 +156,46 @@ impl CreateSchemaArgs<'_> {
     }
 
     #[inline]
-    pub fn data(&self) -> Result<&[u8], ProgramError> {
+    pub fn layout(&self) -> Result<&[u8], ProgramError> {
         // SAFETY: the `bytes` length was validated in `try_from_bytes`.
         unsafe {
             // name length + 4 for encoded len
             let offset = *(self.raw as *const u32) + 4;
             let description_len = *(self.raw.add(offset as usize) as *const u32);
-            // offset for start of the data
+            // offset for start of the layout
             let offset = offset + 4 + description_len;
-            // Len of data
+            // Len of layout
             let len = *(self.raw.add(offset as usize) as *const u32);
             let offset = offset + 4;
-            let data_bytes =
+            let layout_bytes =
                 core::slice::from_raw_parts(self.raw.add(offset as usize), len as usize);
-            Ok(data_bytes)
+            Ok(layout_bytes)
+        }
+    }
+
+    #[inline]
+    pub fn field_names(&self) -> Result<(u32, &[u8]), ProgramError> {
+        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
+        unsafe {
+            // name length + 4 for encoded len
+            let offset = *(self.raw as *const u32) + 4;
+            let description_len = *(self.raw.add(offset as usize) as *const u32);
+            let offset = offset + 4 + description_len;
+            let layout_len = *(self.raw.add(offset as usize) as *const u32);
+            let offset = offset + 4 + layout_len;
+            // Number of field names.
+            let field_names_count = *(self.raw.add(offset as usize) as *const u32);
+            let offset = offset + 4;
+
+            let mut byte_len = 0;
+            for _ in 0..field_names_count {
+                let len = *(self.raw.add((offset + byte_len) as usize) as *const u32);
+                byte_len += 4 + len
+            }
+
+            let field_names_bytes =
+                core::slice::from_raw_parts(self.raw.add(offset as usize), byte_len as usize);
+            Ok((field_names_count, field_names_bytes))
         }
     }
 }

@@ -91,7 +91,8 @@ impl Default for CreateSchemaInstructionData {
 pub struct CreateSchemaInstructionArgs {
     pub name: String,
     pub description: String,
-    pub data: Vec<u8>,
+    pub layout: Vec<u8>,
+    pub field_names: Vec<String>,
 }
 
 /// Instruction builder for `CreateSchema`.
@@ -112,7 +113,8 @@ pub struct CreateSchemaBuilder {
     system_program: Option<solana_program::pubkey::Pubkey>,
     name: Option<String>,
     description: Option<String>,
-    data: Option<Vec<u8>>,
+    layout: Option<Vec<u8>>,
+    field_names: Option<Vec<String>>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -158,8 +160,13 @@ impl CreateSchemaBuilder {
         self
     }
     #[inline(always)]
-    pub fn data(&mut self, data: Vec<u8>) -> &mut Self {
-        self.data = Some(data);
+    pub fn layout(&mut self, layout: Vec<u8>) -> &mut Self {
+        self.layout = Some(layout);
+        self
+    }
+    #[inline(always)]
+    pub fn field_names(&mut self, field_names: Vec<String>) -> &mut Self {
+        self.field_names = Some(field_names);
         self
     }
     /// Add an additional account to the instruction.
@@ -194,7 +201,8 @@ impl CreateSchemaBuilder {
         let args = CreateSchemaInstructionArgs {
             name: self.name.clone().expect("name is not set"),
             description: self.description.clone().expect("description is not set"),
-            data: self.data.clone().expect("data is not set"),
+            layout: self.layout.clone().expect("layout is not set"),
+            field_names: self.field_names.clone().expect("field_names is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -362,7 +370,8 @@ impl<'a, 'b> CreateSchemaCpiBuilder<'a, 'b> {
             system_program: None,
             name: None,
             description: None,
-            data: None,
+            layout: None,
+            field_names: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -416,8 +425,13 @@ impl<'a, 'b> CreateSchemaCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn data(&mut self, data: Vec<u8>) -> &mut Self {
-        self.instruction.data = Some(data);
+    pub fn layout(&mut self, layout: Vec<u8>) -> &mut Self {
+        self.instruction.layout = Some(layout);
+        self
+    }
+    #[inline(always)]
+    pub fn field_names(&mut self, field_names: Vec<String>) -> &mut Self {
+        self.instruction.field_names = Some(field_names);
         self
     }
     /// Add an additional account to the instruction.
@@ -468,7 +482,12 @@ impl<'a, 'b> CreateSchemaCpiBuilder<'a, 'b> {
                 .description
                 .clone()
                 .expect("description is not set"),
-            data: self.instruction.data.clone().expect("data is not set"),
+            layout: self.instruction.layout.clone().expect("layout is not set"),
+            field_names: self
+                .instruction
+                .field_names
+                .clone()
+                .expect("field_names is not set"),
         };
         let instruction = CreateSchemaCpi {
             __program: self.instruction.__program,
@@ -504,7 +523,8 @@ struct CreateSchemaCpiBuilderInstruction<'a, 'b> {
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     name: Option<String>,
     description: Option<String>,
-    data: Option<Vec<u8>>,
+    layout: Option<Vec<u8>>,
+    field_names: Option<Vec<String>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

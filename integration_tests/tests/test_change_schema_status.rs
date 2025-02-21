@@ -54,7 +54,8 @@ async fn pause_and_unpause_schema_success() {
     // Create Schema
     let schema_name = "test_data";
     let description = "schema for test data";
-    let schema_data = TestData::get_serialized_representation();
+    let schema_layout = TestData::get_serialized_representation();
+    let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
         &[
             b"schema",
@@ -71,7 +72,8 @@ async fn pause_and_unpause_schema_success() {
         .system_program(system_program::ID)
         .description(description.to_string())
         .name(schema_name.to_string())
-        .data(schema_data.clone())
+        .layout(schema_layout.clone())
+        .field_names(field_names.clone())
         .instruction();
     let transaction = Transaction::new_signed_with_payer(
         &[create_schema_ix],
@@ -110,7 +112,12 @@ async fn pause_and_unpause_schema_success() {
         .expect("account not nonex");
     let schema = Schema::try_from_slice(&schema_account.data).unwrap();
     assert_eq!(schema.credential, credential_pda);
-    assert_eq!(schema.data_schema, schema_data);
+    assert_eq!(schema.layout, schema_layout);
+    assert_eq!(
+        schema.field_names,
+        // Schema deserialize doesn't include vec length in data.
+        borsh::to_vec(&field_names).unwrap()[4..]
+    );
     assert_eq!(schema.description, description.as_bytes());
     assert_eq!(schema.is_paused, true);
     assert_eq!(schema.name, schema_name.as_bytes());
@@ -141,7 +148,12 @@ async fn pause_and_unpause_schema_success() {
         .expect("account not nonex");
     let schema = Schema::try_from_slice(&schema_account.data).unwrap();
     assert_eq!(schema.credential, credential_pda);
-    assert_eq!(schema.data_schema, schema_data);
+    assert_eq!(schema.layout, schema_layout);
+    assert_eq!(
+        schema.field_names,
+        // Schema deserialize doesn't include vec length in data.
+        borsh::to_vec(&field_names).unwrap()[4..]
+    );
     assert_eq!(schema.description, description.as_bytes());
     assert_eq!(schema.is_paused, false);
     assert_eq!(schema.name, schema_name.as_bytes());
