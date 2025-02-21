@@ -1,11 +1,13 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::{program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
 use pinocchio_log::log;
 use shank::ShankAccount;
 
 use crate::error::AttestationServiceError;
+
+use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
 #[repr(u8)]
 pub enum SchemaDataTypes {
@@ -62,6 +64,24 @@ pub struct Schema {
     pub is_paused: bool,
 }
 
+impl Discriminator for Schema {
+    const DISCRIMINATOR: u8 = AttestationAccountDiscriminators::SchemaDiscriminator as u8;
+}
+
+impl AccountSerialize for Schema {
+    fn to_bytes_inner(&self) -> Vec<u8> {
+        let mut data = Vec::new();
+        data.extend_from_slice(self.credential.as_ref());
+        data.extend_from_slice(self.name.as_ref());
+        data.extend_from_slice(self.description.as_ref());
+        data.extend_from_slice(self.layout.as_ref());
+        data.extend_from_slice(self.field_names.as_ref());
+        data.extend_from_slice(&[self.is_paused as u8]);
+
+        data
+    }
+}
+
 impl Schema {
     pub fn validate(&self, field_names_count: u32) -> Result<(), ProgramError> {
         let size_offset = 4;
@@ -82,7 +102,14 @@ impl Schema {
     }
 
     pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
-        let mut offset: usize = 0;
+        // Check discriminator
+        if data[0] != Self::DISCRIMINATOR {
+            msg!("Invalid Schema Data");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        // Start offset after Discriminator
+        let mut offset: usize = 1;
 
         let credential: Pubkey = data[offset..offset + 32].try_into().unwrap();
         offset += 32;
@@ -114,17 +141,5 @@ impl Schema {
             field_names,
             is_paused,
         })
-    }
-
-    pub fn to_bytes(&self) -> Vec<u8> {
-        let mut data = Vec::new();
-        data.extend_from_slice(self.credential.as_ref());
-        data.extend_from_slice(self.name.as_ref());
-        data.extend_from_slice(self.description.as_ref());
-        data.extend_from_slice(self.layout.as_ref());
-        data.extend_from_slice(self.field_names.as_ref());
-        data.extend_from_slice(&[self.is_paused as u8]);
-
-        data
     }
 }

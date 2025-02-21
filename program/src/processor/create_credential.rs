@@ -19,7 +19,7 @@ use crate::{
         create_pda_account, to_serialized_vec, verify_signer, verify_system_account,
         verify_system_program,
     },
-    state::Credential,
+    state::{discriminator::AccountSerialize, Credential},
 };
 
 #[inline(always)]
@@ -56,8 +56,12 @@ pub fn process_create_credential(
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
-    // Calculate space of Credential: authorized_signers + len, authority, name + len
-    let space = (4 + signers.len() * 32) + 32 + (4 + name.len());
+    // Account layout
+    // discriminator - 1
+    // authorized_signers - 4 + 32 * len
+    // authority - 32
+    // name - 4 + len
+    let space = 1 + (4 + signers.len() * 32) + 32 + (4 + name.len());
 
     let rent = Rent::get()?;
     let bump_seed = [credential_bump];

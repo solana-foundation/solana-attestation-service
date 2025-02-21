@@ -8,7 +8,7 @@ use pinocchio::{
 
 use crate::{
     processor::{verify_owner_mutability, verify_signer, verify_system_program},
-    state::Credential,
+    state::{discriminator::AccountSerialize, Credential},
 };
 
 #[inline(always)]

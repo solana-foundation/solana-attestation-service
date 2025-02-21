@@ -17,7 +17,7 @@ use crate::{
         create_pda_account, to_serialized_vec, verify_signer, verify_system_account,
         verify_system_program,
     },
-    state::{Credential, Schema},
+    state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
 #[inline(always)]
@@ -63,7 +63,16 @@ pub fn process_create_schema(
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
-    let space = 32
+    // Account layout
+    // discriminator - 1
+    // credential - 32
+    // name - 4 + length
+    // description - 4 + length
+    // layout - 4 + length
+    // field_names - 4 + length
+    // is_revoked - 1
+    let space = 1
+        + 32
         + (4 + name.len())
         + (4 + description.len())
         + (4 + layout.len())
