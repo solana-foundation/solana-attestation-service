@@ -12,6 +12,7 @@ use solana_program::pubkey::Pubkey;
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Schema {
+    pub discriminator: u8,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
@@ -19,7 +20,8 @@ pub struct Schema {
     pub credential: Pubkey,
     pub name: Vec<u8>,
     pub description: Vec<u8>,
-    pub data_schema: Vec<u8>,
+    pub layout: Vec<u8>,
+    pub field_names: Vec<u8>,
     pub is_paused: bool,
 }
 

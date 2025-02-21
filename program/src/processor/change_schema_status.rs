@@ -9,7 +9,7 @@ use crate::{
     acc_info_as_str,
     constants::SCHEMA_SEED,
     processor::{verify_owner_mutability, verify_signer},
-    state::{Credential, Schema},
+    state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
 #[inline(always)]

@@ -30,6 +30,6 @@ mod test {
 
     #[test]
     fn test_serialization() {
-        assert_eq!(CustomData::get_serialized_representation(), vec![4, 5, 10]);
+        assert_eq!(CustomData::get_serialized_representation(), vec![3, 5, 12]);
     }
 }
