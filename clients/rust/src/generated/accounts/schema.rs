@@ -23,6 +23,7 @@ pub struct Schema {
     pub layout: Vec<u8>,
     pub field_names: Vec<u8>,
     pub is_paused: bool,
+    pub version: u8,
 }
 
 impl Schema {
