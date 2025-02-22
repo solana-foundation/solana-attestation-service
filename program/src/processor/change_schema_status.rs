@@ -4,6 +4,7 @@ use pinocchio::{
 use pinocchio_log::log;
 
 use crate::{
+    error::AttestationServiceError,
     processor::{verify_owner_mutability, verify_signer},
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
@@ -42,6 +43,11 @@ pub fn process_change_schema_status(
     let mut schema_data = schema_info.try_borrow_mut_data()?;
     let mut schema = Schema::try_from_bytes(&schema_data)?;
     schema.verify_pda(schema_info, program_id)?;
+
+    // Verify that schema is under the same credential.
+    if schema.credential.ne(credential_info.key()) {
+        return Err(AttestationServiceError::InvalidSchema.into());
+    }
 
     schema.is_paused = is_paused;
     log!("Setting schema's is_paused to: {}", is_paused as u8);
