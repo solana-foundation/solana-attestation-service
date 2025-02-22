@@ -1,13 +1,9 @@
-use bs58;
 use pinocchio::{
     account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
 };
 use pinocchio_log::log;
-use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
-    acc_info_as_str,
-    constants::SCHEMA_SEED,
     processor::{verify_owner_mutability, verify_signer},
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
@@ -45,18 +41,7 @@ pub fn process_change_schema_status(
 
     let mut schema_data = schema_info.try_borrow_mut_data()?;
     let mut schema = Schema::try_from_bytes(&schema_data)?;
-    let (schema_pda, _schema_bump) = SolanaPubkey::find_program_address(
-        &[
-            SCHEMA_SEED,
-            credential_info.key(),
-            schema.name.get(4..).unwrap(), // Convert Vec<u8> to UTF8 Array
-        ],
-        &SolanaPubkey::from(*program_id),
-    );
-    if schema_info.key().ne(&schema_pda.to_bytes()) {
-        log!("PDA Mismatch for {}", acc_info_as_str!(schema_info));
-        return Err(ProgramError::InvalidAccountData);
-    }
+    schema.verify_pda(schema_info, program_id)?;
 
     schema.is_paused = is_paused;
     log!("Setting schema's is_paused to: {}", is_paused as u8);
