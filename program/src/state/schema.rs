@@ -1,11 +1,12 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{account_info::AccountInfo, msg, program_error::ProgramError, pubkey::Pubkey};
 use pinocchio_log::log;
 use shank::ShankAccount;
+use solana_program::pubkey::Pubkey as SolanaPubkey;
 
-use crate::error::AttestationServiceError;
+use crate::{acc_info_as_str, constants::SCHEMA_SEED, error::AttestationServiceError};
 
 use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
@@ -45,7 +46,7 @@ impl SchemaDataTypes {
     }
 }
 
-// PDA ["schema", credential, name]
+// PDA ["schema", credential, name, version]
 #[derive(Clone, Debug, PartialEq, ShankAccount)]
 #[repr(C)]
 pub struct Schema {
@@ -62,6 +63,8 @@ pub struct Schema {
     pub field_names: Vec<u8>,
     /// Whether or not this schema is still valid
     pub is_paused: bool,
+    /// Version of this schema. Defaults to 1.
+    pub version: u8,
 }
 
 impl Discriminator for Schema {
@@ -77,12 +80,34 @@ impl AccountSerialize for Schema {
         data.extend_from_slice(self.layout.as_ref());
         data.extend_from_slice(self.field_names.as_ref());
         data.extend_from_slice(&[self.is_paused as u8]);
+        data.extend_from_slice(&[self.version as u8]);
 
         data
     }
 }
 
 impl Schema {
+    pub fn verify_pda(
+        &self,
+        acc_info: &AccountInfo,
+        program_id: &Pubkey,
+    ) -> Result<(), ProgramError> {
+        let (credential_pda, _credential_bump) = SolanaPubkey::find_program_address(
+            &[
+                SCHEMA_SEED,
+                self.credential.as_ref(),
+                self.name.get(4..).unwrap(), // Convert Vec<u8> to UTF8 Array
+                &[self.version],
+            ],
+            &SolanaPubkey::from(*program_id),
+        );
+        if acc_info.key().ne(&credential_pda.to_bytes()) {
+            log!("PDA Mismatch for {}", acc_info_as_str!(acc_info));
+            return Err(ProgramError::InvalidAccountData);
+        }
+        Ok(())
+    }
+
     pub fn validate(&self, field_names_count: u32) -> Result<(), ProgramError> {
         let size_offset = 4;
         let layout_len = self.layout.len().checked_sub(size_offset).unwrap();
@@ -132,6 +157,9 @@ impl Schema {
         offset += 4 + field_names_byte_len;
 
         let is_paused = data[offset] == 1;
+        offset += 1;
+
+        let version = data[offset];
 
         Ok(Self {
             credential,
@@ -140,6 +168,7 @@ impl Schema {
             layout,
             field_names,
             is_paused,
+            version,
         })
     }
 }
