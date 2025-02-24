@@ -228,6 +228,10 @@
           {
             "name": "isPaused",
             "type": "bool"
+          },
+          {
+            "name": "version",
+            "type": "u8"
           }
         ]
       }

@@ -62,6 +62,7 @@ async fn create_schema_success() {
             b"schema",
             &credential_pda.to_bytes(),
             schema_name.as_bytes(),
+            &[1],
         ],
         &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
     );
@@ -104,5 +105,6 @@ async fn create_schema_success() {
     );
     assert_eq!(schema.description, description.as_bytes());
     assert_eq!(schema.is_paused, false);
+    assert_eq!(schema.version, 1);
     assert_eq!(schema.name, schema_name.as_bytes());
 }
