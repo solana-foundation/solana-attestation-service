@@ -15,7 +15,6 @@ sasCodama.update(
     {
       select: "[accountNode]",
       transform: (node) => {
-        console.log('transform')
         codama.assertIsNode(node, "accountNode");
 
         return {

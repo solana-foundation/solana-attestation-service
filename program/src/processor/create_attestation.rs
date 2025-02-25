@@ -15,14 +15,14 @@ pub fn process_create_attestation(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let [payer_info, authority_info, credential_info, schema_info, attestation_info, system_program] =
+    let [payer_info, authorized_signer, credential_info, schema_info, attestation_info, system_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     // Validate: authority should have signed
-    verify_signer(authority_info, false)?;
+    verify_signer(authorized_signer, false)?;
 
     // Validate system program
     verify_system_program(system_program)?;
@@ -33,7 +33,7 @@ pub fn process_create_attestation(
     credential.verify_pda(credential_info, program_id)?;
 
     // Validate Authority is an authorized signer
-    // credential.authorized_signers
+    credential.validate_authorized_signer(authorized_signer.key())?;
 
     // TODO validate Schema PDA
     let schema_data = schema_info.try_borrow_data()?;

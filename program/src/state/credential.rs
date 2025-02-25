@@ -6,7 +6,7 @@ use pinocchio_log::log;
 use shank::ShankAccount;
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
-use crate::{acc_info_as_str, constants::CREDENTIAL_SEED};
+use crate::{acc_info_as_str, constants::CREDENTIAL_SEED, error::AttestationServiceError};
 
 use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
@@ -72,6 +72,14 @@ impl Credential {
         if self.authority.ne(authority) {
             log!("Authority Mismatch");
             return Err(ProgramError::InvalidAccountData);
+        }
+        Ok(())
+    }
+
+    /// Validate the signer is one of the authorized signers.
+    pub fn validate_authorized_signer(&self, signer: &Pubkey) -> Result<(), ProgramError> {
+        if !self.authorized_signers.contains(signer) {
+            return Err(AttestationServiceError::SignerNotAuthorized.into());
         }
         Ok(())
     }

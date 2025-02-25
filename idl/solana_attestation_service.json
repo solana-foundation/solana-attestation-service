@@ -193,14 +193,6 @@
           ]
         },
         {
-          "name": "schema",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Schema the Attestation is associated with"
-          ]
-        },
-        {
           "name": "credential",
           "isMut": false,
           "isSigner": false,
@@ -209,8 +201,21 @@
           ]
         },
         {
+          "name": "schema",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Schema the Attestation is associated with"
+          ]
+        },
+        {
           "name": "attestation",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
           "isSigner": false
         }
       ],
@@ -251,15 +256,6 @@
           {
             "name": "signer",
             "type": "publicKey"
-          },
-          {
-            "name": "signature",
-            "type": {
-              "array": [
-                "u8",
-                64
-              ]
-            }
           },
           {
             "name": "expiry",

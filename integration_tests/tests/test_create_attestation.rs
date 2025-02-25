@@ -45,6 +45,7 @@ async fn create_attestation_success() {
     let schema_name = "test_data";
     let description = "schema for test data";
     let schema_data = TestData::get_serialized_representation();
+    let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
         &[
             b"schema",
@@ -61,7 +62,8 @@ async fn create_attestation_success() {
         .system_program(system_program::ID)
         .description(description.to_string())
         .name(schema_name.to_string())
-        .data(schema_data.clone())
+        .layout(schema_data.clone())
+        .field_names(field_names)
         .instruction();
 
     let transaction = Transaction::new_signed_with_payer(
@@ -98,9 +100,10 @@ async fn create_attestation_success() {
     let create_attestation_ix = CreateAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
         .authority(authority.pubkey())
-        .schema(schema_pda)
         .credential(credential_pda)
+        .schema(schema_pda)
         .attestation(attestation_pda)
+        .system_program(system_program::ID)
         .data(serialized_attestation_data.clone())
         .expiry(expiry)
         .instruction();
