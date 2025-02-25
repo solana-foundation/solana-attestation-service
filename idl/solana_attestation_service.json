@@ -262,6 +262,10 @@
       ],
       "args": [
         {
+          "name": "nonce",
+          "type": "publicKey"
+        },
+        {
           "name": "data",
           "type": "bytes"
         },
@@ -282,6 +286,10 @@
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "nonce",
+            "type": "publicKey"
+          },
           {
             "name": "credential",
             "type": "publicKey"

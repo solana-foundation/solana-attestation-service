@@ -7,6 +7,8 @@ pub enum AttestationServiceError {
     InvalidCredential,
     // Incorrect Schema account
     InvalidSchema,
+    // Incorrect Attestation account
+    InvalidAttestation,
     // Authority was not found in Credential authorized_signatures
     InvalidAuthority,
     // Incorrect Schema data type

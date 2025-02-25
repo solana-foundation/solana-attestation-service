@@ -7,6 +7,7 @@
 
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
+use solana_program::pubkey::Pubkey;
 
 /// Accounts.
 #[derive(Debug)]
@@ -95,6 +96,7 @@ impl Default for CreateAttestationInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateAttestationInstructionArgs {
+    pub nonce: Pubkey,
     pub data: Vec<u8>,
     pub expiry: i64,
 }
@@ -117,6 +119,7 @@ pub struct CreateAttestationBuilder {
     schema: Option<solana_program::pubkey::Pubkey>,
     attestation: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
+    nonce: Option<Pubkey>,
     data: Option<Vec<u8>>,
     expiry: Option<i64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -161,6 +164,11 @@ impl CreateAttestationBuilder {
         self
     }
     #[inline(always)]
+    pub fn nonce(&mut self, nonce: Pubkey) -> &mut Self {
+        self.nonce = Some(nonce);
+        self
+    }
+    #[inline(always)]
     pub fn data(&mut self, data: Vec<u8>) -> &mut Self {
         self.data = Some(data);
         self
@@ -201,6 +209,7 @@ impl CreateAttestationBuilder {
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
         let args = CreateAttestationInstructionArgs {
+            nonce: self.nonce.clone().expect("nonce is not set"),
             data: self.data.clone().expect("data is not set"),
             expiry: self.expiry.clone().expect("expiry is not set"),
         };
@@ -380,6 +389,7 @@ impl<'a, 'b> CreateAttestationCpiBuilder<'a, 'b> {
             schema: None,
             attestation: None,
             system_program: None,
+            nonce: None,
             data: None,
             expiry: None,
             __remaining_accounts: Vec::new(),
@@ -435,6 +445,11 @@ impl<'a, 'b> CreateAttestationCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
+    pub fn nonce(&mut self, nonce: Pubkey) -> &mut Self {
+        self.instruction.nonce = Some(nonce);
+        self
+    }
+    #[inline(always)]
     pub fn data(&mut self, data: Vec<u8>) -> &mut Self {
         self.instruction.data = Some(data);
         self
@@ -486,6 +501,7 @@ impl<'a, 'b> CreateAttestationCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = CreateAttestationInstructionArgs {
+            nonce: self.instruction.nonce.clone().expect("nonce is not set"),
             data: self.instruction.data.clone().expect("data is not set"),
             expiry: self.instruction.expiry.clone().expect("expiry is not set"),
         };
@@ -527,6 +543,7 @@ struct CreateAttestationCpiBuilderInstruction<'a, 'b> {
     schema: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     attestation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    nonce: Option<Pubkey>,
     data: Option<Vec<u8>>,
     expiry: Option<i64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

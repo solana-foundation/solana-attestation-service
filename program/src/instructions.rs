@@ -94,5 +94,9 @@ pub enum AttestationServiceInstruction {
     #[account(3, name = "schema", desc = "Schema the Attestation is associated with")]
     #[account(4, writable, name = "attestation")]
     #[account(5, name = "system_program")]
-    CreateAttestation { data: Vec<u8>, expiry: i64 },
+    CreateAttestation {
+        nonce: Pubkey,
+        data: Vec<u8>,
+        expiry: i64,
+    },
 }

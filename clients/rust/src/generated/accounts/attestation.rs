@@ -17,6 +17,11 @@ pub struct Attestation {
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
+    pub nonce: Pubkey,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
     pub credential: Pubkey,
     #[cfg_attr(
         feature = "serde",

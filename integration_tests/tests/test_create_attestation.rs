@@ -51,6 +51,7 @@ async fn create_attestation_success() {
             b"schema",
             &credential_pda.to_bytes(),
             schema_name.as_bytes(),
+            &[1],
         ],
         &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
     );
@@ -87,12 +88,14 @@ async fn create_attestation_success() {
     attestation_data
         .serialize(&mut serialized_attestation_data)
         .unwrap();
+    let nonce = Pubkey::new_unique();
     let attestation_pda = Pubkey::find_program_address(
         &[
             b"attestation",
             &credential_pda.to_bytes(),
             &authority.pubkey().to_bytes(),
             &schema_pda.to_bytes(),
+            &nonce.to_bytes(),
         ],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     )
@@ -106,6 +109,7 @@ async fn create_attestation_success() {
         .system_program(system_program::ID)
         .data(serialized_attestation_data.clone())
         .expiry(expiry)
+        .nonce(nonce)
         .instruction();
 
     let transaction = Transaction::new_signed_with_payer(
@@ -133,7 +137,8 @@ async fn create_attestation_success() {
     assert_eq!(attestation.is_revoked, false);
     assert_eq!(attestation.schema, schema_pda);
     assert_eq!(attestation.signer, authority.pubkey());
-    // TODO assert signature
+    assert_eq!(attestation.nonce, nonce);
+    // TODO assert signature?
 }
 
 // TODO add failure case for validations?

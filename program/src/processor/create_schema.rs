@@ -59,9 +59,9 @@ pub fn process_create_schema(
         &SolanaPubkey::from(*program_id),
     );
 
-    if schema_info.key() != &schema_pda.to_bytes() {
+    if schema_info.key().ne(&schema_pda.to_bytes()) {
         // PDA was invalid
-        return Err(AttestationServiceError::InvalidCredential.into());
+        return Err(AttestationServiceError::InvalidSchema.into());
     }
 
     // Account layout
