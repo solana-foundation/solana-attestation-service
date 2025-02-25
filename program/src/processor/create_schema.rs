@@ -49,12 +49,13 @@ pub fn process_create_schema(
     let description = args.description()?;
     let layout = args.layout()?;
     let (field_names_count, field_names_bytes) = args.field_names()?;
+    let version = &[1];
 
     // NOTE: this could be optimized further by removing the `solana-program` dependency
     // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
     // pubkey and associated bump (needed to be added as arg) is valid.
     let (schema_pda, schema_bump) = SolanaPubkey::find_program_address(
-        &[SCHEMA_SEED, credential_info.key(), name],
+        &[SCHEMA_SEED, credential_info.key(), name, version],
         &SolanaPubkey::from(*program_id),
     );
 
@@ -70,13 +71,15 @@ pub fn process_create_schema(
     // description - 4 + length
     // layout - 4 + length
     // field_names - 4 + length
-    // is_revoked - 1
+    // is_paused - 1
+    // version - 1
     let space = 1
         + 32
         + (4 + name.len())
         + (4 + description.len())
         + (4 + layout.len())
         + (4 + field_names_bytes.len())
+        + 1
         + 1;
     let rent = Rent::get()?;
     let bump_seed = [schema_bump];
@@ -84,6 +87,7 @@ pub fn process_create_schema(
         Seed::from(SCHEMA_SEED),
         Seed::from(credential_info.key()),
         Seed::from(name),
+        Seed::from(version),
         Seed::from(&bump_seed),
     ];
     create_pda_account(
@@ -102,6 +106,7 @@ pub fn process_create_schema(
         layout: to_serialized_vec(layout),
         field_names: to_serialized_vec(field_names_bytes),
         is_paused: false,
+        version: 1,
     };
 
     // Checks that layout and field names are valid.

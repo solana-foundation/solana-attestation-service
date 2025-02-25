@@ -2,7 +2,7 @@ use borsh::BorshDeserialize;
 use helpers::program_test_context;
 use solana_attestation_service_client::{
     accounts::Schema,
-    instructions::{ChangeSchemaStatusBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
+    instructions::{ChangeSchemaDescriptionBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_sdk::{
@@ -18,7 +18,7 @@ struct TestData {
 }
 
 #[tokio::test]
-async fn pause_and_unpause_schema_success() {
+async fn change_schema_description_success() {
     let ctx = program_test_context().await;
     let authority = Keypair::new();
     let credential_name = "test";
@@ -53,7 +53,7 @@ async fn pause_and_unpause_schema_success() {
 
     // Create Schema
     let schema_name = "test_data";
-    let description = "schema for test data";
+    let description = "first test";
     let schema_layout = TestData::get_serialized_representation();
     let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
@@ -87,50 +87,16 @@ async fn pause_and_unpause_schema_success() {
         .await
         .unwrap();
 
-    let pause_schema_ix = ChangeSchemaStatusBuilder::new()
+    let description = "new test";
+    let change_ix = ChangeSchemaDescriptionBuilder::new()
         .authority(authority.pubkey())
         .credential(credential_pda)
         .schema(schema_pda)
-        .is_paused(true)
+        .system_program(system_program::ID)
+        .description(description.to_string())
         .instruction();
     let transaction = Transaction::new_signed_with_payer(
-        &[pause_schema_ix],
-        Some(&ctx.payer.pubkey()),
-        &[&ctx.payer, &authority],
-        ctx.last_blockhash,
-    );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
-
-    // Assert schema account
-    let schema_account = ctx
-        .banks_client
-        .get_account(schema_pda)
-        .await
-        .expect("get_account")
-        .expect("account not nonex");
-    let schema = Schema::try_from_slice(&schema_account.data).unwrap();
-    assert_eq!(schema.credential, credential_pda);
-    assert_eq!(schema.layout, schema_layout);
-    assert_eq!(
-        schema.field_names,
-        // Schema deserialize doesn't include vec length in data.
-        borsh::to_vec(&field_names).unwrap()[4..]
-    );
-    assert_eq!(schema.description, description.as_bytes());
-    assert_eq!(schema.is_paused, true);
-    assert_eq!(schema.name, schema_name.as_bytes());
-
-    let unpause_schema_ix = ChangeSchemaStatusBuilder::new()
-        .authority(authority.pubkey())
-        .credential(credential_pda)
-        .schema(schema_pda)
-        .is_paused(false)
-        .instruction();
-    let transaction = Transaction::new_signed_with_payer(
-        &[unpause_schema_ix],
+        &[change_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
@@ -157,6 +123,5 @@ async fn pause_and_unpause_schema_success() {
     );
     assert_eq!(schema.description, description.as_bytes());
     assert_eq!(schema.is_paused, false);
-    assert_eq!(schema.version, 1);
     assert_eq!(schema.name, schema_name.as_bytes());
 }

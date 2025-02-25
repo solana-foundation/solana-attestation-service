@@ -12,6 +12,7 @@ use solana_program::pubkey::Pubkey;
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Attestation {
+    pub discriminator: u8,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
@@ -28,8 +29,6 @@ pub struct Attestation {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub signer: Pubkey,
-    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::Bytes>"))]
-    pub signature: [u8; 64],
     pub expiry: i64,
     pub is_revoked: bool,
 }

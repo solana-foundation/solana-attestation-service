@@ -177,6 +177,47 @@
       }
     },
     {
+      "name": "ChangeSchemaDescription",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Credential the Schema is associated with"
+          ]
+        },
+        {
+          "name": "schema",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Credential the Schema is associated with"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
+      }
+    },
+    {
       "name": "CreateAttestation",
       "accounts": [
         {
@@ -231,7 +272,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 4
+        "value": 5
       }
     }
   ],
@@ -318,6 +359,10 @@
           {
             "name": "isPaused",
             "type": "bool"
+          },
+          {
+            "name": "version",
+            "type": "u8"
           }
         ]
       }
