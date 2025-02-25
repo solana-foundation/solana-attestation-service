@@ -61,4 +61,20 @@ pub enum AttestationServiceInstruction {
     )]
     #[account(3, name = "system_program")]
     ChangeAuthorizedSigners { signers: Vec<Pubkey> },
+
+    /// Change description on a Schema
+    #[account(0, signer, name = "authority")]
+    #[account(
+        1,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "schema",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(3, name = "system_program")]
+    ChangeSchemaDescription { description: String },
 }
