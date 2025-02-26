@@ -77,4 +77,20 @@ pub enum AttestationServiceInstruction {
     )]
     #[account(3, name = "system_program")]
     ChangeSchemaDescription { description: String },
+
+    /// Change Schema version
+    #[account(0, writable, signer, name = "payer")]
+    #[account(1, signer, name = "authority")]
+    #[account(
+        2,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(3, name = "existing_schema")]
+    #[account(4, writable, name = "new_schema")]
+    #[account(5, name = "system_program")]
+    ChangeSchemaVersion {
+        layout: Vec<u8>,
+        field_names: Vec<String>,
+    },
 }
