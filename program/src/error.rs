@@ -15,6 +15,8 @@ pub enum AttestationServiceError {
     InvalidSchemaDataType,
     // The signer is not one of the Credential's authorized signers
     SignerNotAuthorized,
+    // Attestation data des not conform to the Schema
+    InvalidAttestationData,
 }
 
 impl From<AttestationServiceError> for ProgramError {

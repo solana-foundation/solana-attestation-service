@@ -16,7 +16,7 @@ use crate::{
     state::{discriminator::AccountSerialize, Attestation, Credential, Schema},
 };
 
-use super::{create_pda_account, to_serialized_vec, verify_signer, verify_system_program};
+use super::{create_pda_account, to_serialized_vec, verify_owner_mutability, verify_signer, verify_system_program};
 
 #[inline(always)]
 pub fn process_create_attestation(
@@ -35,6 +35,9 @@ pub fn process_create_attestation(
 
     // Validate system program
     verify_system_program(system_program)?;
+    // Validate Credential and Schema are owned by our program
+    verify_owner_mutability(credential_info, program_id, false)?;
+    verify_owner_mutability(schema_info, program_id, false)?;
 
     let credential_data = credential_info.try_borrow_data()?;
     let credential = Credential::try_from_bytes(&credential_data)?;
@@ -79,8 +82,8 @@ pub fn process_create_attestation(
         return Err(AttestationServiceError::InvalidAttestation.into());
     }
 
-    // TODO validate data with schema
-    // schema.validate(field_names_count)
+    // TODO validate data with schema layout
+    // attestation.validate_data(schema.layout)?;
 
     // Create Attestation account
 

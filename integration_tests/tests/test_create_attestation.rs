@@ -5,6 +5,7 @@ use solana_attestation_service_client::{
     instructions::{CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
 use solana_attestation_service_macros::SchemaStructSerialize;
+use solana_program_test::ProgramTestContext;
 use solana_sdk::{
     pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
 };
@@ -17,8 +18,14 @@ struct TestData {
     location: u8,
 }
 
-#[tokio::test]
-async fn create_attestation_success() {
+struct TestFixtures {
+    ctx: ProgramTestContext,
+    credential: Pubkey,
+    schema: Pubkey,
+    authority: Keypair,
+}
+
+async fn setup() -> TestFixtures {
     let ctx = program_test_context().await;
 
     let authority = Keypair::new();
@@ -78,6 +85,22 @@ async fn create_attestation_success() {
         .await
         .unwrap();
 
+    TestFixtures {
+        ctx,
+        credential: credential_pda,
+        schema: schema_pda,
+        authority: authority,
+    }
+}
+
+#[tokio::test]
+async fn create_attestation_success() {
+    let TestFixtures {
+        ctx,
+        credential,
+        schema,
+        authority,
+    } = setup().await;
     // Create Attestation
     let attestation_data = TestData {
         name: "attest".to_string(),
@@ -92,9 +115,9 @@ async fn create_attestation_success() {
     let attestation_pda = Pubkey::find_program_address(
         &[
             b"attestation",
-            &credential_pda.to_bytes(),
+            &credential.to_bytes(),
             &authority.pubkey().to_bytes(),
-            &schema_pda.to_bytes(),
+            &schema.to_bytes(),
             &nonce.to_bytes(),
         ],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
@@ -103,8 +126,8 @@ async fn create_attestation_success() {
     let create_attestation_ix = CreateAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
         .authority(authority.pubkey())
-        .credential(credential_pda)
-        .schema(schema_pda)
+        .credential(credential)
+        .schema(schema)
         .attestation(attestation_pda)
         .system_program(system_program::ID)
         .data(serialized_attestation_data.clone())
@@ -132,13 +155,68 @@ async fn create_attestation_success() {
         .unwrap();
     let attestation = Attestation::try_from_slice(&attestation_account.data).unwrap();
     assert_eq!(attestation.data, serialized_attestation_data);
-    assert_eq!(attestation.credential, credential_pda);
+    assert_eq!(attestation.credential, credential);
     assert_eq!(attestation.expiry, expiry);
     assert_eq!(attestation.is_revoked, false);
-    assert_eq!(attestation.schema, schema_pda);
+    assert_eq!(attestation.schema, schema);
     assert_eq!(attestation.signer, authority.pubkey());
     assert_eq!(attestation.nonce, nonce);
     // TODO assert signature?
+}
+
+#[tokio::test]
+async fn create_attestation_fail_bad_data() {
+    let TestFixtures {
+        ctx,
+        credential,
+        schema,
+        authority,
+    } = setup().await;
+    // Create Attestation
+    let attestation_data = TestData {
+        name: "attest".to_string(),
+        location: 11,
+    };
+    let expiry: i64 = 1000;
+    let mut serialized_attestation_data = Vec::new();
+    serialized_attestation_data.extend([1, 2, 3, 4, 5, 6, 7]);
+    attestation_data
+        .serialize(&mut serialized_attestation_data)
+        .unwrap();
+    let nonce = Pubkey::new_unique();
+    let attestation_pda = Pubkey::find_program_address(
+        &[
+            b"attestation",
+            &credential.to_bytes(),
+            &authority.pubkey().to_bytes(),
+            &schema.to_bytes(),
+            &nonce.to_bytes(),
+        ],
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+    )
+    .0;
+    let create_attestation_ix = CreateAttestationBuilder::new()
+        .payer(ctx.payer.pubkey())
+        .authority(authority.pubkey())
+        .credential(credential)
+        .schema(schema)
+        .attestation(attestation_pda)
+        .system_program(system_program::ID)
+        .data(serialized_attestation_data.clone())
+        .expiry(expiry)
+        .nonce(nonce)
+        .instruction();
+
+    let transaction = Transaction::new_signed_with_payer(
+        &[create_attestation_ix],
+        Some(&ctx.payer.pubkey()),
+        &[&ctx.payer, &authority],
+        ctx.last_blockhash,
+    );
+    ctx.banks_client
+        .process_transaction(transaction)
+        .await
+        .unwrap();
 }
 
 // TODO add failure case for validations?
