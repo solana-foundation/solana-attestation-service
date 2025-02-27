@@ -113,17 +113,14 @@ impl Schema {
     }
 
     pub fn validate(&self, field_names_count: u32) -> Result<(), ProgramError> {
-        let size_offset = 4;
-        let layout_len = self.layout.len();
-
-        for i in size_offset..self.layout.len() {
-            if self.layout[i] > SchemaDataTypes::max() {
+        for data_type in &self.layout {
+            if data_type > &SchemaDataTypes::max() {
                 return Err(AttestationServiceError::InvalidSchemaDataType.into());
             }
         }
 
         // Expect number of field names to match number of fields in layout.
-        if field_names_count != u32::try_from(layout_len).unwrap() {
+        if field_names_count != u32::try_from(self.layout.len()).unwrap() {
             log!("Field names does not match layout length");
             return Err(AttestationServiceError::InvalidSchema.into());
         }

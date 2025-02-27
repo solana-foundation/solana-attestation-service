@@ -57,6 +57,7 @@ fn get_size_of_vec(offset: usize, element_size: usize, data: &Vec<u8>) -> usize 
     4 + len * element_size
 }
 
+// TODO updated `validate_data` to use enum values for easier readability
 impl Attestation {
     /// Validate the data in the Attestation conforms to the Schema's
     /// layout.
