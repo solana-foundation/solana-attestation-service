@@ -22,7 +22,8 @@ pub fn process_instruction(
         2 => process_change_schema_status(program_id, accounts, instruction_data),
         3 => process_change_authorized_signers(program_id, accounts, instruction_data),
         4 => process_change_schema_description(program_id, accounts, instruction_data),
-        5 => process_create_attestation(program_id, accounts, instruction_data),
+        5 => process_change_schema_version(program_id, accounts, instruction_data),
+        6 => process_create_attestation(program_id, accounts, instruction_data),
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }
