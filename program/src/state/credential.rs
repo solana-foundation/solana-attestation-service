@@ -6,7 +6,7 @@ use pinocchio_log::log;
 use shank::ShankAccount;
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
-use crate::{acc_info_as_str, constants::CREDENTIAL_SEED};
+use crate::{acc_info_as_str, constants::CREDENTIAL_SEED, error::AttestationServiceError};
 
 use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
@@ -35,6 +35,7 @@ impl AccountSerialize for Credential {
         data.extend_from_slice(self.authority.as_ref());
 
         // Name encoding
+        data.extend(&(self.name.len() as u32).to_le_bytes());
         data.extend_from_slice(self.name.as_ref());
 
         // Authorized signers encoding
@@ -54,16 +55,28 @@ impl Credential {
         program_id: &Pubkey,
     ) -> Result<(), ProgramError> {
         let (credential_pda, _credential_bump) = SolanaPubkey::find_program_address(
-            &[
-                CREDENTIAL_SEED,
-                self.authority.as_ref(),
-                self.name.get(4..).unwrap(), // Convert Vec<u8> to UTF8 Array
-            ],
+            &[CREDENTIAL_SEED, self.authority.as_ref(), self.name.as_ref()],
             &SolanaPubkey::from(*program_id),
         );
         if acc_info.key().ne(&credential_pda.to_bytes()) {
             log!("PDA Mismatch for {}", acc_info_as_str!(acc_info));
             return Err(ProgramError::InvalidAccountData);
+        }
+        Ok(())
+    }
+
+    pub fn validate_authority(&self, authority: &Pubkey) -> Result<(), ProgramError> {
+        if self.authority.ne(authority) {
+            log!("Authority Mismatch");
+            return Err(ProgramError::InvalidAccountData);
+        }
+        Ok(())
+    }
+
+    /// Validate the signer is one of the authorized signers.
+    pub fn validate_authorized_signer(&self, signer: &Pubkey) -> Result<(), ProgramError> {
+        if !self.authorized_signers.contains(signer) {
+            return Err(AttestationServiceError::SignerNotAuthorized.into());
         }
         Ok(())
     }
@@ -82,13 +95,14 @@ impl Credential {
         offset += 32;
 
         let name_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-        let name = data[offset..(offset + 4 + name_len)].to_vec();
-        offset += 4 + name_len;
+        offset += 4;
+        let name = data[offset..offset + name_len].to_vec();
+        offset += name_len;
 
         let signers_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-        let mut authorized_signers: Vec<Pubkey> = Vec::new();
-
         offset += 4;
+
+        let mut authorized_signers: Vec<Pubkey> = Vec::new();
         for _ in 0..signers_len {
             let signer: Pubkey = data[offset..offset + 32].try_into().unwrap();
             authorized_signers.push(signer);

@@ -7,8 +7,16 @@ pub enum AttestationServiceError {
     InvalidCredential,
     // Incorrect Schema account
     InvalidSchema,
+    // Incorrect Attestation account
+    InvalidAttestation,
+    // Authority was not found in Credential authorized_signatures
+    InvalidAuthority,
     // Incorrect Schema data type
     InvalidSchemaDataType,
+    // The signer is not one of the Credential's authorized signers
+    SignerNotAuthorized,
+    // Attestation data des not conform to the Schema
+    InvalidAttestationData,
 }
 
 impl From<AttestationServiceError> for ProgramError {

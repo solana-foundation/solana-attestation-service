@@ -14,7 +14,7 @@ use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
     processor::{
-        create_pda_account, to_serialized_vec, verify_owner_mutability, verify_signer,
+        create_pda_account, verify_owner_mutability, verify_signer,
         verify_system_account, verify_system_program,
     },
     state::{discriminator::AccountSerialize, Credential, Schema},
@@ -65,16 +65,11 @@ pub fn process_change_schema_version(
     // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
     // pubkey and associated bump (needed to be added as arg) is valid.
     let (schema_pda, schema_bump) = SolanaPubkey::find_program_address(
-        &[
-            SCHEMA_SEED,
-            credential_info.key(),
-            name.get(4..).unwrap(), // Convert Vec<u8> to UTF8 Array
-            version,
-        ],
+        &[SCHEMA_SEED, credential_info.key(), name.as_ref(), version],
         &SolanaPubkey::from(*program_id),
     );
 
-    if new_schema_info.key() != &schema_pda.to_bytes() {
+    if new_schema_info.key().ne(&schema_pda.to_bytes()) {
         // PDA was invalid
         return Err(AttestationServiceError::InvalidCredential.into());
     }
@@ -82,16 +77,16 @@ pub fn process_change_schema_version(
     // Account layout
     // discriminator - 1
     // credential - 32
-    // name - length (len header included)
-    // description - length (len header included)
+    // name - 4 + length
+    // description - 4 + length
     // layout - 4 + length
     // field_names - 4 + length
     // is_paused - 1
     // version - 1
     let space = 1
         + 32
-        + (name.len())
-        + (description.len())
+        + (4 + name.len())
+        + (4 + description.len())
         + (4 + layout.len())
         + (4 + field_names_bytes.len())
         + 1
@@ -101,7 +96,7 @@ pub fn process_change_schema_version(
     let signer_seeds = [
         Seed::from(SCHEMA_SEED),
         Seed::from(credential_info.key()),
-        Seed::from(name.as_slice().get(4..).unwrap()),
+        Seed::from(name.as_slice()),
         Seed::from(version),
         Seed::from(&bump_seed),
     ];
@@ -118,8 +113,8 @@ pub fn process_change_schema_version(
         credential: *credential_info.key(),
         name: name.to_vec(),
         description,
-        layout: to_serialized_vec(layout),
-        field_names: to_serialized_vec(field_names_bytes),
+        layout: layout.to_vec(),
+        field_names: field_names_bytes.to_vec(),
         is_paused: false,
         version: version[0],
     };

@@ -13,10 +13,7 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
-    processor::{
-        create_pda_account, to_serialized_vec, verify_signer, verify_system_account,
-        verify_system_program,
-    },
+    processor::{create_pda_account, verify_signer, verify_system_account, verify_system_program},
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
@@ -59,9 +56,9 @@ pub fn process_create_schema(
         &SolanaPubkey::from(*program_id),
     );
 
-    if schema_info.key() != &schema_pda.to_bytes() {
+    if schema_info.key().ne(&schema_pda.to_bytes()) {
         // PDA was invalid
-        return Err(AttestationServiceError::InvalidCredential.into());
+        return Err(AttestationServiceError::InvalidSchema.into());
     }
 
     // Account layout
@@ -101,10 +98,10 @@ pub fn process_create_schema(
 
     let schema = Schema {
         credential: *credential_info.key(),
-        name: to_serialized_vec(name),
-        description: to_serialized_vec(description),
-        layout: to_serialized_vec(layout),
-        field_names: to_serialized_vec(field_names_bytes),
+        name: name.to_vec(),
+        description: description.to_vec(),
+        layout: layout.to_vec(),
+        field_names: field_names_bytes.to_vec(),
         is_paused: false,
         version: 1,
     };
