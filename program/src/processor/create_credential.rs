@@ -16,7 +16,7 @@ use crate::{
     constants::CREDENTIAL_SEED,
     error::AttestationServiceError,
     processor::{
-        create_pda_account, to_serialized_vec, verify_signer, verify_system_account,
+        create_pda_account, verify_signer, verify_system_account,
         verify_system_program,
     },
     state::{discriminator::AccountSerialize, Credential},
@@ -51,7 +51,7 @@ pub fn process_create_credential(
         &SolanaPubkey::from(*program_id),
     );
 
-    if credential_info.key() != &credential_pda.to_bytes() {
+    if credential_info.key().ne(&credential_pda.to_bytes()) {
         // PDA was invalid
         return Err(AttestationServiceError::InvalidCredential.into());
     }
@@ -82,7 +82,7 @@ pub fn process_create_credential(
 
     let credential = Credential {
         authority: *authority_info.key(),
-        name: to_serialized_vec(name),
+        name: name.to_vec(),
         authorized_signers: signers,
     };
     let mut credential_data = credential_info.try_borrow_mut_data()?;
