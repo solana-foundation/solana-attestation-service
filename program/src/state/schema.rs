@@ -75,9 +75,13 @@ impl AccountSerialize for Schema {
     fn to_bytes_inner(&self) -> Vec<u8> {
         let mut data = Vec::new();
         data.extend_from_slice(self.credential.as_ref());
+        data.extend(&(self.name.len() as u32).to_le_bytes());
         data.extend_from_slice(self.name.as_ref());
+        data.extend(&(self.description.len() as u32).to_le_bytes());
         data.extend_from_slice(self.description.as_ref());
+        data.extend(&(self.layout.len() as u32).to_le_bytes());
         data.extend_from_slice(self.layout.as_ref());
+        data.extend(&(self.field_names.len() as u32).to_le_bytes());
         data.extend_from_slice(self.field_names.as_ref());
         data.extend_from_slice(&[self.is_paused as u8]);
         data.extend_from_slice(&[self.version as u8]);
@@ -92,16 +96,16 @@ impl Schema {
         acc_info: &AccountInfo,
         program_id: &Pubkey,
     ) -> Result<(), ProgramError> {
-        let (credential_pda, _credential_bump) = SolanaPubkey::find_program_address(
+        let (expected_schema_pda, _bump) = SolanaPubkey::find_program_address(
             &[
                 SCHEMA_SEED,
                 self.credential.as_ref(),
-                self.name.get(4..).unwrap(), // Convert Vec<u8> to UTF8 Array
+                self.name.as_ref(), // Convert Vec<u8> to UTF8 Array
                 &[self.version],
             ],
             &SolanaPubkey::from(*program_id),
         );
-        if acc_info.key().ne(&credential_pda.to_bytes()) {
+        if acc_info.key().ne(&expected_schema_pda.to_bytes()) {
             log!("PDA Mismatch for {}", acc_info_as_str!(acc_info));
             return Err(ProgramError::InvalidAccountData);
         }
@@ -110,7 +114,7 @@ impl Schema {
 
     pub fn validate(&self, field_names_count: u32) -> Result<(), ProgramError> {
         let size_offset = 4;
-        let layout_len = self.layout.len().checked_sub(size_offset).unwrap();
+        let layout_len = self.layout.len();
 
         for i in size_offset..self.layout.len() {
             if self.layout[i] > SchemaDataTypes::max() {
@@ -140,21 +144,25 @@ impl Schema {
         offset += 32;
 
         let name_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-        let name = data[offset..(offset + 4 + name_len)].to_vec();
-        offset += 4 + name_len;
+        offset += 4;
+        let name = data[offset..offset + name_len].to_vec();
+        offset += name_len;
 
         let desc_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-        let description = data[offset..(offset + 4 + desc_len)].to_vec();
-        offset += 4 + desc_len;
+        offset += 4;
+        let description = data[offset..offset + desc_len].to_vec();
+        offset += desc_len;
 
         let layout_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-        let layout = data[offset..(offset + 4 + layout_len)].to_vec();
-        offset += 4 + layout_len;
+        offset += 4;
+        let layout = data[offset..offset + layout_len].to_vec();
+        offset += layout_len;
 
         let field_names_byte_len =
             u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-        let field_names: Vec<u8> = data[offset..(offset + 4 + field_names_byte_len)].to_vec();
-        offset += 4 + field_names_byte_len;
+        offset += 4;
+        let field_names: Vec<u8> = data[offset..offset + field_names_byte_len].to_vec();
+        offset += field_names_byte_len;
 
         let is_paused = data[offset] == 1;
         offset += 1;

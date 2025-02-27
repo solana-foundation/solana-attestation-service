@@ -16,7 +16,7 @@ use crate::{
     state::{discriminator::AccountSerialize, Attestation, Credential, Schema},
 };
 
-use super::{create_pda_account, to_serialized_vec, verify_owner_mutability, verify_signer, verify_system_program};
+use super::{create_pda_account, verify_owner_mutability, verify_signer, verify_system_program};
 
 #[inline(always)]
 pub fn process_create_attestation(

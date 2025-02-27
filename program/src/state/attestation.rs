@@ -61,12 +61,11 @@ impl Attestation {
     /// Validate the data in the Attestation conforms to the Schema's
     /// layout.
     pub fn validate_data(&self, layout: Vec<u8>) -> Result<(), ProgramError> {
-        let _layout = layout.get(4..).unwrap();
         // Iterate over the data and ensure there are no overflows.
         // If we do not overflow and match with the end of the data,
         // then we can assume the data is valid for the schema.
         let mut data_offset = 0;
-        for data_type in _layout {
+        for data_type in layout {
             match data_type {
                 // u8 -> u128
                 0 => data_offset += 1,
@@ -150,12 +149,12 @@ mod tests {
         };
 
         // u8
-        let layout = alloc::vec![1, 0, 0, 0, 0];
+        let layout = alloc::vec![0];
         attestation.data = alloc::vec![10];
         assert!(attestation.validate_data(layout).is_ok());
 
         // u8, Vec<String>, u128
-        let layout = alloc::vec![3, 0, 0, 0, 0, 25, 4];
+        let layout = alloc::vec![0, 25, 4];
         let mut data: Vec<u8> = Vec::new();
         data.extend([10]);
         let strings = alloc::vec!["test1", "test2"];
@@ -172,13 +171,13 @@ mod tests {
         assert!(attestation.validate_data(layout).is_ok());
 
         // u8
-        let layout = alloc::vec![1, 0, 0, 0, 0];
+        let layout = alloc::vec![0];
         attestation.data = Vec::new();
         // Should fail when attestion has no data
         assert!(attestation.validate_data(layout).is_err());
 
         // u16
-        let layout = alloc::vec![1, 0, 0, 0, 1];
+        let layout = alloc::vec![1];
         attestation.data = Vec::new();
         // Should fail when attestion has no data
         assert!(attestation.validate_data(layout).is_err());
