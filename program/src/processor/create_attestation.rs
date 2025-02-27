@@ -82,9 +82,6 @@ pub fn process_create_attestation(
         return Err(AttestationServiceError::InvalidAttestation.into());
     }
 
-    // TODO validate data with schema layout
-    // attestation.validate_data(schema.layout)?;
-
     // Create Attestation account
 
     // Account layout
@@ -122,11 +119,15 @@ pub fn process_create_attestation(
         nonce: *nonce,
         credential: *credential_info.key(),
         schema: *schema_info.key(),
-        data: to_serialized_vec(data),
+        data: data.to_vec(),
         signer: *authorized_signer.key(),
         expiry,
         is_revoked: false,
     };
+
+    // Validate the Attestation data matches the layout of the Schema
+    attestation.validate_data(schema.layout)?;
+
     let mut attestation_data = attestation_info.try_borrow_mut_data()?;
     attestation_data.copy_from_slice(&attestation.to_bytes());
 

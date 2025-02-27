@@ -41,6 +41,7 @@ impl AccountSerialize for Attestation {
         data.extend_from_slice(self.nonce.as_ref());
         data.extend_from_slice(self.credential.as_ref());
         data.extend_from_slice(self.schema.as_ref());
+        data.extend_from_slice(&(self.data.len() as u32).to_le_bytes());
         data.extend_from_slice(self.data.as_ref());
         data.extend_from_slice(self.signer.as_ref());
         data.extend_from_slice(&self.expiry.to_le_bytes());
@@ -60,11 +61,12 @@ impl Attestation {
     /// Validate the data in the Attestation conforms to the Schema's
     /// layout.
     pub fn validate_data(&self, layout: Vec<u8>) -> Result<(), ProgramError> {
+        let _layout = layout.get(4..).unwrap();
         // Iterate over the data and ensure there are no overflows.
         // If we do not overflow and match with the end of the data,
         // then we can assume the data is valid for the schema.
         let mut data_offset = 0;
-        for data_type in layout {
+        for data_type in _layout {
             match data_type {
                 // u8 -> u128
                 0 => data_offset += 1,
@@ -148,31 +150,35 @@ mod tests {
         };
 
         // u8
-        let layout = alloc::vec![0];
+        let layout = alloc::vec![1, 0, 0, 0, 0];
         attestation.data = alloc::vec![10];
         assert!(attestation.validate_data(layout).is_ok());
 
         // u8, Vec<String>, u128
-        let layout = alloc::vec![0, 25, 4];
+        let layout = alloc::vec![3, 0, 0, 0, 0, 25, 4];
         let mut data: Vec<u8> = Vec::new();
         data.extend([10]);
-        let strings = alloc::vec![to_serialized_vec(b"test1"), to_serialized_vec(b"test2")];
-        let string_bytes = strings.iter().flatten().collect::<Vec<_>>();
-        // [5, 0, 0, 0, 116, 101, 115, 116, 49, 5, 0, 0, 0, 116, 101, 115, 116, 50]
-        // data.extend(to_serialized_vec(string_bytes));
+        let strings = alloc::vec!["test1", "test2"];
+        data.extend((strings.len() as u32).to_le_bytes());
+        data.extend(
+            strings
+                .iter()
+                .map(|s| to_serialized_vec(s.as_bytes()))
+                .flatten()
+                .collect::<Vec<_>>(),
+        );
         data.extend(199u128.to_le_bytes());
-        // core::panic!("string bytes {:?} \n\n data {:?} \n\n", string_bytes, data);
         attestation.data = data;
         assert!(attestation.validate_data(layout).is_ok());
 
         // u8
-        let layout = alloc::vec![0];
+        let layout = alloc::vec![1, 0, 0, 0, 0];
         attestation.data = Vec::new();
         // Should fail when attestion has no data
         assert!(attestation.validate_data(layout).is_err());
 
         // u16
-        let layout = alloc::vec![1];
+        let layout = alloc::vec![1, 0, 0, 0, 1];
         attestation.data = Vec::new();
         // Should fail when attestion has no data
         assert!(attestation.validate_data(layout).is_err());

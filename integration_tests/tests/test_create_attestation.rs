@@ -7,7 +7,12 @@ use solana_attestation_service_client::{
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
+    instruction::InstructionError,
+    pubkey::Pubkey,
+    signature::Keypair,
+    signer::Signer,
+    system_program,
+    transaction::{Transaction, TransactionError},
 };
 
 mod helpers;
@@ -213,10 +218,16 @@ async fn create_attestation_fail_bad_data() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
+    let tx_err = ctx
+        .banks_client
         .process_transaction(transaction)
         .await
+        .err()
+        .expect("should error")
         .unwrap();
+    assert_eq!(
+        tx_err,
+        TransactionError::InstructionError(0, InstructionError::Custom(6))
+    )
 }
 
-// TODO add failure case for validations?
