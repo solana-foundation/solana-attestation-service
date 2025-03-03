@@ -46,6 +46,46 @@ impl SchemaDataTypes {
     }
 }
 
+impl From<u8> for SchemaDataTypes {
+    fn from(byte: u8) -> SchemaDataTypes {
+        match byte {
+            0 => SchemaDataTypes::U8,
+            1 => SchemaDataTypes::U16,
+            2 => SchemaDataTypes::U32,
+            3 => SchemaDataTypes::U64,
+            4 => SchemaDataTypes::U128,
+            5 => SchemaDataTypes::I8,
+            6 => SchemaDataTypes::I16,
+            7 => SchemaDataTypes::I32,
+            8 => SchemaDataTypes::I64,
+            9 => SchemaDataTypes::I128,
+            10 => SchemaDataTypes::Bool,
+            11 => SchemaDataTypes::Char,
+            12 => SchemaDataTypes::String,
+            13 => SchemaDataTypes::VecU8,
+            14 => SchemaDataTypes::VecU16,
+            15 => SchemaDataTypes::VecU32,
+            16 => SchemaDataTypes::VecU64,
+            17 => SchemaDataTypes::VecU128,
+            18 => SchemaDataTypes::VecI8,
+            19 => SchemaDataTypes::VecI16,
+            20 => SchemaDataTypes::VecI32,
+            21 => SchemaDataTypes::VecI64,
+            22 => SchemaDataTypes::VecI128,
+            23 => SchemaDataTypes::VecBool,
+            24 => SchemaDataTypes::VecChar,
+            25 => SchemaDataTypes::VecString,
+            _ => panic!("Invalid u8 for SchemaDataTypes"),
+        }
+    }
+}
+
+impl From<SchemaDataTypes> for u8 {
+    fn from(data_type: SchemaDataTypes) -> u8 {
+        data_type as u8
+    }
+}
+
 // PDA ["schema", credential, name, version]
 #[derive(Clone, Debug, PartialEq, ShankAccount)]
 #[repr(C)]

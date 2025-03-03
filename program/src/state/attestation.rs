@@ -6,7 +6,10 @@ use shank::ShankAccount;
 
 use crate::error::AttestationServiceError;
 
-use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
+use super::{
+    discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator},
+    SchemaDataTypes,
+};
 
 // PDA ["attestation", credential, signer, schema, nonce]
 #[derive(Clone, Debug, PartialEq, ShankAccount)]
@@ -22,9 +25,6 @@ pub struct Attestation {
     pub data: Vec<u8>,
     /// The pubkey of the signer. Must be one of the `authorized_signer`s at time of attestation
     pub signer: Pubkey,
-    // TODO is the signature needed?
-    /// Signature from the authorized signer attesting to the data
-    // pub signature: [u8; 64],
     /// Designates when the credential is expired. 0 means never expired
     pub expiry: i64,
     /// Whether the attestation has been revoked or not
@@ -57,7 +57,6 @@ fn get_size_of_vec(offset: usize, element_size: usize, data: &Vec<u8>) -> usize 
     4 + len * element_size
 }
 
-// TODO updated `validate_data` to use enum values for easier readability
 impl Attestation {
     /// Validate the data in the Attestation conforms to the Schema's
     /// layout.
@@ -67,43 +66,70 @@ impl Attestation {
         // then we can assume the data is valid for the schema.
         let mut data_offset = 0;
         for data_type in layout {
-            match data_type {
+            let schema_data_type: SchemaDataTypes = data_type.into();
+            match schema_data_type {
                 // u8 -> u128
-                0 => data_offset += 1,
-                1 => data_offset += 2,
-                2 => data_offset += 4,
-                3 => data_offset += 8,
-                4 => data_offset += 16,
+                SchemaDataTypes::U8 => data_offset += 1,
+                SchemaDataTypes::U16 => data_offset += 2,
+                SchemaDataTypes::U32 => data_offset += 4,
+                SchemaDataTypes::U64 => data_offset += 8,
+                SchemaDataTypes::U128 => data_offset += 16,
                 // i8 -> i128
-                5 => data_offset += 1,
-                6 => data_offset += 2,
-                7 => data_offset += 4,
-                8 => data_offset += 8,
-                9 => data_offset += 16,
+                SchemaDataTypes::I8 => data_offset += 1,
+                SchemaDataTypes::I16 => data_offset += 2,
+                SchemaDataTypes::I32 => data_offset += 4,
+                SchemaDataTypes::I64 => data_offset += 8,
+                SchemaDataTypes::I128 => data_offset += 16,
                 // bool
-                10 => data_offset += 1,
+                SchemaDataTypes::Bool => data_offset += 1,
                 // char
-                11 => data_offset += 4,
+                SchemaDataTypes::Char => data_offset += 4,
                 // String
-                12 => data_offset += get_size_of_vec(data_offset, 1, &self.data),
+                SchemaDataTypes::String => {
+                    data_offset += get_size_of_vec(data_offset, 1, &self.data)
+                }
                 // Vec<u8> -> Vec<u128>
-                13 => data_offset += get_size_of_vec(data_offset, 1, &self.data),
-                14 => data_offset += get_size_of_vec(data_offset, 2, &self.data),
-                15 => data_offset += get_size_of_vec(data_offset, 4, &self.data),
-                16 => data_offset += get_size_of_vec(data_offset, 8, &self.data),
-                17 => data_offset += get_size_of_vec(data_offset, 16, &self.data),
+                SchemaDataTypes::VecU8 => {
+                    data_offset += get_size_of_vec(data_offset, 1, &self.data)
+                }
+                SchemaDataTypes::VecU16 => {
+                    data_offset += get_size_of_vec(data_offset, 2, &self.data)
+                }
+                SchemaDataTypes::VecU32 => {
+                    data_offset += get_size_of_vec(data_offset, 4, &self.data)
+                }
+                SchemaDataTypes::VecU64 => {
+                    data_offset += get_size_of_vec(data_offset, 8, &self.data)
+                }
+                SchemaDataTypes::VecU128 => {
+                    data_offset += get_size_of_vec(data_offset, 16, &self.data)
+                }
                 // Vec<i8> -> Vec<i128>
-                18 => data_offset += get_size_of_vec(data_offset, 1, &self.data),
-                19 => data_offset += get_size_of_vec(data_offset, 2, &self.data),
-                20 => data_offset += get_size_of_vec(data_offset, 4, &self.data),
-                21 => data_offset += get_size_of_vec(data_offset, 8, &self.data),
-                22 => data_offset += get_size_of_vec(data_offset, 16, &self.data),
+                SchemaDataTypes::VecI8 => {
+                    data_offset += get_size_of_vec(data_offset, 1, &self.data)
+                }
+                SchemaDataTypes::VecI16 => {
+                    data_offset += get_size_of_vec(data_offset, 2, &self.data)
+                }
+                SchemaDataTypes::VecI32 => {
+                    data_offset += get_size_of_vec(data_offset, 4, &self.data)
+                }
+                SchemaDataTypes::VecI64 => {
+                    data_offset += get_size_of_vec(data_offset, 8, &self.data)
+                }
+                SchemaDataTypes::VecI128 => {
+                    data_offset += get_size_of_vec(data_offset, 16, &self.data)
+                }
                 // Vec<bool>
-                23 => data_offset += get_size_of_vec(data_offset, 1, &self.data),
+                SchemaDataTypes::VecBool => {
+                    data_offset += get_size_of_vec(data_offset, 1, &self.data)
+                }
                 // Vec<char>
-                24 => data_offset += get_size_of_vec(data_offset, 4, &self.data),
+                SchemaDataTypes::VecChar => {
+                    data_offset += get_size_of_vec(data_offset, 4, &self.data)
+                }
                 // Vec<String>
-                25 => {
+                SchemaDataTypes::VecString => {
                     let len = u32::from_le_bytes(
                         self.data[data_offset..data_offset + 4].try_into().unwrap(),
                     ) as usize;
