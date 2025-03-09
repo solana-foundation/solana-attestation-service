@@ -115,4 +115,16 @@ pub enum AttestationServiceInstruction {
         data: Vec<u8>,
         expiry: i64,
     },
+
+    /// Close an Attestation account.
+    #[account(0, writable, signer, name = "payer")]
+    #[account(
+        1,
+        signer,
+        name = "authority",
+        desc = "Signer that issued the Attestation"
+    )]
+    #[account(2, writable, name = "attestation")]
+    #[account(3, name = "system_program")]
+    CloseAttestation {},
 }
