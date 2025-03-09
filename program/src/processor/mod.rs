@@ -6,6 +6,7 @@ pub mod close_attestation;
 pub mod create_attestation;
 pub mod create_credential;
 pub mod create_schema;
+pub mod emit_event;
 pub mod shared;
 
 pub use change_authorized_signers::*;
@@ -16,4 +17,5 @@ pub use close_attestation::*;
 pub use create_attestation::*;
 pub use create_credential::*;
 pub use create_schema::*;
+pub use emit_event::*;
 pub use shared::*;

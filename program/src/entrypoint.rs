@@ -25,6 +25,7 @@ pub fn process_instruction(
         5 => process_change_schema_version(program_id, accounts, instruction_data),
         6 => process_create_attestation(program_id, accounts, instruction_data),
         7 => process_close_attestation(program_id, accounts),
+        8 => process_emit_event(program_id, accounts, instruction_data),
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }
