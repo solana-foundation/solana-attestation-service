@@ -346,7 +346,7 @@
           "isMut": false,
           "isSigner": true,
           "docs": [
-            "Signer that issued the Attestation"
+            "Authorized signer of the Schema's Credential"
           ]
         },
         {

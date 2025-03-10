@@ -12,7 +12,7 @@ use borsh::BorshSerialize;
 #[derive(Debug)]
 pub struct CloseAttestation {
     pub payer: solana_program::pubkey::Pubkey,
-    /// Signer that issued the Attestation
+    /// Authorized signer of the Schema's Credential
     pub authority: solana_program::pubkey::Pubkey,
 
     pub credential: solana_program::pubkey::Pubkey,
@@ -124,7 +124,7 @@ impl CloseAttestationBuilder {
         self.payer = Some(payer);
         self
     }
-    /// Signer that issued the Attestation
+    /// Authorized signer of the Schema's Credential
     #[inline(always)]
     pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
         self.authority = Some(authority);
@@ -203,7 +203,7 @@ impl CloseAttestationBuilder {
 /// `close_attestation` CPI accounts.
 pub struct CloseAttestationCpiAccounts<'a, 'b> {
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Signer that issued the Attestation
+    /// Authorized signer of the Schema's Credential
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub credential: &'b solana_program::account_info::AccountInfo<'a>,
@@ -223,7 +223,7 @@ pub struct CloseAttestationCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Signer that issued the Attestation
+    /// Authorized signer of the Schema's Credential
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub credential: &'b solana_program::account_info::AccountInfo<'a>,
@@ -386,7 +386,7 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
         self.instruction.payer = Some(payer);
         self
     }
-    /// Signer that issued the Attestation
+    /// Authorized signer of the Schema's Credential
     #[inline(always)]
     pub fn authority(
         &mut self,

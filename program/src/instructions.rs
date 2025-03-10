@@ -122,7 +122,7 @@ pub enum AttestationServiceInstruction {
         1,
         signer,
         name = "authority",
-        desc = "Signer that issued the Attestation"
+        desc = "Authorized signer of the Schema's Credential"
     )]
     #[account(2, name = "credential")]
     #[account(3, writable, name = "attestation")]
