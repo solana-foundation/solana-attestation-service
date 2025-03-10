@@ -15,6 +15,8 @@ pub struct CloseAttestation {
     /// Signer that issued the Attestation
     pub authority: solana_program::pubkey::Pubkey,
 
+    pub credential: solana_program::pubkey::Pubkey,
+
     pub attestation: solana_program::pubkey::Pubkey,
 
     pub event_authority: solana_program::pubkey::Pubkey,
@@ -33,13 +35,17 @@ impl CloseAttestation {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.authority,
             true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.credential,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.attestation,
@@ -92,14 +98,16 @@ impl Default for CloseAttestationInstructionData {
 ///
 ///   0. `[writable, signer]` payer
 ///   1. `[signer]` authority
-///   2. `[writable]` attestation
-///   3. `[]` event_authority
-///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   5. `[]` attestation_program
+///   2. `[]` credential
+///   3. `[writable]` attestation
+///   4. `[]` event_authority
+///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   6. `[]` attestation_program
 #[derive(Clone, Debug, Default)]
 pub struct CloseAttestationBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
     authority: Option<solana_program::pubkey::Pubkey>,
+    credential: Option<solana_program::pubkey::Pubkey>,
     attestation: Option<solana_program::pubkey::Pubkey>,
     event_authority: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -120,6 +128,11 @@ impl CloseAttestationBuilder {
     #[inline(always)]
     pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
         self.authority = Some(authority);
+        self
+    }
+    #[inline(always)]
+    pub fn credential(&mut self, credential: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.credential = Some(credential);
         self
     }
     #[inline(always)]
@@ -172,6 +185,7 @@ impl CloseAttestationBuilder {
         let accounts = CloseAttestation {
             payer: self.payer.expect("payer is not set"),
             authority: self.authority.expect("authority is not set"),
+            credential: self.credential.expect("credential is not set"),
             attestation: self.attestation.expect("attestation is not set"),
             event_authority: self.event_authority.expect("event_authority is not set"),
             system_program: self
@@ -192,6 +206,8 @@ pub struct CloseAttestationCpiAccounts<'a, 'b> {
     /// Signer that issued the Attestation
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub credential: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub attestation: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub event_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -209,6 +225,8 @@ pub struct CloseAttestationCpi<'a, 'b> {
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
     /// Signer that issued the Attestation
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub credential: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub attestation: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -228,6 +246,7 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
             __program: program,
             payer: accounts.payer,
             authority: accounts.authority,
+            credential: accounts.credential,
             attestation: accounts.attestation,
             event_authority: accounts.event_authority,
             system_program: accounts.system_program,
@@ -267,7 +286,7 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
             true,
@@ -275,6 +294,10 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.authority.key,
             true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.credential.key,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.attestation.key,
@@ -306,10 +329,11 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(8 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.payer.clone());
         account_infos.push(self.authority.clone());
+        account_infos.push(self.credential.clone());
         account_infos.push(self.attestation.clone());
         account_infos.push(self.event_authority.clone());
         account_infos.push(self.system_program.clone());
@@ -332,10 +356,11 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
 ///
 ///   0. `[writable, signer]` payer
 ///   1. `[signer]` authority
-///   2. `[writable]` attestation
-///   3. `[]` event_authority
-///   4. `[]` system_program
-///   5. `[]` attestation_program
+///   2. `[]` credential
+///   3. `[writable]` attestation
+///   4. `[]` event_authority
+///   5. `[]` system_program
+///   6. `[]` attestation_program
 #[derive(Clone, Debug)]
 pub struct CloseAttestationCpiBuilder<'a, 'b> {
     instruction: Box<CloseAttestationCpiBuilderInstruction<'a, 'b>>,
@@ -347,6 +372,7 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
             __program: program,
             payer: None,
             authority: None,
+            credential: None,
             attestation: None,
             event_authority: None,
             system_program: None,
@@ -367,6 +393,14 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
         authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.authority = Some(authority);
+        self
+    }
+    #[inline(always)]
+    pub fn credential(
+        &mut self,
+        credential: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.credential = Some(credential);
         self
     }
     #[inline(always)]
@@ -449,6 +483,8 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
 
             authority: self.instruction.authority.expect("authority is not set"),
 
+            credential: self.instruction.credential.expect("credential is not set"),
+
             attestation: self
                 .instruction
                 .attestation
@@ -481,6 +517,7 @@ struct CloseAttestationCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    credential: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     attestation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     event_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

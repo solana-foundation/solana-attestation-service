@@ -58,14 +58,6 @@ fn get_size_of_vec(offset: usize, element_size: usize, data: &Vec<u8>) -> usize 
 }
 
 impl Attestation {
-    pub fn validate_signer(&self, signer: &Pubkey) -> Result<(), ProgramError> {
-        if self.signer.ne(signer) {
-            msg!("Signer Mismatch");
-            return Err(ProgramError::InvalidAccountData);
-        }
-        Ok(())
-    }
-
     /// Validate the data in the Attestation conforms to the Schema's
     /// layout.
     pub fn validate_data(&self, layout: Vec<u8>) -> Result<(), ProgramError> {

@@ -350,6 +350,11 @@
           ]
         },
         {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "attestation",
           "isMut": true,
           "isSigner": false

@@ -170,6 +170,7 @@ async fn close_attestation_success() {
     let close_attestation_ix = CloseAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
         .authority(authority.pubkey())
+        .credential(credential)
         .attestation(attestation_pda)
         .event_authority(event_auth_pda)
         .system_program(system_program::ID)

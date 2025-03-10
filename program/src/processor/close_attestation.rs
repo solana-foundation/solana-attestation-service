@@ -12,7 +12,7 @@ use crate::{
     constants::EVENT_AUTHORITY_SEED,
     error::AttestationServiceError,
     events::CloseAttestationEvent,
-    state::{discriminator::AccountSerialize, Attestation},
+    state::{discriminator::AccountSerialize, Attestation, Credential},
 };
 
 use super::{
@@ -21,7 +21,7 @@ use super::{
 
 #[inline(always)]
 pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
-    let [payer_info, authorized_signer, attestation_info, event_authority_info, system_program, attestation_program] =
+    let [payer_info, authorized_signer, credential_info, attestation_info, event_authority_info, system_program, attestation_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -36,15 +36,28 @@ pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) 
     // Verify attestation program
     verify_current_program(attestation_program)?;
 
-    // Validate Attestation is owned by our program
+    // Validate Credential and Attestation is owned by our program
+    verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(attestation_info, program_id, true)?;
+
+    // Check that one of credential's authorized signers have signed.
+    let credential_data = credential_info.try_borrow_data()?;
+    let credential = Credential::try_from_bytes(&credential_data)?;
+    if !credential
+        .authorized_signers
+        .contains(authorized_signer.key())
+    {
+        return Err(AttestationServiceError::SignerNotAuthorized.into());
+    }
 
     let attestation_data = attestation_info.try_borrow_data()?;
     let attestation = Attestation::try_from_bytes(&attestation_data)?;
     drop(attestation_data); // Drop immutable borrow.
 
-    // Verify that attestation's signer matches signer.
-    attestation.validate_signer(authorized_signer.key())?;
+    // Check that credential matches attestation's.
+    if !attestation.credential.eq(credential_info.key()) {
+        return Err(AttestationServiceError::InvalidCredential.into());
+    }
 
     // Close account and transfer rent to payer.
     let payer_lamports = payer_info.lamports();
