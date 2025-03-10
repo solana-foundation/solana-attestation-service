@@ -1,8 +1,10 @@
-use borsh::BorshSerialize;
+use borsh::{BorshDeserialize, BorshSerialize};
 use helpers::program_test_context;
+use solana_attestation_service_client::accounts::CloseAttestationEvent;
 use solana_attestation_service_client::instructions::{
     CloseAttestationBuilder, CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder,
 };
+use solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID;
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
@@ -35,7 +37,7 @@ async fn setup() -> TestFixtures {
             &authority.pubkey().to_bytes(),
             credential_name.as_bytes(),
         ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &Pubkey::from(SOLANA_ATTESTATION_SERVICE_ID),
     );
 
     let create_credential_ix = CreateCredentialBuilder::new()
@@ -59,7 +61,7 @@ async fn setup() -> TestFixtures {
             schema_name.as_bytes(),
             &[1],
         ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &Pubkey::from(SOLANA_ATTESTATION_SERVICE_ID),
     );
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -120,7 +122,7 @@ async fn close_attestation_success() {
             &schema.to_bytes(),
             &nonce.to_bytes(),
         ],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+        &SOLANA_ATTESTATION_SERVICE_ID,
     )
     .0;
     let create_attestation_ix = CreateAttestationBuilder::new()
@@ -135,21 +137,19 @@ async fn close_attestation_success() {
         .nonce(nonce)
         .instruction();
 
-    let transaction = Transaction::new_signed_with_payer(
+    let create_tx = Transaction::new_signed_with_payer(
         &[create_attestation_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
     ctx.banks_client
-        .process_transaction(transaction)
+        .process_transaction(create_tx)
         .await
         .unwrap();
 
-    let (event_auth_pda, _bump) = Pubkey::find_program_address(
-        &[b"eventAuthority"],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (event_auth_pda, _bump) =
+        Pubkey::find_program_address(&[b"eventAuthority"], &SOLANA_ATTESTATION_SERVICE_ID);
 
     let initial_payer_lamports = ctx
         .banks_client
@@ -177,15 +177,54 @@ async fn close_attestation_success() {
             solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
         )
         .instruction();
-
-    let transaction = Transaction::new_signed_with_payer(
+    let close_tx = Transaction::new_signed_with_payer(
         &[close_attestation_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
+
+    // Simulate transaction to check if event is emitted correctly.
+    let simulate_res = ctx
+        .banks_client
+        .simulate_transaction(close_tx.clone())
+        .await
+        .unwrap();
+    let inner_ixs = simulate_res
+        .simulation_details
+        .unwrap()
+        .inner_instructions
+        .unwrap();
+
+    // Look through transaction instructions to find CloseAttestationEvent in emit_event ix data args.
+    let mut event_found = false;
+    for inner_instr_group in inner_ixs {
+        for inner_instr in inner_instr_group {
+            let program_id = inner_instr
+                .instruction
+                .program_id(&close_tx.message.account_keys);
+
+            if program_id.eq(&SOLANA_ATTESTATION_SERVICE_ID) {
+                let data = inner_instr.instruction.data;
+
+                // Check ix discriminator matches emit_event.
+                let match_event = data.starts_with(&[8]);
+                if match_event {
+                    // Deserialize data in ix args (after discriminator).
+                    let event = CloseAttestationEvent::try_from_slice(&data[1..]).unwrap();
+                    assert_eq!(event.discriminator, 0);
+                    assert_eq!(event.schema, schema);
+                    assert_eq!(event.attestation_data, serialized_attestation_data);
+                    event_found = true;
+                }
+            }
+        }
+    }
+    assert!(event_found);
+
+    // Send close attestation transaction.
     ctx.banks_client
-        .process_transaction(transaction)
+        .process_transaction(close_tx)
         .await
         .unwrap();
 
