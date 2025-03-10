@@ -2,7 +2,7 @@ use bs58;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 use pinocchio_log::log;
 
-use crate::{acc_info_as_str, key_as_str};
+use crate::{acc_info_as_str, key_as_str, ID};
 
 /// Verify account as a signer, returning an error if it is not or if it is not writable while
 /// expected to be.
@@ -68,6 +68,25 @@ pub fn verify_system_program(info: &AccountInfo) -> Result<(), ProgramError> {
     if info.key().ne(&pinocchio_system::ID) {
         log!(
             "Account {} is not the system program",
+            acc_info_as_str!(info)
+        );
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    Ok(())
+}
+
+/// Verify account as current program, returning an error if it is not.
+///
+/// # Arguments
+/// * `info` - The account to verify.
+///
+/// # Returns
+/// * `Result<(), ProgramError>` - The result of the operation
+pub fn verify_current_program(info: &AccountInfo) -> Result<(), ProgramError> {
+    if info.key().ne(&ID) {
+        log!(
+            "Account {} is not the current program",
             acc_info_as_str!(info)
         );
         return Err(ProgramError::IncorrectProgramId);

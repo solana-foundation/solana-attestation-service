@@ -1,6 +1,3 @@
-extern crate alloc;
-
-use alloc::vec::Vec;
 use pinocchio::{
     account_info::AccountInfo,
     instruction::{AccountMeta, Instruction, Seed, Signer},
@@ -11,9 +8,16 @@ use pinocchio::{
 };
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
-use crate::{constants::EVENT_AUTHORITY_SEED, error::AttestationServiceError, state::Attestation};
+use crate::{
+    constants::EVENT_AUTHORITY_SEED,
+    error::AttestationServiceError,
+    events::CloseAttestationEvent,
+    state::{discriminator::AccountSerialize, Attestation},
+};
 
-use super::{verify_owner_mutability, verify_signer, verify_system_program};
+use super::{
+    verify_current_program, verify_owner_mutability, verify_signer, verify_system_program,
+};
 
 #[inline(always)]
 pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
@@ -23,13 +27,14 @@ pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) 
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // TODO: Verify attestation_program
-
     // Validate: authority should have signed
     verify_signer(authorized_signer, false)?;
 
     // Validate system program
     verify_system_program(system_program)?;
+
+    // Verify attestation program
+    verify_current_program(attestation_program)?;
 
     // Validate Attestation is owned by our program
     verify_owner_mutability(attestation_info, program_id, true)?;
@@ -63,21 +68,21 @@ pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) 
         return Err(AttestationServiceError::InvalidEventAuthority.into());
     }
 
-    // TODO: Replace with event struct.
-    let mut event_data = Vec::new();
-    event_data.extend_from_slice(&[8_u8]); // Start with [8] as a Vec<u8>
-    event_data.extend_from_slice(&attestation.data); // Append the Vec<u8>
-
-    let emit_event_ix = Instruction {
-        program_id,
-        accounts: &[
-            AccountMeta::new(event_authority_info.key(), false, true),
-            AccountMeta::new(program_id, false, false),
-        ],
-        data: event_data.as_slice(),
+    // CPI to emit_event ix on same program to store event data in ix arg.
+    let event = CloseAttestationEvent {
+        schema: attestation.schema,
+        attestation_data: attestation.data,
     };
     invoke_signed(
-        &emit_event_ix,
+        &Instruction {
+            program_id,
+            accounts: &[
+                AccountMeta::new(event_authority_info.key(), false, true),
+                AccountMeta::new(program_id, false, false),
+            ],
+            // Prepend IX Discriminator for emit_event.
+            data: &[&[8_u8], event.to_bytes().as_slice()].concat(),
+        },
         &[event_authority_info, attestation_program],
         &[Signer::from(&[
             Seed::from(b"eventAuthority"),
