@@ -355,7 +355,17 @@
           "isSigner": false
         },
         {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "attestationProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -373,6 +383,11 @@
           "name": "eventAuthority",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "attestationProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [],

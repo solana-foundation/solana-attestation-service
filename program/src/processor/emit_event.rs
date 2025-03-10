@@ -13,7 +13,7 @@ pub fn process_emit_event(
     accounts: &[AccountInfo],
     _instruction_data: &[u8],
 ) -> ProgramResult {
-    let [event_authority] = accounts else {
+    let [event_authority, _attestation_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 

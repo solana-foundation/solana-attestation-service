@@ -125,10 +125,13 @@ pub enum AttestationServiceInstruction {
         desc = "Signer that issued the Attestation"
     )]
     #[account(2, writable, name = "attestation")]
-    #[account(3, name = "system_program")]
+    #[account(3, name = "event_authority")]
+    #[account(4, name = "system_program")]
+    #[account(5, name = "attestation_program")]
     CloseAttestation {},
 
     /// Invoked via CPI from SAS Program to log event via instruction data.
-    #[account(0, signer, name = "eventAuthority")]
+    #[account(0, signer, name = "event_authority")]
+    #[account(1, name = "attestation_program")]
     EmitEvent {},
 }

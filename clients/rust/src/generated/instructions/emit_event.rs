@@ -10,21 +10,13 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 #[derive(Debug)]
-pub struct CloseAttestation {
-    pub payer: solana_program::pubkey::Pubkey,
-    /// Signer that issued the Attestation
-    pub authority: solana_program::pubkey::Pubkey,
-
-    pub attestation: solana_program::pubkey::Pubkey,
-
+pub struct EmitEvent {
     pub event_authority: solana_program::pubkey::Pubkey,
-
-    pub system_program: solana_program::pubkey::Pubkey,
 
     pub attestation_program: solana_program::pubkey::Pubkey,
 }
 
-impl CloseAttestation {
+impl EmitEvent {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(&[])
     }
@@ -33,32 +25,17 @@ impl CloseAttestation {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.authority,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.attestation,
-            false,
-        ));
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.event_authority,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.system_program,
-            false,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.attestation_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let data = borsh::to_vec(&CloseAttestationInstructionData::new()).unwrap();
+        let data = borsh::to_vec(&EmitEventInstructionData::new()).unwrap();
 
         solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
@@ -70,62 +47,38 @@ impl CloseAttestation {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CloseAttestationInstructionData {
+pub struct EmitEventInstructionData {
     discriminator: u8,
 }
 
-impl CloseAttestationInstructionData {
+impl EmitEventInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 7 }
+        Self { discriminator: 8 }
     }
 }
 
-impl Default for CloseAttestationInstructionData {
+impl Default for EmitEventInstructionData {
     fn default() -> Self {
         Self::new()
     }
 }
 
-/// Instruction builder for `CloseAttestation`.
+/// Instruction builder for `EmitEvent`.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable, signer]` payer
-///   1. `[signer]` authority
-///   2. `[writable]` attestation
-///   3. `[]` event_authority
-///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   5. `[]` attestation_program
+///   0. `[signer]` event_authority
+///   1. `[]` attestation_program
 #[derive(Clone, Debug, Default)]
-pub struct CloseAttestationBuilder {
-    payer: Option<solana_program::pubkey::Pubkey>,
-    authority: Option<solana_program::pubkey::Pubkey>,
-    attestation: Option<solana_program::pubkey::Pubkey>,
+pub struct EmitEventBuilder {
     event_authority: Option<solana_program::pubkey::Pubkey>,
-    system_program: Option<solana_program::pubkey::Pubkey>,
     attestation_program: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl CloseAttestationBuilder {
+impl EmitEventBuilder {
     pub fn new() -> Self {
         Self::default()
-    }
-    #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
-        self
-    }
-    /// Signer that issued the Attestation
-    #[inline(always)]
-    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.authority = Some(authority);
-        self
-    }
-    #[inline(always)]
-    pub fn attestation(&mut self, attestation: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.attestation = Some(attestation);
-        self
     }
     #[inline(always)]
     pub fn event_authority(
@@ -133,12 +86,6 @@ impl CloseAttestationBuilder {
         event_authority: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.event_authority = Some(event_authority);
-        self
-    }
-    /// `[optional account, default to '11111111111111111111111111111111']`
-    #[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.system_program = Some(system_program);
         self
     }
     #[inline(always)]
@@ -169,14 +116,8 @@ impl CloseAttestationBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = CloseAttestation {
-            payer: self.payer.expect("payer is not set"),
-            authority: self.authority.expect("authority is not set"),
-            attestation: self.attestation.expect("attestation is not set"),
+        let accounts = EmitEvent {
             event_authority: self.event_authority.expect("event_authority is not set"),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
             attestation_program: self
                 .attestation_program
                 .expect("attestation_program is not set"),
@@ -186,51 +127,31 @@ impl CloseAttestationBuilder {
     }
 }
 
-/// `close_attestation` CPI accounts.
-pub struct CloseAttestationCpiAccounts<'a, 'b> {
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Signer that issued the Attestation
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub attestation: &'b solana_program::account_info::AccountInfo<'a>,
-
+/// `emit_event` CPI accounts.
+pub struct EmitEventCpiAccounts<'a, 'b> {
     pub event_authority: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub attestation_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `close_attestation` CPI instruction.
-pub struct CloseAttestationCpi<'a, 'b> {
+/// `emit_event` CPI instruction.
+pub struct EmitEventCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Signer that issued the Attestation
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub attestation: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub event_authority: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub attestation_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
+impl<'a, 'b> EmitEventCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: CloseAttestationCpiAccounts<'a, 'b>,
+        accounts: EmitEventCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
-            payer: accounts.payer,
-            authority: accounts.authority,
-            attestation: accounts.attestation,
             event_authority: accounts.event_authority,
-            system_program: accounts.system_program,
             attestation_program: accounts.attestation_program,
         }
     }
@@ -267,26 +188,10 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.authority.key,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.attestation.key,
-            false,
-        ));
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.event_authority.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
-            false,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.attestation_program.key,
@@ -299,20 +204,16 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let data = borsh::to_vec(&CloseAttestationInstructionData::new()).unwrap();
+        let data = borsh::to_vec(&EmitEventInstructionData::new()).unwrap();
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.payer.clone());
-        account_infos.push(self.authority.clone());
-        account_infos.push(self.attestation.clone());
         account_infos.push(self.event_authority.clone());
-        account_infos.push(self.system_program.clone());
         account_infos.push(self.attestation_program.clone());
         remaining_accounts
             .iter()
@@ -326,56 +227,26 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `CloseAttestation` via CPI.
+/// Instruction builder for `EmitEvent` via CPI.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable, signer]` payer
-///   1. `[signer]` authority
-///   2. `[writable]` attestation
-///   3. `[]` event_authority
-///   4. `[]` system_program
-///   5. `[]` attestation_program
+///   0. `[signer]` event_authority
+///   1. `[]` attestation_program
 #[derive(Clone, Debug)]
-pub struct CloseAttestationCpiBuilder<'a, 'b> {
-    instruction: Box<CloseAttestationCpiBuilderInstruction<'a, 'b>>,
+pub struct EmitEventCpiBuilder<'a, 'b> {
+    instruction: Box<EmitEventCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
+impl<'a, 'b> EmitEventCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(CloseAttestationCpiBuilderInstruction {
+        let instruction = Box::new(EmitEventCpiBuilderInstruction {
             __program: program,
-            payer: None,
-            authority: None,
-            attestation: None,
             event_authority: None,
-            system_program: None,
             attestation_program: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
-    }
-    #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
-        self
-    }
-    /// Signer that issued the Attestation
-    #[inline(always)]
-    pub fn authority(
-        &mut self,
-        authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.authority = Some(authority);
-        self
-    }
-    #[inline(always)]
-    pub fn attestation(
-        &mut self,
-        attestation: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.attestation = Some(attestation);
-        self
     }
     #[inline(always)]
     pub fn event_authority(
@@ -383,14 +254,6 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
         event_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.event_authority = Some(event_authority);
-        self
-    }
-    #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.system_program = Some(system_program);
         self
     }
     #[inline(always)]
@@ -442,27 +305,13 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let instruction = CloseAttestationCpi {
+        let instruction = EmitEventCpi {
             __program: self.instruction.__program,
-
-            payer: self.instruction.payer.expect("payer is not set"),
-
-            authority: self.instruction.authority.expect("authority is not set"),
-
-            attestation: self
-                .instruction
-                .attestation
-                .expect("attestation is not set"),
 
             event_authority: self
                 .instruction
                 .event_authority
                 .expect("event_authority is not set"),
-
-            system_program: self
-                .instruction
-                .system_program
-                .expect("system_program is not set"),
 
             attestation_program: self
                 .instruction
@@ -477,13 +326,9 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct CloseAttestationCpiBuilderInstruction<'a, 'b> {
+struct EmitEventCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    attestation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     event_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     attestation_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

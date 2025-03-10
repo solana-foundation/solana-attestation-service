@@ -146,6 +146,11 @@ async fn close_attestation_success() {
         .await
         .unwrap();
 
+    let (event_auth_pda, _bump) = Pubkey::find_program_address(
+        &[b"eventAuthority"],
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+    );
+
     let initial_payer_lamports = ctx
         .banks_client
         .get_account(ctx.payer.pubkey())
@@ -166,7 +171,11 @@ async fn close_attestation_success() {
         .payer(ctx.payer.pubkey())
         .authority(authority.pubkey())
         .attestation(attestation_pda)
+        .event_authority(event_auth_pda)
         .system_program(system_program::ID)
+        .attestation_program(
+            solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+        )
         .instruction();
 
     let transaction = Transaction::new_signed_with_payer(

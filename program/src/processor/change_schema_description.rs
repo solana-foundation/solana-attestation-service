@@ -1,5 +1,5 @@
 use pinocchio::{
-    account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult
+    account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
 };
 
 use crate::{
@@ -50,14 +50,14 @@ pub fn process_change_schema_description(
     // Get and update description on struct.
     let data_len = u32::from_le_bytes(instruction_data[0..4].try_into().unwrap()) as usize;
     schema.description = instruction_data[4..4 + data_len].to_vec();
-    
+
     // Resize account if needed.
     let new_description_len = schema.description.len();
     if new_description_len != prev_description_len {
         let new_space = schema_info.data_len() + new_description_len - prev_description_len;
         schema_info.realloc(new_space, false)?;
     }
-    
+
     // Write updated data.
     let mut schema_data = schema_info.try_borrow_mut_data()?;
     schema_data.copy_from_slice(&schema.to_bytes());
