@@ -1,10 +1,10 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use helpers::program_test_context;
-use solana_attestation_service_client::accounts::CloseAttestationEvent;
 use solana_attestation_service_client::instructions::{
     CloseAttestationBuilder, CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder,
 };
 use solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID;
+use solana_attestation_service_client::types::CloseAttestationEvent;
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{

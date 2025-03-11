@@ -21,3 +21,7 @@ pub mod shared {
 pub mod programs {
     pub use super::generated::programs::*;
 }
+
+pub mod types {
+    pub use super::generated::types::*;
+}

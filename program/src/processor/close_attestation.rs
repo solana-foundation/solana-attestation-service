@@ -11,8 +11,8 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 use crate::{
     constants::EVENT_AUTHORITY_SEED,
     error::AttestationServiceError,
-    events::CloseAttestationEvent,
-    state::{discriminator::AccountSerialize, Attestation, Credential},
+    events::{CloseAttestationEvent, EventDiscriminators},
+    state::{Attestation, Credential},
 };
 
 use super::{
@@ -43,12 +43,7 @@ pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) 
     // Check that one of credential's authorized signers have signed.
     let credential_data = credential_info.try_borrow_data()?;
     let credential = Credential::try_from_bytes(&credential_data)?;
-    if !credential
-        .authorized_signers
-        .contains(authorized_signer.key())
-    {
-        return Err(AttestationServiceError::SignerNotAuthorized.into());
-    }
+    credential.validate_authorized_signer(authorized_signer.key())?;
 
     let attestation_data = attestation_info.try_borrow_data()?;
     let attestation = Attestation::try_from_bytes(&attestation_data)?;
@@ -83,6 +78,7 @@ pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) 
 
     // CPI to emit_event ix on same program to store event data in ix arg.
     let event = CloseAttestationEvent {
+        discriminator: EventDiscriminators::CloseEvent as u8,
         schema: attestation.schema,
         attestation_data: attestation.data,
     };
@@ -93,12 +89,11 @@ pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) 
                 AccountMeta::new(event_authority_info.key(), false, true),
                 AccountMeta::new(program_id, false, false),
             ],
-            // Prepend IX Discriminator for emit_event.
-            data: &[&[8_u8], event.to_bytes().as_slice()].concat(),
+            data: event.to_bytes().as_slice(),
         },
         &[event_authority_info, attestation_program],
         &[Signer::from(&[
-            Seed::from(b"eventAuthority"),
+            Seed::from(EVENT_AUTHORITY_SEED),
             Seed::from(&[bump]),
         ])],
     )?;

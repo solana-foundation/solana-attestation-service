@@ -404,22 +404,6 @@
   ],
   "accounts": [
     {
-      "name": "CloseAttestationEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "schema",
-            "type": "publicKey"
-          },
-          {
-            "name": "attestationData",
-            "type": "bytes"
-          }
-        ]
-      }
-    },
-    {
       "name": "Attestation",
       "type": {
         "kind": "struct",
@@ -509,6 +493,28 @@
           {
             "name": "version",
             "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "CloseAttestationEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "discriminator",
+            "type": "u8"
+          },
+          {
+            "name": "schema",
+            "type": "publicKey"
+          },
+          {
+            "name": "attestationData",
+            "type": "bytes"
           }
         ]
       }
