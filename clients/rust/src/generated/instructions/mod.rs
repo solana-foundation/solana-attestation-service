@@ -9,14 +9,18 @@ pub(crate) mod r#change_authorized_signers;
 pub(crate) mod r#change_schema_description;
 pub(crate) mod r#change_schema_status;
 pub(crate) mod r#change_schema_version;
+pub(crate) mod r#close_attestation;
 pub(crate) mod r#create_attestation;
 pub(crate) mod r#create_credential;
 pub(crate) mod r#create_schema;
+pub(crate) mod r#emit_event;
 
 pub use self::r#change_authorized_signers::*;
 pub use self::r#change_schema_description::*;
 pub use self::r#change_schema_status::*;
 pub use self::r#change_schema_version::*;
+pub use self::r#close_attestation::*;
 pub use self::r#create_attestation::*;
 pub use self::r#create_credential::*;
 pub use self::r#create_schema::*;
+pub use self::r#emit_event::*;

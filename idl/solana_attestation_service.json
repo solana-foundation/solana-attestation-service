@@ -332,6 +332,74 @@
         "type": "u8",
         "value": 6
       }
+    },
+    {
+      "name": "CloseAttestation",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Authorized signer of the Schema's Credential"
+          ]
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "attestation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "attestationProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 7
+      }
+    },
+    {
+      "name": "EmitEvent",
+      "accounts": [
+        {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "attestationProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 8
+      }
     }
   ],
   "accounts": [
@@ -425,6 +493,28 @@
           {
             "name": "version",
             "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "CloseAttestationEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "discriminator",
+            "type": "u8"
+          },
+          {
+            "name": "schema",
+            "type": "publicKey"
+          },
+          {
+            "name": "attestationData",
+            "type": "bytes"
           }
         ]
       }

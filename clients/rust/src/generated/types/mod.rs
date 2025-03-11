@@ -5,11 +5,6 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-pub mod accounts;
-pub mod errors;
-pub mod instructions;
-pub mod programs;
-pub mod shared;
-pub mod types;
+pub(crate) mod r#close_attestation_event;
 
-pub(crate) use programs::*;
+pub use self::r#close_attestation_event::*;

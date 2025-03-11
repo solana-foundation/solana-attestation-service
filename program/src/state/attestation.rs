@@ -1,7 +1,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::{program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
 use shank::ShankAccount;
 
 use crate::error::AttestationServiceError;
@@ -154,6 +154,49 @@ impl Attestation {
             return Err(AttestationServiceError::InvalidAttestationData.into());
         }
         Ok(())
+    }
+
+    pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
+        // Check discriminator
+        if data[0] != Self::DISCRIMINATOR {
+            msg!("Invalid Attestation Data");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        // Start offset after Discriminator
+        let mut offset: usize = 1;
+
+        let nonce: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        offset += 32;
+
+        let credential: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        offset += 32;
+
+        let schema: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        offset += 32;
+
+        let data_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+        offset += 4;
+        let attestation_data = data[offset..offset + data_len].to_vec();
+        offset += data_len;
+
+        let signer: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        offset += 32;
+
+        let expiry = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
+        offset += 8;
+
+        let is_revoked = data[offset] == 1;
+
+        Ok(Self {
+            nonce,
+            credential,
+            schema,
+            data: attestation_data,
+            signer,
+            expiry,
+            is_revoked,
+        })
     }
 }
 

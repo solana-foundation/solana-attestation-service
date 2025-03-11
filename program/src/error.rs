@@ -17,6 +17,8 @@ pub enum AttestationServiceError {
     SignerNotAuthorized,
     // Attestation data des not conform to the Schema
     InvalidAttestationData,
+    // Incorrect Event Authority
+    InvalidEventAuthority,
 }
 
 impl From<AttestationServiceError> for ProgramError {
