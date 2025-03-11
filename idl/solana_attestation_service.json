@@ -431,10 +431,6 @@
           {
             "name": "expiry",
             "type": "i64"
-          },
-          {
-            "name": "isRevoked",
-            "type": "bool"
           }
         ]
       }

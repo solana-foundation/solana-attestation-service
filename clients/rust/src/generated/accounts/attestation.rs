@@ -35,7 +35,6 @@ pub struct Attestation {
     )]
     pub signer: Pubkey,
     pub expiry: i64,
-    pub is_revoked: bool,
 }
 
 impl Attestation {

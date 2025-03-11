@@ -27,8 +27,6 @@ pub struct Attestation {
     pub signer: Pubkey,
     /// Designates when the credential is expired. 0 means never expired
     pub expiry: i64,
-    /// Whether the attestation has been revoked or not
-    pub is_revoked: bool,
 }
 
 impl Discriminator for Attestation {
@@ -45,7 +43,6 @@ impl AccountSerialize for Attestation {
         data.extend_from_slice(self.data.as_ref());
         data.extend_from_slice(self.signer.as_ref());
         data.extend_from_slice(&self.expiry.to_le_bytes());
-        data.extend_from_slice(&[self.is_revoked as u8]);
 
         data
     }
@@ -184,9 +181,6 @@ impl Attestation {
         offset += 32;
 
         let expiry = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
-        offset += 8;
-
-        let is_revoked = data[offset] == 1;
 
         Ok(Self {
             nonce,
@@ -195,7 +189,6 @@ impl Attestation {
             data: attestation_data,
             signer,
             expiry,
-            is_revoked,
         })
     }
 }
@@ -215,7 +208,6 @@ mod tests {
             data: Vec::new(),
             signer: Pubkey::default(),
             expiry: 0,
-            is_revoked: false,
         };
 
         // u8
