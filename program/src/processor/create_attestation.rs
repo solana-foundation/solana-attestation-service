@@ -92,8 +92,7 @@ pub fn process_create_attestation(
     // data - 4 + len
     // signer - 32
     // expiry - 8
-    // is_revoked - 1
-    let space = 1 + 32 + 32 + 32 + (4 + data.len()) + 32 + 8 + 1;
+    let space = 1 + 32 + 32 + 32 + (4 + data.len()) + 32 + 8;
 
     let bump_seed = [attestation_bump];
     let signer_seeds = [
@@ -122,7 +121,6 @@ pub fn process_create_attestation(
         data: data.to_vec(),
         signer: *authorized_signer.key(),
         expiry,
-        is_revoked: false,
     };
 
     // Validate the Attestation data matches the layout of the Schema

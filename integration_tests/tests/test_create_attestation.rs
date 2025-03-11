@@ -162,7 +162,6 @@ async fn create_attestation_success() {
     assert_eq!(attestation.data, serialized_attestation_data);
     assert_eq!(attestation.credential, credential);
     assert_eq!(attestation.expiry, expiry);
-    assert_eq!(attestation.is_revoked, false);
     assert_eq!(attestation.schema, schema);
     assert_eq!(attestation.signer, authority.pubkey());
     assert_eq!(attestation.nonce, nonce);
@@ -230,4 +229,3 @@ async fn create_attestation_fail_bad_data() {
         TransactionError::InstructionError(0, InstructionError::Custom(6))
     )
 }
-
