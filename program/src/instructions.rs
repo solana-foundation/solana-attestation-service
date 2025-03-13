@@ -152,8 +152,9 @@ pub enum AttestationServiceInstruction {
     #[account(3, name = "schema", desc = "Schema the Attestation is associated with")]
     #[account(4, writable, name = "attestation")]
     #[account(5, name = "system_program")]
-    #[account(6, writable, signer, name = "asset_info")]
-    #[account(7, name = "core_program")]
+    #[account(6, writable, signer, name = "asset")]
+    #[account(7, name = "sas_pda")]
+    #[account(8, name = "core_program")]
     CreateAttestationWithToken {
         nonce: Pubkey,
         data: Vec<u8>,

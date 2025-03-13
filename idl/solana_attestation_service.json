@@ -444,9 +444,14 @@
           "isSigner": false
         },
         {
-          "name": "assetInfo",
+          "name": "asset",
           "isMut": true,
           "isSigner": true
+        },
+        {
+          "name": "sasPda",
+          "isMut": false,
+          "isSigner": false
         },
         {
           "name": "coreProgram",

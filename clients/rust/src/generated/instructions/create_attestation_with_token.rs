@@ -24,7 +24,9 @@ pub struct CreateAttestationWithToken {
 
     pub system_program: solana_program::pubkey::Pubkey,
 
-    pub asset_info: solana_program::pubkey::Pubkey,
+    pub asset: solana_program::pubkey::Pubkey,
+
+    pub sas_pda: solana_program::pubkey::Pubkey,
 
     pub core_program: solana_program::pubkey::Pubkey,
 }
@@ -42,7 +44,7 @@ impl CreateAttestationWithToken {
         args: CreateAttestationWithTokenInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
         ));
@@ -67,8 +69,11 @@ impl CreateAttestationWithToken {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.asset_info,
-            true,
+            self.asset, true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.sas_pda,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.core_program,
@@ -125,8 +130,9 @@ pub struct CreateAttestationWithTokenInstructionArgs {
 ///   3. `[]` schema
 ///   4. `[writable]` attestation
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   6. `[writable, signer]` asset_info
-///   7. `[]` core_program
+///   6. `[writable, signer]` asset
+///   7. `[]` sas_pda
+///   8. `[]` core_program
 #[derive(Clone, Debug, Default)]
 pub struct CreateAttestationWithTokenBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
@@ -135,7 +141,8 @@ pub struct CreateAttestationWithTokenBuilder {
     schema: Option<solana_program::pubkey::Pubkey>,
     attestation: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    asset_info: Option<solana_program::pubkey::Pubkey>,
+    asset: Option<solana_program::pubkey::Pubkey>,
+    sas_pda: Option<solana_program::pubkey::Pubkey>,
     core_program: Option<solana_program::pubkey::Pubkey>,
     nonce: Option<Pubkey>,
     data: Option<Vec<u8>>,
@@ -184,8 +191,13 @@ impl CreateAttestationWithTokenBuilder {
         self
     }
     #[inline(always)]
-    pub fn asset_info(&mut self, asset_info: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.asset_info = Some(asset_info);
+    pub fn asset(&mut self, asset: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.asset = Some(asset);
+        self
+    }
+    #[inline(always)]
+    pub fn sas_pda(&mut self, sas_pda: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.sas_pda = Some(sas_pda);
         self
     }
     #[inline(always)]
@@ -247,7 +259,8 @@ impl CreateAttestationWithTokenBuilder {
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            asset_info: self.asset_info.expect("asset_info is not set"),
+            asset: self.asset.expect("asset is not set"),
+            sas_pda: self.sas_pda.expect("sas_pda is not set"),
             core_program: self.core_program.expect("core_program is not set"),
         };
         let args = CreateAttestationWithTokenInstructionArgs {
@@ -276,7 +289,9 @@ pub struct CreateAttestationWithTokenCpiAccounts<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub asset_info: &'b solana_program::account_info::AccountInfo<'a>,
+    pub asset: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub core_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -298,7 +313,9 @@ pub struct CreateAttestationWithTokenCpi<'a, 'b> {
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub asset_info: &'b solana_program::account_info::AccountInfo<'a>,
+    pub asset: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub core_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -319,7 +336,8 @@ impl<'a, 'b> CreateAttestationWithTokenCpi<'a, 'b> {
             schema: accounts.schema,
             attestation: accounts.attestation,
             system_program: accounts.system_program,
-            asset_info: accounts.asset_info,
+            asset: accounts.asset,
+            sas_pda: accounts.sas_pda,
             core_program: accounts.core_program,
             __args: args,
         }
@@ -357,7 +375,7 @@ impl<'a, 'b> CreateAttestationWithTokenCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer.key,
             true,
@@ -383,8 +401,12 @@ impl<'a, 'b> CreateAttestationWithTokenCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.asset_info.key,
+            *self.asset.key,
             true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.sas_pda.key,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.core_program.key,
@@ -406,7 +428,7 @@ impl<'a, 'b> CreateAttestationWithTokenCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(10 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.payer.clone());
         account_infos.push(self.authority.clone());
@@ -414,7 +436,8 @@ impl<'a, 'b> CreateAttestationWithTokenCpi<'a, 'b> {
         account_infos.push(self.schema.clone());
         account_infos.push(self.attestation.clone());
         account_infos.push(self.system_program.clone());
-        account_infos.push(self.asset_info.clone());
+        account_infos.push(self.asset.clone());
+        account_infos.push(self.sas_pda.clone());
         account_infos.push(self.core_program.clone());
         remaining_accounts
             .iter()
@@ -438,8 +461,9 @@ impl<'a, 'b> CreateAttestationWithTokenCpi<'a, 'b> {
 ///   3. `[]` schema
 ///   4. `[writable]` attestation
 ///   5. `[]` system_program
-///   6. `[writable, signer]` asset_info
-///   7. `[]` core_program
+///   6. `[writable, signer]` asset
+///   7. `[]` sas_pda
+///   8. `[]` core_program
 #[derive(Clone, Debug)]
 pub struct CreateAttestationWithTokenCpiBuilder<'a, 'b> {
     instruction: Box<CreateAttestationWithTokenCpiBuilderInstruction<'a, 'b>>,
@@ -455,7 +479,8 @@ impl<'a, 'b> CreateAttestationWithTokenCpiBuilder<'a, 'b> {
             schema: None,
             attestation: None,
             system_program: None,
-            asset_info: None,
+            asset: None,
+            sas_pda: None,
             core_program: None,
             nonce: None,
             data: None,
@@ -515,11 +540,16 @@ impl<'a, 'b> CreateAttestationWithTokenCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn asset_info(
+    pub fn asset(&mut self, asset: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.asset = Some(asset);
+        self
+    }
+    #[inline(always)]
+    pub fn sas_pda(
         &mut self,
-        asset_info: &'b solana_program::account_info::AccountInfo<'a>,
+        sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.asset_info = Some(asset_info);
+        self.instruction.sas_pda = Some(sas_pda);
         self
     }
     #[inline(always)]
@@ -624,7 +654,9 @@ impl<'a, 'b> CreateAttestationWithTokenCpiBuilder<'a, 'b> {
                 .system_program
                 .expect("system_program is not set"),
 
-            asset_info: self.instruction.asset_info.expect("asset_info is not set"),
+            asset: self.instruction.asset.expect("asset is not set"),
+
+            sas_pda: self.instruction.sas_pda.expect("sas_pda is not set"),
 
             core_program: self
                 .instruction
@@ -648,7 +680,8 @@ struct CreateAttestationWithTokenCpiBuilderInstruction<'a, 'b> {
     schema: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     attestation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    asset_info: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    asset: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    sas_pda: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     core_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nonce: Option<Pubkey>,
     data: Option<Vec<u8>>,

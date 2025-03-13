@@ -7,15 +7,19 @@ use mpl_core::programs::MPL_CORE_ID;
 use mpl_core::types::DataState;
 use pinocchio::{
     account_info::AccountInfo,
-    instruction::{AccountMeta, Instruction},
-    program::invoke,
+    instruction::{AccountMeta, Instruction, Seed, Signer},
+    program::invoke_signed,
     program_error::ProgramError,
     pubkey::Pubkey,
     ProgramResult,
 };
 use pinocchio_log::log;
+use solana_program::pubkey::Pubkey as SolanaPubkey;
 
-use crate::{acc_info_as_str, processor::process_create_attestation};
+use crate::{
+    acc_info_as_str, constants::SAS_SEED, error::AttestationServiceError,
+    processor::process_create_attestation,
+};
 
 #[inline(always)]
 pub fn process_create_attestation_with_token(
@@ -26,7 +30,7 @@ pub fn process_create_attestation_with_token(
     // Create Attestation first
     process_create_attestation(program_id, &accounts[0..6], instruction_data)?;
 
-    let [payer_info, _authorized_signer, _credential_info, _schema_info, _attestation_info, system_program, asset_info, core_program] =
+    let [payer_info, _authorized_signer, _credential_info, _schema_info, _attestation_info, system_program, asset_info, sas_pda_info, core_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -38,6 +42,12 @@ pub fn process_create_attestation_with_token(
             acc_info_as_str!(core_program)
         );
         return Err(ProgramError::IncorrectProgramId);
+    }
+
+    let (sas_pda, bump) =
+        SolanaPubkey::find_program_address(&[SAS_SEED], &SolanaPubkey::from(*program_id));
+    if sas_pda_info.key().ne(&sas_pda.to_bytes()) {
+        return Err(AttestationServiceError::InvalidProgramSigner.into());
     }
 
     let args = CreateAttestationWithTokenArgs::try_from_bytes(instruction_data)?;
@@ -58,29 +68,30 @@ pub fn process_create_attestation_with_token(
     let ix = &Instruction {
         program_id: core_program.key(),
         accounts: &[
-            AccountMeta::new(asset_info.key(), true, true),
+            AccountMeta::new(asset_info.key(), true, true), // Asset
             AccountMeta::new(core_program.key(), false, false), // Placeholder for collection
-            AccountMeta::new(core_program.key(), false, false), // Placeholder for authority
-            AccountMeta::new(payer_info.key(), true, true),
-            AccountMeta::new(core_program.key(), false, false), // Placeholder for owner
-            AccountMeta::new(core_program.key(), false, false), // Placeholder for update_authority
-            AccountMeta::new(system_program.key(), false, false),
+            AccountMeta::new(sas_pda_info.key(), false, true), // Optional for MPL Core, used here to check for valid signing.
+            AccountMeta::new(payer_info.key(), true, true),    // Payer
+            AccountMeta::new(payer_info.key(), false, false),  // Owner (recipient of asset)
+            AccountMeta::new(sas_pda_info.key(), false, false), // Update Authority
+            AccountMeta::new(system_program.key(), false, false), // System Program
             AccountMeta::new(core_program.key(), false, false), // Placeholder for log_wrapper
         ],
         data: data.as_slice(),
     };
-    invoke(
+    invoke_signed(
         ix,
         &[
             asset_info,
             core_program,
-            core_program,
+            sas_pda_info,
             payer_info,
-            core_program,
-            core_program,
+            payer_info,
+            sas_pda_info,
             system_program,
             core_program,
         ],
+        &[Signer::from(&[Seed::from(SAS_SEED), Seed::from(&[bump])])],
     )?;
 
     Ok(())

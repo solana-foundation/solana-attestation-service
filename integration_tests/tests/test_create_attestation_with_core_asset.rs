@@ -8,6 +8,7 @@ use solana_attestation_service_client::{
     instructions::{
         CreateAttestationWithTokenBuilder, CreateCredentialBuilder, CreateSchemaBuilder,
     },
+    programs::SOLANA_ATTESTATION_SERVICE_ID,
 };
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
@@ -41,7 +42,7 @@ async fn setup() -> TestFixtures {
             &authority.pubkey().to_bytes(),
             credential_name.as_bytes(),
         ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &SOLANA_ATTESTATION_SERVICE_ID,
     );
 
     let create_credential_ix = CreateCredentialBuilder::new()
@@ -65,7 +66,7 @@ async fn setup() -> TestFixtures {
             schema_name.as_bytes(),
             &[1],
         ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &SOLANA_ATTESTATION_SERVICE_ID,
     );
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -125,9 +126,11 @@ async fn create_attestation_asset_success() {
             &schema.to_bytes(),
             &nonce.to_bytes(),
         ],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+        &SOLANA_ATTESTATION_SERVICE_ID,
     )
     .0;
+
+    let (sas_pda, _bump) = Pubkey::find_program_address(&[b"sas"], &SOLANA_ATTESTATION_SERVICE_ID);
 
     let asset_keypair = Keypair::new();
     let name = "Test Asset".to_string();
@@ -139,7 +142,8 @@ async fn create_attestation_asset_success() {
         .schema(schema)
         .attestation(attestation_pda)
         .system_program(system_program::ID)
-        .asset_info(asset_keypair.pubkey())
+        .asset(asset_keypair.pubkey())
+        .sas_pda(sas_pda)
         .core_program(MPL_CORE_ID)
         .data(serialized_attestation_data.clone())
         .expiry(expiry)
@@ -185,7 +189,7 @@ async fn create_attestation_asset_success() {
     assert_eq!(asset.base.owner, ctx.payer.pubkey());
     assert_eq!(
         asset.base.update_authority,
-        UpdateAuthority::Address(ctx.payer.pubkey())
+        UpdateAuthority::Address(sas_pda)
     );
     assert_eq!(asset.base.name, name);
     assert_eq!(asset.base.uri, uri);
