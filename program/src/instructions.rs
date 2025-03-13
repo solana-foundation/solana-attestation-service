@@ -135,4 +135,30 @@ pub enum AttestationServiceInstruction {
     #[account(0, signer, name = "event_authority")]
     #[account(1, name = "attestation_program")]
     EmitEvent {},
+
+    /// Create an Attestation for a Schema with Metaplex Core Asset Token.
+    #[account(0, writable, signer, name = "payer")]
+    #[account(
+        1,
+        signer,
+        name = "authority",
+        desc = "Authorized signer of the Schema's Credential"
+    )]
+    #[account(
+        2,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(3, name = "schema", desc = "Schema the Attestation is associated with")]
+    #[account(4, writable, name = "attestation")]
+    #[account(5, name = "system_program")]
+    #[account(6, writable, signer, name = "asset_info")]
+    #[account(7, name = "core_program")]
+    CreateAttestationWithToken {
+        nonce: Pubkey,
+        data: Vec<u8>,
+        expiry: i64,
+        name: String,
+        uri: String,
+    },
 }

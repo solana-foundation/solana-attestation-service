@@ -400,6 +400,86 @@
         "type": "u8",
         "value": 8
       }
+    },
+    {
+      "name": "CreateAttestationWithToken",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Authorized signer of the Schema's Credential"
+          ]
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Credential the Schema is associated with"
+          ]
+        },
+        {
+          "name": "schema",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Schema the Attestation is associated with"
+          ]
+        },
+        {
+          "name": "attestation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "assetInfo",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "coreProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "publicKey"
+        },
+        {
+          "name": "data",
+          "type": "bytes"
+        },
+        {
+          "name": "expiry",
+          "type": "i64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "uri",
+          "type": "string"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 9
+      }
     }
   ],
   "accounts": [
