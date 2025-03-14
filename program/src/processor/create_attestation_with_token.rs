@@ -38,6 +38,9 @@ pub fn process_create_attestation_with_token(
 
     // Validate: asset should have signed
     verify_signer(asset_info, true)?;
+    if !asset_info.data_is_empty() {
+        return Err(ProgramError::AccountAlreadyInitialized);
+    }
 
     if core_program.key().ne(&MPL_CORE_ID.to_bytes()) {
         log!(
