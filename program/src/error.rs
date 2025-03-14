@@ -15,10 +15,12 @@ pub enum AttestationServiceError {
     InvalidSchemaDataType,
     // The signer is not one of the Credential's authorized signers
     SignerNotAuthorized,
-    // Attestation data des not conform to the Schema
+    // Attestation data does not conform to the Schema
     InvalidAttestationData,
     // Incorrect Event Authority
     InvalidEventAuthority,
+    // Incorrect SAS Program Signer.
+    InvalidProgramSigner,
 }
 
 impl From<AttestationServiceError> for ProgramError {
