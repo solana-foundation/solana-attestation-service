@@ -18,7 +18,7 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     acc_info_as_str, constants::SAS_SEED, error::AttestationServiceError,
-    processor::process_create_attestation,
+    processor::process_create_attestation, processor::shared::verify_signer,
 };
 
 #[inline(always)]
@@ -35,6 +35,9 @@ pub fn process_create_attestation_with_token(
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
+
+    // Validate: asset should have signed
+    verify_signer(asset_info, true)?;
 
     if core_program.key().ne(&MPL_CORE_ID.to_bytes()) {
         log!(
