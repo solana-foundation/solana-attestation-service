@@ -139,7 +139,6 @@ impl Attestation {
                         data_offset += 4 + string_len;
                     }
                 }
-                _ => return Err(AttestationServiceError::InvalidSchemaDataType.into()),
             }
 
             // Check data size at end of each iteration and error if offset exceeds the data length.
