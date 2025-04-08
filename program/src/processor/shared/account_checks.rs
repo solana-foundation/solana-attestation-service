@@ -36,7 +36,7 @@ pub fn verify_signer(info: &AccountInfo, expect_writable: bool) -> Result<(), Pr
 /// # Returns
 /// * `Result<(), ProgramError>` - The result of the operation
 pub fn verify_system_account(info: &AccountInfo, is_writable: bool) -> Result<(), ProgramError> {
-    if info.owner().ne(&pinocchio_system::id()) {
+    if unsafe { info.owner().ne(&pinocchio_system::id()) } {
         log!(
             "Account {} is not owned by the system program",
             acc_info_as_str!(info)
@@ -109,7 +109,7 @@ pub fn verify_owner_mutability(
     owner: &Pubkey,
     is_writable: bool,
 ) -> Result<(), ProgramError> {
-    if info.owner().ne(owner) {
+    if unsafe { info.owner().ne(owner) } {
         log!(
             "Owner of {} does not match {}",
             acc_info_as_str!(info),

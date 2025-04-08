@@ -15,6 +15,7 @@ pinocchio = { workspace = true }
 pinocchio-log = { workspace = true }
 pinocchio-pubkey = { workspace = true }
 pinocchio-system = { workspace = true }
+pinocchio-token = { workspace = true }
 shank = { workspace = true }
 solana-program = { workspace = true }
 bs58 = { workspace = true }

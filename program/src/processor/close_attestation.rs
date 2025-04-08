@@ -61,7 +61,7 @@ pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) 
         .unwrap();
     *attestation_info.try_borrow_mut_lamports().unwrap() = 0;
 
-    attestation_info.assign(&system_program.key());
+    unsafe { attestation_info.assign(system_program.key()) };
     attestation_info.realloc(0, false)?;
 
     // Check that event authority PDA is valid.
