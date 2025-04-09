@@ -18,6 +18,7 @@ use pinocchio_token::{
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
+    constants::{SAS_SEED, SCHEMA_MINT_SEED},
     error::AttestationServiceError,
     processor::{create_pda_account, verify_signer, verify_system_program},
     state::{Credential, Schema},
@@ -59,7 +60,7 @@ pub fn process_tokenize_schema(
 
     // Validate that mint to initialize matches expected PDA
     let (mint_pda, mint_bump) = SolanaPubkey::find_program_address(
-        &[b"schemaMint", schema_info.key()],
+        &[SCHEMA_MINT_SEED, schema_info.key()],
         &SolanaPubkey::from(*program_id),
     );
     if mint_info.key().ne(&mint_pda.to_bytes()) {
@@ -68,7 +69,7 @@ pub fn process_tokenize_schema(
 
     // Validate that sas_pda matches
     let (sas_pda, sas_bump) =
-        SolanaPubkey::find_program_address(&[b"sas"], &SolanaPubkey::from(*program_id));
+        SolanaPubkey::find_program_address(&[SAS_SEED], &SolanaPubkey::from(*program_id));
     if sas_pda_info.key().ne(&sas_pda.to_bytes()) {
         return Err(AttestationServiceError::InvalidProgramSigner.into());
     }
@@ -85,7 +86,7 @@ pub fn process_tokenize_schema(
         &TOKEN_2022_PROGRAM_ID,
         mint_info,
         [
-            Seed::from(b"schemaMint"),
+            Seed::from(SCHEMA_MINT_SEED),
             Seed::from(schema_info.key()),
             Seed::from(&[mint_bump]),
         ],
@@ -110,7 +111,7 @@ pub fn process_tokenize_schema(
     .invoke(TokenProgramVariant::Token2022)?;
 
     let bump_seed = [sas_bump];
-    let sas_pda_seeds = [Seed::from(b"sas"), Seed::from(&bump_seed)];
+    let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
     InitializeGroup {
         group: mint_info,
         mint: mint_info,
