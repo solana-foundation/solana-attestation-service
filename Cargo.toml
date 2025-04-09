@@ -28,6 +28,7 @@ solana-attestation-service-client = { path = "clients/rust" }
 solana-program = "2.1.13"
 solana-program-test = "2.1.13"
 solana-sdk = "2.1.13"
+spl-token-2022 = "8.0.1"
 syn = "2.0.72"
 tokio = "1.43.0"
 bs58 = "0.4"
