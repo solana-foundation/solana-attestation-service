@@ -112,6 +112,7 @@ pub fn process_create_attestation(
         program_id,
         attestation_info,
         signer_seeds,
+        None,
     )?;
 
     let attestation = Attestation {

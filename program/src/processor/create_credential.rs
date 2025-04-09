@@ -15,10 +15,7 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 use crate::{
     constants::CREDENTIAL_SEED,
     error::AttestationServiceError,
-    processor::{
-        create_pda_account, verify_signer, verify_system_account,
-        verify_system_program,
-    },
+    processor::{create_pda_account, verify_signer, verify_system_account, verify_system_program},
     state::{discriminator::AccountSerialize, Credential},
 };
 
@@ -78,6 +75,7 @@ pub fn process_create_credential(
         program_id,
         credential_info,
         signer_seeds,
+        None,
     )?;
 
     let credential = Credential {

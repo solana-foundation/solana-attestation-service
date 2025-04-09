@@ -14,8 +14,8 @@ use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
     processor::{
-        create_pda_account, verify_owner_mutability, verify_signer,
-        verify_system_account, verify_system_program,
+        create_pda_account, verify_owner_mutability, verify_signer, verify_system_account,
+        verify_system_program,
     },
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
@@ -107,6 +107,7 @@ pub fn process_change_schema_version(
         program_id,
         new_schema_info,
         signer_seeds,
+        None,
     )?;
 
     let schema = Schema {

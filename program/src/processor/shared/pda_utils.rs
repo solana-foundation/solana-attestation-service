@@ -15,17 +15,17 @@ pub fn create_pda_account<const N: usize>(
     owner: &Pubkey,
     new_pda_account: &AccountInfo,
     new_pda_signer_seeds: [Seed; N],
+    min_rent_space: Option<usize>,
 ) -> ProgramResult {
     let signers = [Signer::from(&new_pda_signer_seeds)];
+    let required_lamports = rent.minimum_balance(min_rent_space.unwrap_or(space)).max(1);
+
     if new_pda_account.lamports() > 0 {
         // someone can transfer lamports to accounts before they're initialized
         // in that case, creating the account won't work.
         // in order to get around it, you need to fund the account with enough lamports to be rent exempt,
         // then allocate the required space and set the owner to the current program
-        let required_lamports = rent
-            .minimum_balance(space)
-            .max(1)
-            .saturating_sub(new_pda_account.lamports());
+        let required_lamports = required_lamports.saturating_sub(new_pda_account.lamports());
         if required_lamports > 0 {
             Transfer {
                 from: payer,
@@ -48,7 +48,7 @@ pub fn create_pda_account<const N: usize>(
         CreateAccount {
             from: payer,
             to: new_pda_account,
-            lamports: rent.minimum_balance(space).max(1),
+            lamports: required_lamports,
             space: space as u64,
             owner,
         }
