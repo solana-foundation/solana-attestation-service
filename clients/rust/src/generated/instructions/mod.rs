@@ -14,6 +14,7 @@ pub(crate) mod r#create_attestation;
 pub(crate) mod r#create_credential;
 pub(crate) mod r#create_schema;
 pub(crate) mod r#emit_event;
+pub(crate) mod r#tokenize_schema;
 
 pub use self::r#change_authorized_signers::*;
 pub use self::r#change_schema_description::*;
@@ -24,3 +25,4 @@ pub use self::r#create_attestation::*;
 pub use self::r#create_credential::*;
 pub use self::r#create_schema::*;
 pub use self::r#emit_event::*;
+pub use self::r#tokenize_schema::*;

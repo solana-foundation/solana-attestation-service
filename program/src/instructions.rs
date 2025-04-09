@@ -135,4 +135,19 @@ pub enum AttestationServiceInstruction {
     #[account(0, signer, name = "event_authority")]
     #[account(1, name = "attestation_program")]
     EmitEvent {},
+
+    /// Enable tokenization for a Schema
+    #[account(0, writable, signer, name = "payer")]
+    #[account(1, signer, name = "authority")]
+    #[account(
+        2,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(3, name = "schema")]
+    #[account(4, writable, name = "mint")]
+    #[account(5, name = "sas_pda")]
+    #[account(6, name = "system_program")]
+    #[account(7, name = "token_program")]
+    TokenizeSchema { max_size: u64 },
 }

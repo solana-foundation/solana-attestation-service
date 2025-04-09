@@ -15,3 +15,4 @@ export * from './createAttestation';
 export * from './createCredential';
 export * from './createSchema';
 export * from './emitEvent';
+export * from './tokenizeSchema';

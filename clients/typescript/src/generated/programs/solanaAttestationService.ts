@@ -22,6 +22,7 @@ import {
   type ParsedCreateCredentialInstruction,
   type ParsedCreateSchemaInstruction,
   type ParsedEmitEventInstruction,
+  type ParsedTokenizeSchemaInstruction,
 } from '../instructions';
 
 export const SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS =
@@ -43,6 +44,7 @@ export enum SolanaAttestationServiceInstruction {
   CreateAttestation,
   CloseAttestation,
   EmitEvent,
+  TokenizeSchema,
 }
 
 export function identifySolanaAttestationServiceInstruction(
@@ -75,6 +77,9 @@ export function identifySolanaAttestationServiceInstruction(
   }
   if (containsBytes(data, getU8Encoder().encode(8), 0)) {
     return SolanaAttestationServiceInstruction.EmitEvent;
+  }
+  if (containsBytes(data, getU8Encoder().encode(9), 0)) {
+    return SolanaAttestationServiceInstruction.TokenizeSchema;
   }
   throw new Error(
     'The provided instruction could not be identified as a solanaAttestationService instruction.'
@@ -110,4 +115,7 @@ export type ParsedSolanaAttestationServiceInstruction<
     } & ParsedCloseAttestationInstruction<TProgram>)
   | ({
       instructionType: SolanaAttestationServiceInstruction.EmitEvent;
-    } & ParsedEmitEventInstruction<TProgram>);
+    } & ParsedEmitEventInstruction<TProgram>)
+  | ({
+      instructionType: SolanaAttestationServiceInstruction.TokenizeSchema;
+    } & ParsedTokenizeSchemaInstruction<TProgram>);
