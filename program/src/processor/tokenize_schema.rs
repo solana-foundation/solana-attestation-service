@@ -110,6 +110,7 @@ pub fn process_tokenize_schema(
     }
     .invoke(TokenProgramVariant::Token2022)?;
 
+    // Initialize Group extension.
     let bump_seed = [sas_bump];
     let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
     InitializeGroup {
