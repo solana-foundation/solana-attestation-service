@@ -24,7 +24,7 @@ use crate::{
     state::{Credential, Schema},
 };
 
-use super::verify_owner_mutability;
+use super::{verify_owner_mutability, verify_token22_program};
 
 #[inline(always)]
 pub fn process_tokenize_schema(
@@ -32,7 +32,7 @@ pub fn process_tokenize_schema(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let [payer_info, authority_info, credential_info, schema_info, mint_info, sas_pda_info, system_program, _token_program] =
+    let [payer_info, authority_info, credential_info, schema_info, mint_info, sas_pda_info, system_program, token_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -45,6 +45,7 @@ pub fn process_tokenize_schema(
     verify_owner_mutability(schema_info, program_id, false)?;
     // Validate: system program
     verify_system_program(system_program)?;
+    verify_token22_program(token_program)?;
 
     // Verify signer matches credential authority.
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;

@@ -18,9 +18,9 @@ pub struct TokenizeSchema {
     pub credential: solana_program::pubkey::Pubkey,
 
     pub schema: solana_program::pubkey::Pubkey,
-
+    /// Mint of Schema Token
     pub mint: solana_program::pubkey::Pubkey,
-
+    /// Program derived address used as program signer authority
     pub sas_pda: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
@@ -161,11 +161,13 @@ impl TokenizeSchemaBuilder {
         self.schema = Some(schema);
         self
     }
+    /// Mint of Schema Token
     #[inline(always)]
     pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
         self.mint = Some(mint);
         self
     }
+    /// Program derived address used as program signer authority
     #[inline(always)]
     pub fn sas_pda(&mut self, sas_pda: solana_program::pubkey::Pubkey) -> &mut Self {
         self.sas_pda = Some(sas_pda);
@@ -239,9 +241,9 @@ pub struct TokenizeSchemaCpiAccounts<'a, 'b> {
     pub credential: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub schema: &'b solana_program::account_info::AccountInfo<'a>,
-
+    /// Mint of Schema Token
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-
+    /// Program derived address used as program signer authority
     pub sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -261,9 +263,9 @@ pub struct TokenizeSchemaCpi<'a, 'b> {
     pub credential: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub schema: &'b solana_program::account_info::AccountInfo<'a>,
-
+    /// Mint of Schema Token
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-
+    /// Program derived address used as program signer authority
     pub sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -461,11 +463,13 @@ impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
         self.instruction.schema = Some(schema);
         self
     }
+    /// Mint of Schema Token
     #[inline(always)]
     pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.mint = Some(mint);
         self
     }
+    /// Program derived address used as program signer authority
     #[inline(always)]
     pub fn sas_pda(
         &mut self,

@@ -1,6 +1,8 @@
 use bs58;
 use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio_associated_token_account::ID as ATA_PROGRAM_ID;
 use pinocchio_log::log;
+use pinocchio_token::TOKEN_2022_PROGRAM_ID;
 
 use crate::{acc_info_as_str, key_as_str, ID};
 
@@ -68,6 +70,44 @@ pub fn verify_system_program(info: &AccountInfo) -> Result<(), ProgramError> {
     if info.key().ne(&pinocchio_system::ID) {
         log!(
             "Account {} is not the system program",
+            acc_info_as_str!(info)
+        );
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    Ok(())
+}
+
+/// Verify account as Token 2022 program, returning an error if it is not.
+///
+/// # Arguments
+/// * `info` - The account to verify.
+///
+/// # Returns
+/// * `Result<(), ProgramError>` - The result of the operation
+pub fn verify_token22_program(info: &AccountInfo) -> Result<(), ProgramError> {
+    if info.key().ne(&TOKEN_2022_PROGRAM_ID) {
+        log!(
+            "Account {} is not the Token 2022 program",
+            acc_info_as_str!(info)
+        );
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    Ok(())
+}
+
+/// Verify account as Associated Token program, returning an error if it is not.
+///
+/// # Arguments
+/// * `info` - The account to verify.
+///
+/// # Returns
+/// * `Result<(), ProgramError>` - The result of the operation
+pub fn verify_ata_program(info: &AccountInfo) -> Result<(), ProgramError> {
+    if info.key().ne(&ATA_PROGRAM_ID) {
+        log!(
+            "Account {} is not the Associated Token program",
             acc_info_as_str!(info)
         );
         return Err(ProgramError::IncorrectProgramId);

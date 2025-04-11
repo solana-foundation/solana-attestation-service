@@ -2,34 +2,36 @@ use core::marker::PhantomData;
 
 use pinocchio::{
     account_info::AccountInfo,
-    instruction::{AccountMeta, Instruction, Seed, Signer},
-    program::invoke_signed,
+    instruction::{Seed, Signer},
     program_error::ProgramError,
     pubkey::Pubkey,
     sysvars::{rent::Rent, Sysvar},
     ProgramResult,
 };
+use pinocchio_associated_token_account::instructions::Create;
 use pinocchio_log::log;
 use pinocchio_token::{
     extensions::{
         group_member_pointer::Initialize as InitializeGroupMemberPointer,
+        metadata::{Field, InitializeTokenMetadata, UpdateField},
         metadata_pointer::Initialize as InitializeMetadataPointer,
-        non_transferable::InitializeNonTransferableMint, token_group::InitializeMember,
+        non_transferable::InitializeNonTransferableMint,
+        token_group::InitializeMember,
     },
-    instructions::{InitializeMint2, TokenProgramVariant},
+    instructions::{InitializeMint2, MintToChecked, TokenProgramVariant},
     TOKEN_2022_PROGRAM_ID,
 };
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
-    acc_info_as_str,
     constants::{ATTESTATION_MINT_SEED, SAS_SEED, SCHEMA_MINT_SEED},
     error::AttestationServiceError,
-    processor::{process_create_attestation, shared::verify_signer},
-    state::schema,
+    processor::process_create_attestation,
 };
 
-use super::{create_pda_account, verify_system_program};
+use super::{
+    create_pda_account, verify_ata_program, verify_system_account, verify_token22_program,
+};
 
 #[inline(always)]
 pub fn process_create_tokenized_attestation(
@@ -40,18 +42,41 @@ pub fn process_create_tokenized_attestation(
     // Create Attestation first
     process_create_attestation(program_id, &accounts[0..6], instruction_data)?;
 
-    let [payer_info, _authorized_signer, _credential_info, schema_info, attestation_info, system_program, schema_mint_info, attestation_mint_info, sas_pda_info, _token_program] =
+    let [payer_info, _authorized_signer, _credential_info, schema_info, attestation_info, system_program, schema_mint_info, attestation_mint_info, sas_pda_info, recipient_token_account_info, recipient_info, token_program, ata_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Validate that mint to initialize matches expected PDA
-    let (mint_pda, mint_bump) = SolanaPubkey::find_program_address(
+    // Validate: should be owned by system account, empty, and writable
+    verify_system_account(recipient_token_account_info, true)?;
+
+    // Verify token programs.
+    verify_token22_program(token_program)?;
+    verify_ata_program(ata_program)?;
+
+    if recipient_info.is_writable() {
+        log!("Recipient should not be writable");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    // Validate that mint matches expected PDA
+    let (attestation_mint_pda, attestation_mint_bump) = SolanaPubkey::find_program_address(
         &[ATTESTATION_MINT_SEED, attestation_info.key()],
         &SolanaPubkey::from(*program_id),
     );
-    if attestation_mint_info.key().ne(&mint_pda.to_bytes()) {
+    if attestation_mint_info
+        .key()
+        .ne(&attestation_mint_pda.to_bytes())
+    {
+        return Err(AttestationServiceError::InvalidMint.into());
+    }
+    let (schema_mint_pda, _) = SolanaPubkey::find_program_address(
+        &[SCHEMA_MINT_SEED, schema_info.key()],
+        &SolanaPubkey::from(*program_id),
+    );
+
+    if schema_mint_info.key().ne(&schema_mint_pda.to_bytes()) {
         return Err(AttestationServiceError::InvalidMint.into());
     }
 
@@ -62,23 +87,28 @@ pub fn process_create_tokenized_attestation(
         return Err(AttestationServiceError::InvalidProgramSigner.into());
     }
 
+    // Read args from instruction data.
     let args = CreateTokenizedAttestionArgs::try_from_bytes(instruction_data)?;
     let name = args.name()?;
     let uri = args.uri()?;
+    let symbol = args.symbol()?;
+    let mint_account_space = args.mint_account_space()?;
 
     // Initialize new account owned by token_program.
     create_pda_account(
         payer_info,
         &Rent::get()?,
-        306, // Size before TokenGroupMember Extension
+        306, // Size before TokenGroupMember and TokenMetadata Extension
         &TOKEN_2022_PROGRAM_ID,
         attestation_mint_info,
         [
             Seed::from(ATTESTATION_MINT_SEED),
             Seed::from(attestation_info.key()),
-            Seed::from(&[mint_bump]),
+            Seed::from(&[attestation_mint_bump]),
         ],
-        Some(500), // TODO: Update with correct size.
+        // Sufficient rent needs to be allocated or instruction fails with
+        // "Lamport balance below rent-exempt threshold" or "InsufficientFundsForRent".
+        Some(mint_account_space.into()),
     )?;
 
     // Initialize GroupMemberPointer extension
@@ -103,20 +133,47 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke()?;
 
-    // TODO: Call init metadata extension.
-
     // Initialize Mint on created account
     InitializeMint2 {
         mint: attestation_mint_info,
-        decimals: 9,
+        decimals: 0,
         mint_authority: sas_pda_info.key(),
         freeze_authority: Some(sas_pda_info.key()),
     }
     .invoke(TokenProgramVariant::Token2022)?;
 
-    // Initialize TokenGroupMember extension
+    // Initialize TokenMetadata extension
     let bump_seed = [sas_bump];
     let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
+    let ix = InitializeTokenMetadata {
+        metadata: attestation_mint_info,
+        update_authority: sas_pda_info,
+        mint: attestation_mint_info,
+        mint_authority: sas_pda_info,
+        name: core::str::from_utf8(name).unwrap(),
+        symbol: core::str::from_utf8(symbol).unwrap(),
+        uri: core::str::from_utf8(uri).unwrap(),
+    };
+    ix.invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
+
+    // Set attestation and schema metadata using UpdateField extension
+    let ix = UpdateField {
+        metadata: attestation_mint_info,
+        update_authority: sas_pda_info,
+        field: Field::Key("attestation"),
+        value: &bs58::encode(attestation_info.key()).into_string(),
+    };
+    ix.invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
+
+    let ix = UpdateField {
+        metadata: attestation_mint_info,
+        update_authority: sas_pda_info,
+        field: Field::Key("schema"),
+        value: &bs58::encode(schema_info.key()).into_string(),
+    };
+    ix.invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
+
+    // Initialize TokenGroupMember extension
     InitializeMember {
         group: schema_mint_info,
         group_update_authority: sas_pda_info,
@@ -125,6 +182,30 @@ pub fn process_create_tokenized_attestation(
         member_mint_authority: sas_pda_info,
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
+
+    // Create new associated token account to hold Attestation token.
+    Create {
+        funding_account: payer_info,
+        account: recipient_token_account_info,
+        wallet: recipient_info,
+        mint: attestation_mint_info,
+        system_program,
+        token_program,
+    }
+    .invoke()?;
+
+    // Mint to recipient token account.
+    MintToChecked {
+        mint: attestation_mint_info,
+        account: recipient_token_account_info,
+        mint_authority: sas_pda_info,
+        amount: 1,
+        decimals: 0,
+    }
+    .invoke_signed(
+        &[Signer::from(&sas_pda_seeds)],
+        TokenProgramVariant::Token2022,
+    )?;
 
     Ok(())
 }
@@ -145,7 +226,9 @@ impl CreateTokenizedAttestionArgs<'_> {
         // - expiry (8 bytes)
         // - name (5 bytes. 4 len, 1 byte)
         // - uri (5 bytes. 4 len, 1 byte)
-        if bytes.len() < 55 {
+        // - symbol (5 bytes. 4 len, 1 byte)
+        // - mint_account_space (2 bytes)
+        if bytes.len() < 62 {
             return Err(ProgramError::InvalidInstructionData);
         }
 
@@ -188,6 +271,46 @@ impl CreateTokenizedAttestionArgs<'_> {
             let uri_bytes =
                 core::slice::from_raw_parts(self.raw.add(offset as usize), uri_len as usize);
             Ok(uri_bytes)
+        }
+    }
+
+    #[inline]
+    pub fn symbol(&self) -> Result<&[u8], ProgramError> {
+        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
+        unsafe {
+            let mut offset: u32 = 32; // Nonce
+            let data_len = *(self.raw.add(offset as usize) as *const u32);
+            offset += data_len + 4; // Data
+            offset += 8; // Expiry
+            let name_len = *(self.raw.add(offset as usize) as *const u32);
+            offset += name_len + 4; // Name
+            let uri_len = *(self.raw.add(offset as usize) as *const u32);
+            offset += uri_len + 4; // Uri
+
+            let symbol_len = *(self.raw.add(offset as usize) as *const u32);
+            offset += 4;
+            let symbol_bytes =
+                core::slice::from_raw_parts(self.raw.add(offset as usize), symbol_len as usize);
+            Ok(symbol_bytes)
+        }
+    }
+
+    #[inline]
+    pub fn mint_account_space(&self) -> Result<u16, ProgramError> {
+        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
+        unsafe {
+            let mut offset: u32 = 32; // Nonce
+            let data_len = *(self.raw.add(offset as usize) as *const u32);
+            offset += data_len + 4; // Data
+            offset += 8; // Expiry
+            let name_len = *(self.raw.add(offset as usize) as *const u32);
+            offset += name_len + 4; // Name
+            let uri_len = *(self.raw.add(offset as usize) as *const u32);
+            offset += uri_len + 4; // Uri
+            let symbol_len = *(self.raw.add(offset as usize) as *const u32);
+            offset += symbol_len + 4; // Symbol
+
+            Ok(*(self.raw.add(offset as usize) as *const u16))
         }
     }
 }

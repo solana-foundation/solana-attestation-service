@@ -137,7 +137,9 @@ export type TokenizeSchemaInput<
   /** Credential the Schema is associated with */
   credential: Address<TAccountCredential>;
   schema: Address<TAccountSchema>;
+  /** Mint of Schema Token */
   mint: Address<TAccountMint>;
+  /** Program derived address used as program signer authority */
   sasPda: Address<TAccountSasPda>;
   systemProgram?: Address<TAccountSystemProgram>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -253,7 +255,9 @@ export type ParsedTokenizeSchemaInstruction<
     /** Credential the Schema is associated with */
     credential: TAccountMetas[2];
     schema: TAccountMetas[3];
+    /** Mint of Schema Token */
     mint: TAccountMetas[4];
+    /** Program derived address used as program signer authority */
     sasPda: TAccountMetas[5];
     systemProgram: TAccountMetas[6];
     tokenProgram: TAccountMetas[7];

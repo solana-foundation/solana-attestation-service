@@ -430,12 +430,18 @@
         {
           "name": "mint",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Mint of Schema Token"
+          ]
         },
         {
           "name": "sasPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Program derived address used as program signer authority"
+          ]
         },
         {
           "name": "systemProgram",
@@ -504,20 +510,50 @@
         {
           "name": "schemaMint",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Mint of Schema Token"
+          ]
         },
         {
           "name": "attestationMint",
           "isMut": true,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Mint of Attestation Token"
+          ]
         },
         {
           "name": "sasPda",
           "isMut": false,
-          "isSigner": false
+          "isSigner": false,
+          "docs": [
+            "Program derived address used as program signer authority"
+          ]
+        },
+        {
+          "name": "recipientTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Associated token account of Recipient for Attestation Token"
+          ]
+        },
+        {
+          "name": "recipient",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Wallet to receive Attestation Token"
+          ]
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -542,6 +578,14 @@
         {
           "name": "uri",
           "type": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "mintAccountSpace",
+          "type": "u16"
         }
       ],
       "discriminant": {

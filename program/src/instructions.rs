@@ -145,8 +145,12 @@ pub enum AttestationServiceInstruction {
         desc = "Credential the Schema is associated with"
     )]
     #[account(3, name = "schema")]
-    #[account(4, writable, name = "mint")]
-    #[account(5, name = "sas_pda")]
+    #[account(4, writable, name = "mint", desc = "Mint of Schema Token")]
+    #[account(
+        5,
+        name = "sas_pda",
+        desc = "Program derived address used as program signer authority"
+    )]
     #[account(6, name = "system_program")]
     #[account(7, name = "token_program")]
     TokenizeSchema { max_size: u64 },
@@ -167,15 +171,34 @@ pub enum AttestationServiceInstruction {
     #[account(3, name = "schema", desc = "Schema the Attestation is associated with")]
     #[account(4, writable, name = "attestation")]
     #[account(5, name = "system_program")]
-    #[account(6, writable, name = "schema_mint")]
-    #[account(7, writable, name = "attestation_mint")]
-    #[account(8, name = "sas_pda")]
-    #[account(9, name = "token_program")]
+    #[account(6, writable, name = "schema_mint", desc = "Mint of Schema Token")]
+    #[account(
+        7,
+        writable,
+        name = "attestation_mint",
+        desc = "Mint of Attestation Token"
+    )]
+    #[account(
+        8,
+        name = "sas_pda",
+        desc = "Program derived address used as program signer authority"
+    )]
+    #[account(
+        9,
+        writable,
+        name = "recipient_token_account",
+        desc = "Associated token account of Recipient for Attestation Token"
+    )]
+    #[account(10, name = "recipient", desc = "Wallet to receive Attestation Token")]
+    #[account(11, name = "token_program")]
+    #[account(12, name = "associated_token_program")]
     CreateTokenizedAttestation {
         nonce: Pubkey,
         data: Vec<u8>,
         expiry: i64,
         name: String,
         uri: String,
+        symbol: String,
+        mint_account_space: u16,
     },
 }

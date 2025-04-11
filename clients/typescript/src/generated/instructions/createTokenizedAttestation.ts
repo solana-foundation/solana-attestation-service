@@ -18,6 +18,8 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
+  getU16Decoder,
+  getU16Encoder,
   getU32Decoder,
   getU32Encoder,
   getU8Decoder,
@@ -63,9 +65,12 @@ export type CreateTokenizedAttestationInstruction<
   TAccountSchemaMint extends string | IAccountMeta<string> = string,
   TAccountAttestationMint extends string | IAccountMeta<string> = string,
   TAccountSasPda extends string | IAccountMeta<string> = string,
+  TAccountRecipientTokenAccount extends string | IAccountMeta<string> = string,
+  TAccountRecipient extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountAssociatedTokenProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -100,9 +105,18 @@ export type CreateTokenizedAttestationInstruction<
       TAccountSasPda extends string
         ? ReadonlyAccount<TAccountSasPda>
         : TAccountSasPda,
+      TAccountRecipientTokenAccount extends string
+        ? WritableAccount<TAccountRecipientTokenAccount>
+        : TAccountRecipientTokenAccount,
+      TAccountRecipient extends string
+        ? ReadonlyAccount<TAccountRecipient>
+        : TAccountRecipient,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountAssociatedTokenProgram extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
+        : TAccountAssociatedTokenProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -114,6 +128,8 @@ export type CreateTokenizedAttestationInstructionData = {
   expiry: bigint;
   name: string;
   uri: string;
+  symbol: string;
+  mintAccountSpace: number;
 };
 
 export type CreateTokenizedAttestationInstructionDataArgs = {
@@ -122,6 +138,8 @@ export type CreateTokenizedAttestationInstructionDataArgs = {
   expiry: number | bigint;
   name: string;
   uri: string;
+  symbol: string;
+  mintAccountSpace: number;
 };
 
 export function getCreateTokenizedAttestationInstructionDataEncoder(): Encoder<CreateTokenizedAttestationInstructionDataArgs> {
@@ -133,6 +151,8 @@ export function getCreateTokenizedAttestationInstructionDataEncoder(): Encoder<C
       ['expiry', getI64Encoder()],
       ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ['uri', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+      ['symbol', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+      ['mintAccountSpace', getU16Encoder()],
     ]),
     (value) => ({
       ...value,
@@ -149,6 +169,8 @@ export function getCreateTokenizedAttestationInstructionDataDecoder(): Decoder<C
     ['expiry', getI64Decoder()],
     ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['uri', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+    ['symbol', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+    ['mintAccountSpace', getU16Decoder()],
   ]);
 }
 
@@ -172,7 +194,10 @@ export type CreateTokenizedAttestationInput<
   TAccountSchemaMint extends string = string,
   TAccountAttestationMint extends string = string,
   TAccountSasPda extends string = string,
+  TAccountRecipientTokenAccount extends string = string,
+  TAccountRecipient extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
 > = {
   payer: TransactionSigner<TAccountPayer>;
   /** Authorized signer of the Schema's Credential */
@@ -183,15 +208,25 @@ export type CreateTokenizedAttestationInput<
   schema: Address<TAccountSchema>;
   attestation: Address<TAccountAttestation>;
   systemProgram?: Address<TAccountSystemProgram>;
+  /** Mint of Schema Token */
   schemaMint: Address<TAccountSchemaMint>;
+  /** Mint of Attestation Token */
   attestationMint: Address<TAccountAttestationMint>;
+  /** Program derived address used as program signer authority */
   sasPda: Address<TAccountSasPda>;
+  /** Associated token account of Recipient for Attestation Token */
+  recipientTokenAccount: Address<TAccountRecipientTokenAccount>;
+  /** Wallet to receive Attestation Token */
+  recipient: Address<TAccountRecipient>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  associatedTokenProgram: Address<TAccountAssociatedTokenProgram>;
   nonce: CreateTokenizedAttestationInstructionDataArgs['nonce'];
   data: CreateTokenizedAttestationInstructionDataArgs['data'];
   expiry: CreateTokenizedAttestationInstructionDataArgs['expiry'];
   name: CreateTokenizedAttestationInstructionDataArgs['name'];
   uri: CreateTokenizedAttestationInstructionDataArgs['uri'];
+  symbol: CreateTokenizedAttestationInstructionDataArgs['symbol'];
+  mintAccountSpace: CreateTokenizedAttestationInstructionDataArgs['mintAccountSpace'];
 };
 
 export function getCreateTokenizedAttestationInstruction<
@@ -204,7 +239,10 @@ export function getCreateTokenizedAttestationInstruction<
   TAccountSchemaMint extends string,
   TAccountAttestationMint extends string,
   TAccountSasPda extends string,
+  TAccountRecipientTokenAccount extends string,
+  TAccountRecipient extends string,
   TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TProgramAddress extends
     Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 >(
@@ -218,7 +256,10 @@ export function getCreateTokenizedAttestationInstruction<
     TAccountSchemaMint,
     TAccountAttestationMint,
     TAccountSasPda,
-    TAccountTokenProgram
+    TAccountRecipientTokenAccount,
+    TAccountRecipient,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): CreateTokenizedAttestationInstruction<
@@ -232,7 +273,10 @@ export function getCreateTokenizedAttestationInstruction<
   TAccountSchemaMint,
   TAccountAttestationMint,
   TAccountSasPda,
-  TAccountTokenProgram
+  TAccountRecipientTokenAccount,
+  TAccountRecipient,
+  TAccountTokenProgram,
+  TAccountAssociatedTokenProgram
 > {
   // Program address.
   const programAddress =
@@ -249,7 +293,16 @@ export function getCreateTokenizedAttestationInstruction<
     schemaMint: { value: input.schemaMint ?? null, isWritable: true },
     attestationMint: { value: input.attestationMint ?? null, isWritable: true },
     sasPda: { value: input.sasPda ?? null, isWritable: false },
+    recipientTokenAccount: {
+      value: input.recipientTokenAccount ?? null,
+      isWritable: true,
+    },
+    recipient: { value: input.recipient ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -281,7 +334,10 @@ export function getCreateTokenizedAttestationInstruction<
       getAccountMeta(accounts.schemaMint),
       getAccountMeta(accounts.attestationMint),
       getAccountMeta(accounts.sasPda),
+      getAccountMeta(accounts.recipientTokenAccount),
+      getAccountMeta(accounts.recipient),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
     ],
     programAddress,
     data: getCreateTokenizedAttestationInstructionDataEncoder().encode(
@@ -298,7 +354,10 @@ export function getCreateTokenizedAttestationInstruction<
     TAccountSchemaMint,
     TAccountAttestationMint,
     TAccountSasPda,
-    TAccountTokenProgram
+    TAccountRecipientTokenAccount,
+    TAccountRecipient,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram
   >;
 
   return instruction;
@@ -319,10 +378,18 @@ export type ParsedCreateTokenizedAttestationInstruction<
     schema: TAccountMetas[3];
     attestation: TAccountMetas[4];
     systemProgram: TAccountMetas[5];
+    /** Mint of Schema Token */
     schemaMint: TAccountMetas[6];
+    /** Mint of Attestation Token */
     attestationMint: TAccountMetas[7];
+    /** Program derived address used as program signer authority */
     sasPda: TAccountMetas[8];
-    tokenProgram: TAccountMetas[9];
+    /** Associated token account of Recipient for Attestation Token */
+    recipientTokenAccount: TAccountMetas[9];
+    /** Wallet to receive Attestation Token */
+    recipient: TAccountMetas[10];
+    tokenProgram: TAccountMetas[11];
+    associatedTokenProgram: TAccountMetas[12];
   };
   data: CreateTokenizedAttestationInstructionData;
 };
@@ -335,7 +402,7 @@ export function parseCreateTokenizedAttestationInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedCreateTokenizedAttestationInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
+  if (instruction.accounts.length < 13) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -357,7 +424,10 @@ export function parseCreateTokenizedAttestationInstruction<
       schemaMint: getNextAccount(),
       attestationMint: getNextAccount(),
       sasPda: getNextAccount(),
+      recipientTokenAccount: getNextAccount(),
+      recipient: getNextAccount(),
       tokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextAccount(),
     },
     data: getCreateTokenizedAttestationInstructionDataDecoder().decode(
       instruction.data
