@@ -60,9 +60,7 @@ pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) 
         .checked_add(attestation_info.lamports())
         .unwrap();
     *attestation_info.try_borrow_mut_lamports().unwrap() = 0;
-
-    unsafe { attestation_info.assign(system_program.key()) };
-    attestation_info.realloc(0, false)?;
+    attestation_info.close()?;
 
     // Check that event authority PDA is valid.
     let (event_authority_pda, bump) = SolanaPubkey::find_program_address(
