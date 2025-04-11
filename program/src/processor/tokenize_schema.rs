@@ -104,7 +104,7 @@ pub fn process_tokenize_schema(
     // Initialize Mint on created account.
     InitializeMint2 {
         mint: mint_info,
-        decimals: 9,
+        decimals: 0,
         mint_authority: sas_pda_info.key(),
         freeze_authority: Some(sas_pda_info.key()),
     }
@@ -148,9 +148,6 @@ impl TokenizeSchemaArgs<'_> {
 
     #[inline]
     pub fn max_size(&self) -> Result<u64, ProgramError> {
-        unsafe {
-            let max_size_bytes = *(self.raw as *const u64);
-            Ok(max_size_bytes)
-        }
+        unsafe { Ok(*(self.raw as *const u64)) }
     }
 }
