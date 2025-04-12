@@ -15,10 +15,12 @@ package.edition = "2021"
 
 [workspace.dependencies]
 borsh = "1.5.5"
-pinocchio = "0.7.1"
-pinocchio-log = "0.3.0"
-pinocchio-pubkey = "0.2.2"
-pinocchio-system = "0.2.1"
+pinocchio = { git = "https://github.com/iurage/pinocchio", branch = "token-metadata", package = "pinocchio" }
+pinocchio-log = { git = "https://github.com/iurage/pinocchio", branch = "token-metadata", package = "pinocchio-log" }
+pinocchio-pubkey = { git = "https://github.com/iurage/pinocchio", branch = "token-metadata", package = "pinocchio-pubkey" }
+pinocchio-system = { git = "https://github.com/iurage/pinocchio", branch = "token-metadata", package = "pinocchio-system" }
+pinocchio-token = { git = "https://github.com/iurage/pinocchio", branch = "token-metadata", package = "pinocchio-token" }
+pinocchio-associated-token-account = { git = "https://github.com/iurage/pinocchio", branch = "token-metadata", package = "pinocchio-associated-token-account" }
 proc-macro2 = "1.0.86"
 quote = "1.0.36"
 shank = "0.4.2"
@@ -27,6 +29,10 @@ solana-attestation-service-client = { path = "clients/rust" }
 solana-program = "2.1.13"
 solana-program-test = "2.1.13"
 solana-sdk = "2.1.13"
+spl-token-2022 = "8.0.1"
+spl-associated-token-account = "6.0.0"
+spl-token-group-interface = "0.6.0"
+spl-token-metadata-interface = "0.7.0"
 syn = "2.0.72"
 tokio = "1.43.0"
 bs58 = "0.4"

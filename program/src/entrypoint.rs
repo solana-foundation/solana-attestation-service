@@ -26,6 +26,8 @@ pub fn process_instruction(
         6 => process_create_attestation(program_id, accounts, instruction_data),
         7 => process_close_attestation(program_id, accounts),
         8 => process_emit_event(program_id, accounts, instruction_data),
+        9 => process_tokenize_schema(program_id, accounts, instruction_data),
+        10 => process_create_tokenized_attestation(program_id, accounts, instruction_data),
         _ => Err(ProgramError::InvalidInstructionData),
     }
 }

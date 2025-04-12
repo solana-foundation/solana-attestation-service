@@ -94,6 +94,7 @@ pub fn process_create_schema(
         program_id,
         schema_info,
         signer_seeds,
+        None,
     )?;
 
     let schema = Schema {

@@ -135,4 +135,70 @@ pub enum AttestationServiceInstruction {
     #[account(0, signer, name = "event_authority")]
     #[account(1, name = "attestation_program")]
     EmitEvent {},
+
+    /// Enable tokenization for a Schema
+    #[account(0, writable, signer, name = "payer")]
+    #[account(1, signer, name = "authority")]
+    #[account(
+        2,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(3, name = "schema")]
+    #[account(4, writable, name = "mint", desc = "Mint of Schema Token")]
+    #[account(
+        5,
+        name = "sas_pda",
+        desc = "Program derived address used as program signer authority"
+    )]
+    #[account(6, name = "system_program")]
+    #[account(7, name = "token_program")]
+    TokenizeSchema { max_size: u64 },
+
+    /// Create attestation with token.
+    #[account(0, writable, signer, name = "payer")]
+    #[account(
+        1,
+        signer,
+        name = "authority",
+        desc = "Authorized signer of the Schema's Credential"
+    )]
+    #[account(
+        2,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(3, name = "schema", desc = "Schema the Attestation is associated with")]
+    #[account(4, writable, name = "attestation")]
+    #[account(5, name = "system_program")]
+    #[account(6, writable, name = "schema_mint", desc = "Mint of Schema Token")]
+    #[account(
+        7,
+        writable,
+        name = "attestation_mint",
+        desc = "Mint of Attestation Token"
+    )]
+    #[account(
+        8,
+        name = "sas_pda",
+        desc = "Program derived address used as program signer authority"
+    )]
+    #[account(
+        9,
+        writable,
+        name = "recipient_token_account",
+        desc = "Associated token account of Recipient for Attestation Token"
+    )]
+    #[account(10, name = "recipient", desc = "Wallet to receive Attestation Token")]
+    #[account(11, name = "token_program")]
+    #[account(12, name = "associated_token_program")]
+    CreateTokenizedAttestation {
+        nonce: Pubkey,
+        data: Vec<u8>,
+        expiry: i64,
+        name: String,
+        uri: String,
+        symbol: String,
+        mint_account_space: u16,
+    },
 }

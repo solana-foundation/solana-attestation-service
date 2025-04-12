@@ -19,6 +19,10 @@ pub enum AttestationServiceError {
     InvalidAttestationData,
     // Incorrect Event Authority
     InvalidEventAuthority,
+    // Incorrect Mint
+    InvalidMint,
+    // Incorrect Program Signer
+    InvalidProgramSigner,
 }
 
 impl From<AttestationServiceError> for ProgramError {

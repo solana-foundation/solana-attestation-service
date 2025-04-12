@@ -37,7 +37,7 @@ async fn setup() -> TestFixtures {
             &authority.pubkey().to_bytes(),
             credential_name.as_bytes(),
         ],
-        &Pubkey::from(SOLANA_ATTESTATION_SERVICE_ID),
+        &SOLANA_ATTESTATION_SERVICE_ID,
     );
 
     let create_credential_ix = CreateCredentialBuilder::new()
@@ -61,7 +61,7 @@ async fn setup() -> TestFixtures {
             schema_name.as_bytes(),
             &[1],
         ],
-        &Pubkey::from(SOLANA_ATTESTATION_SERVICE_ID),
+        &SOLANA_ATTESTATION_SERVICE_ID,
     );
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -90,7 +90,7 @@ async fn setup() -> TestFixtures {
         ctx,
         credential: credential_pda,
         schema: schema_pda,
-        authority: authority,
+        authority,
     }
 }
 
