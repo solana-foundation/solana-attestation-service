@@ -145,7 +145,10 @@ pub fn process_create_tokenized_attestation(
     // Initialize TokenMetadata extension
     let bump_seed = [sas_bump];
     let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
-    let ix = InitializeTokenMetadata {
+
+    // Allow internal buffer size to max out at 995 bytes which is limit for transaction data.
+    const MAX_BUF_SIZE: usize = 995;
+    InitializeTokenMetadata::<MAX_BUF_SIZE> {
         metadata: attestation_mint_info,
         update_authority: sas_pda_info,
         mint: attestation_mint_info,
@@ -153,25 +156,26 @@ pub fn process_create_tokenized_attestation(
         name: core::str::from_utf8(name).unwrap(),
         symbol: core::str::from_utf8(symbol).unwrap(),
         uri: core::str::from_utf8(uri).unwrap(),
-    };
-    ix.invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
+    }
+    .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
     // Set attestation and schema metadata using UpdateField extension
-    let ix = UpdateField {
+    // Choose a fixed upper bound to avoid overflows
+    UpdateField::<MAX_BUF_SIZE> {
         metadata: attestation_mint_info,
         update_authority: sas_pda_info,
         field: Field::Key("attestation"),
         value: &bs58::encode(attestation_info.key()).into_string(),
-    };
-    ix.invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
+    }
+    .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
-    let ix = UpdateField {
+    UpdateField::<MAX_BUF_SIZE> {
         metadata: attestation_mint_info,
         update_authority: sas_pda_info,
         field: Field::Key("schema"),
         value: &bs58::encode(schema_info.key()).into_string(),
-    };
-    ix.invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
+    }
+    .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
     // Initialize TokenGroupMember extension
     InitializeMember {
