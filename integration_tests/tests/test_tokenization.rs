@@ -306,6 +306,7 @@ async fn create_tokenized_attestation_success() {
     assert_eq!(attestation.schema, schema);
     assert_eq!(attestation.signer, authority.pubkey());
     assert_eq!(attestation.nonce, nonce);
+    assert_eq!(attestation.token_account, recipient_token_account);
 
     let attestation_mint_account = ctx
         .banks_client

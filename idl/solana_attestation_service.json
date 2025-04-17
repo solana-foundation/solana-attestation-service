@@ -623,6 +623,10 @@
           {
             "name": "expiry",
             "type": "i64"
+          },
+          {
+            "name": "tokenAccount",
+            "type": "publicKey"
           }
         ]
       }

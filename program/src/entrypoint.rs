@@ -23,7 +23,7 @@ pub fn process_instruction(
         3 => process_change_authorized_signers(program_id, accounts, instruction_data),
         4 => process_change_schema_description(program_id, accounts, instruction_data),
         5 => process_change_schema_version(program_id, accounts, instruction_data),
-        6 => process_create_attestation(program_id, accounts, instruction_data),
+        6 => process_create_attestation(program_id, accounts, instruction_data, None),
         7 => process_close_attestation(program_id, accounts),
         8 => process_emit_event(program_id, accounts, instruction_data),
         9 => process_tokenize_schema(program_id, accounts, instruction_data),
