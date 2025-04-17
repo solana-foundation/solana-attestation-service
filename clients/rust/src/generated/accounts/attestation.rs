@@ -35,6 +35,11 @@ pub struct Attestation {
     )]
     pub signer: Pubkey,
     pub expiry: i64,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub token_account: Pubkey,
 }
 
 impl Attestation {

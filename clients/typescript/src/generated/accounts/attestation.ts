@@ -48,6 +48,7 @@ export type Attestation = {
   data: ReadonlyUint8Array;
   signer: Address;
   expiry: bigint;
+  tokenAccount: Address;
 };
 
 export type AttestationArgs = {
@@ -58,6 +59,7 @@ export type AttestationArgs = {
   data: ReadonlyUint8Array;
   signer: Address;
   expiry: number | bigint;
+  tokenAccount: Address;
 };
 
 export function getAttestationEncoder(): Encoder<AttestationArgs> {
@@ -69,6 +71,7 @@ export function getAttestationEncoder(): Encoder<AttestationArgs> {
     ['data', addEncoderSizePrefix(getBytesEncoder(), getU32Encoder())],
     ['signer', getAddressEncoder()],
     ['expiry', getI64Encoder()],
+    ['tokenAccount', getAddressEncoder()],
   ]);
 }
 
@@ -81,6 +84,7 @@ export function getAttestationDecoder(): Decoder<Attestation> {
     ['data', addDecoderSizePrefix(getBytesDecoder(), getU32Decoder())],
     ['signer', getAddressDecoder()],
     ['expiry', getI64Decoder()],
+    ['tokenAccount', getAddressDecoder()],
   ]);
 }
 

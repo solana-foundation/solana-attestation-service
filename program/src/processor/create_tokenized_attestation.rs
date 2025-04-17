@@ -39,14 +39,19 @@ pub fn process_create_tokenized_attestation(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    // Create Attestation first
-    process_create_attestation(program_id, &accounts[0..6], instruction_data)?;
-
     let [payer_info, _authorized_signer, _credential_info, schema_info, attestation_info, system_program, schema_mint_info, attestation_mint_info, sas_pda_info, recipient_token_account_info, recipient_info, token_program, ata_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
+
+    // Create Attestation first
+    process_create_attestation(
+        program_id,
+        &accounts[0..6],
+        instruction_data,
+        Some(*recipient_token_account_info.key()),
+    )?;
 
     // Validate: should be owned by system account, empty, and writable
     verify_system_account(recipient_token_account_info, true)?;
