@@ -11,6 +11,7 @@ export * from './changeSchemaDescription';
 export * from './changeSchemaStatus';
 export * from './changeSchemaVersion';
 export * from './closeAttestation';
+export * from './closeTokenizedAttestation';
 export * from './createAttestation';
 export * from './createCredential';
 export * from './createSchema';

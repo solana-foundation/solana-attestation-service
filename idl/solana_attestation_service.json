@@ -592,6 +592,83 @@
         "type": "u8",
         "value": 10
       }
+    },
+    {
+      "name": "CloseTokenizedAttestation",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Authorized signer of the Schema's Credential"
+          ]
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "attestation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "attestationProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "attestationMint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Mint of Attestation Token"
+          ]
+        },
+        {
+          "name": "sasPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Program derived address used as program signer authority"
+          ]
+        },
+        {
+          "name": "recipientTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Associated token account of Recipient for Attestation Token"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 11
+      }
     }
   ],
   "accounts": [

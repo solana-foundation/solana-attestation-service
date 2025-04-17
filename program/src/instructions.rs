@@ -201,4 +201,37 @@ pub enum AttestationServiceInstruction {
         symbol: String,
         mint_account_space: u16,
     },
+
+    /// Close an Attestation and Attestation token.
+    #[account(0, writable, signer, name = "payer")]
+    #[account(
+        1,
+        signer,
+        name = "authority",
+        desc = "Authorized signer of the Schema's Credential"
+    )]
+    #[account(2, name = "credential")]
+    #[account(3, writable, name = "attestation")]
+    #[account(4, name = "event_authority")]
+    #[account(5, name = "system_program")]
+    #[account(6, name = "attestation_program")]
+    #[account(
+        7,
+        writable,
+        name = "attestation_mint",
+        desc = "Mint of Attestation Token"
+    )]
+    #[account(
+        8,
+        name = "sas_pda",
+        desc = "Program derived address used as program signer authority"
+    )]
+    #[account(
+        9,
+        writable,
+        name = "recipient_token_account",
+        desc = "Associated token account of Recipient for Attestation Token"
+    )]
+    #[account(10, name = "token_program")]
+    CloseTokenizedAttestation {},
 }
