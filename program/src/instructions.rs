@@ -229,8 +229,8 @@ pub enum AttestationServiceInstruction {
     #[account(
         9,
         writable,
-        name = "recipient_token_account",
-        desc = "Associated token account of Recipient for Attestation Token"
+        name = "attestation_token_account",
+        desc = "Associated token account of the related Attestation Token"
     )]
     #[account(10, name = "token_program")]
     CloseTokenizedAttestation {},

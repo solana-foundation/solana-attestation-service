@@ -50,7 +50,9 @@ export type CloseTokenizedAttestationInstruction<
   TAccountAttestationProgram extends string | IAccountMeta<string> = string,
   TAccountAttestationMint extends string | IAccountMeta<string> = string,
   TAccountSasPda extends string | IAccountMeta<string> = string,
-  TAccountRecipientTokenAccount extends string | IAccountMeta<string> = string,
+  TAccountAttestationTokenAccount extends
+    | string
+    | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -88,9 +90,9 @@ export type CloseTokenizedAttestationInstruction<
       TAccountSasPda extends string
         ? ReadonlyAccount<TAccountSasPda>
         : TAccountSasPda,
-      TAccountRecipientTokenAccount extends string
-        ? WritableAccount<TAccountRecipientTokenAccount>
-        : TAccountRecipientTokenAccount,
+      TAccountAttestationTokenAccount extends string
+        ? WritableAccount<TAccountAttestationTokenAccount>
+        : TAccountAttestationTokenAccount,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -138,7 +140,7 @@ export type CloseTokenizedAttestationInput<
   TAccountAttestationProgram extends string = string,
   TAccountAttestationMint extends string = string,
   TAccountSasPda extends string = string,
-  TAccountRecipientTokenAccount extends string = string,
+  TAccountAttestationTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   payer: TransactionSigner<TAccountPayer>;
@@ -153,8 +155,8 @@ export type CloseTokenizedAttestationInput<
   attestationMint: Address<TAccountAttestationMint>;
   /** Program derived address used as program signer authority */
   sasPda: Address<TAccountSasPda>;
-  /** Associated token account of Recipient for Attestation Token */
-  recipientTokenAccount: Address<TAccountRecipientTokenAccount>;
+  /** Associated token account of the related Attestation Token */
+  attestationTokenAccount: Address<TAccountAttestationTokenAccount>;
   tokenProgram?: Address<TAccountTokenProgram>;
 };
 
@@ -168,7 +170,7 @@ export function getCloseTokenizedAttestationInstruction<
   TAccountAttestationProgram extends string,
   TAccountAttestationMint extends string,
   TAccountSasPda extends string,
-  TAccountRecipientTokenAccount extends string,
+  TAccountAttestationTokenAccount extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends
     Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
@@ -183,7 +185,7 @@ export function getCloseTokenizedAttestationInstruction<
     TAccountAttestationProgram,
     TAccountAttestationMint,
     TAccountSasPda,
-    TAccountRecipientTokenAccount,
+    TAccountAttestationTokenAccount,
     TAccountTokenProgram
   >,
   config?: { programAddress?: TProgramAddress }
@@ -198,7 +200,7 @@ export function getCloseTokenizedAttestationInstruction<
   TAccountAttestationProgram,
   TAccountAttestationMint,
   TAccountSasPda,
-  TAccountRecipientTokenAccount,
+  TAccountAttestationTokenAccount,
   TAccountTokenProgram
 > {
   // Program address.
@@ -219,8 +221,8 @@ export function getCloseTokenizedAttestationInstruction<
     },
     attestationMint: { value: input.attestationMint ?? null, isWritable: true },
     sasPda: { value: input.sasPda ?? null, isWritable: false },
-    recipientTokenAccount: {
-      value: input.recipientTokenAccount ?? null,
+    attestationTokenAccount: {
+      value: input.attestationTokenAccount ?? null,
       isWritable: true,
     },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -252,7 +254,7 @@ export function getCloseTokenizedAttestationInstruction<
       getAccountMeta(accounts.attestationProgram),
       getAccountMeta(accounts.attestationMint),
       getAccountMeta(accounts.sasPda),
-      getAccountMeta(accounts.recipientTokenAccount),
+      getAccountMeta(accounts.attestationTokenAccount),
       getAccountMeta(accounts.tokenProgram),
     ],
     programAddress,
@@ -268,7 +270,7 @@ export function getCloseTokenizedAttestationInstruction<
     TAccountAttestationProgram,
     TAccountAttestationMint,
     TAccountSasPda,
-    TAccountRecipientTokenAccount,
+    TAccountAttestationTokenAccount,
     TAccountTokenProgram
   >;
 
@@ -293,8 +295,8 @@ export type ParsedCloseTokenizedAttestationInstruction<
     attestationMint: TAccountMetas[7];
     /** Program derived address used as program signer authority */
     sasPda: TAccountMetas[8];
-    /** Associated token account of Recipient for Attestation Token */
-    recipientTokenAccount: TAccountMetas[9];
+    /** Associated token account of the related Attestation Token */
+    attestationTokenAccount: TAccountMetas[9];
     tokenProgram: TAccountMetas[10];
   };
   data: CloseTokenizedAttestationInstructionData;
@@ -330,7 +332,7 @@ export function parseCloseTokenizedAttestationInstruction<
       attestationProgram: getNextAccount(),
       attestationMint: getNextAccount(),
       sasPda: getNextAccount(),
-      recipientTokenAccount: getNextAccount(),
+      attestationTokenAccount: getNextAccount(),
       tokenProgram: getNextAccount(),
     },
     data: getCloseTokenizedAttestationInstructionDataDecoder().decode(

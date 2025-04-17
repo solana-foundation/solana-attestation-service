@@ -651,11 +651,11 @@
           ]
         },
         {
-          "name": "recipientTokenAccount",
+          "name": "attestationTokenAccount",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Associated token account of Recipient for Attestation Token"
+            "Associated token account of the related Attestation Token"
           ]
         },
         {
