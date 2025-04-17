@@ -118,7 +118,6 @@ async fn close_attestation_success() {
         &[
             b"attestation",
             &credential.to_bytes(),
-            &authority.pubkey().to_bytes(),
             &schema.to_bytes(),
             &nonce.to_bytes(),
         ],

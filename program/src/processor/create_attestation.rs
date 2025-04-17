@@ -70,7 +70,6 @@ pub fn process_create_attestation(
         &[
             ATTESTATION_SEED,
             credential_info.key(),
-            authorized_signer.key(),
             schema_info.key(),
             nonce,
         ],
@@ -98,7 +97,6 @@ pub fn process_create_attestation(
     let signer_seeds = [
         Seed::from(ATTESTATION_SEED),
         Seed::from(credential_info.key()),
-        Seed::from(authorized_signer.key()),
         Seed::from(schema_info.key()),
         Seed::from(nonce),
         Seed::from(&bump_seed),
