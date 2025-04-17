@@ -45,7 +45,7 @@ impl AccountSerialize for Attestation {
         data.extend_from_slice(self.data.as_ref());
         data.extend_from_slice(self.signer.as_ref());
         data.extend_from_slice(&self.expiry.to_le_bytes());
-        data.extend_from_slice(&self.token_account.as_ref());
+        data.extend_from_slice(self.token_account.as_ref());
 
         data
     }
