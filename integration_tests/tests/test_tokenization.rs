@@ -21,7 +21,8 @@ use spl_token_2022::{
     extension::{
         group_member_pointer::GroupMemberPointer, group_pointer::GroupPointer,
         metadata_pointer::MetadataPointer, non_transferable::NonTransferable,
-        BaseStateWithExtensions, ExtensionType, StateWithExtensions,
+        permanent_delegate::PermanentDelegate, BaseStateWithExtensions, ExtensionType,
+        StateWithExtensions,
     },
     state::{Account, Mint},
     ID as TOKEN_2022_PROGRAM_ID,
@@ -256,7 +257,7 @@ async fn create_tokenized_attestation_success() {
     let name = "Test Asset".to_string();
     let uri = "https://x.com".to_string();
     let symbol = "VAT".to_string();
-    let mint_account_space = 620;
+    let mint_account_space = 686;
     let create_attestation_ix = CreateTokenizedAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
         .authority(authority.pubkey())
@@ -344,6 +345,10 @@ async fn create_tokenized_attestation_success() {
     assert_eq!(token_group_member.mint, attestation_mint_pda);
     assert_eq!(token_group_member.group, schema_mint_pda);
     assert_eq!(u64::from(token_group_member.member_number), 1);
+
+    // Verify the Permanent Delegate extension.
+    let permanent_delegate = mint_state.get_extension::<PermanentDelegate>().unwrap();
+    assert_eq!(permanent_delegate.delegate.0, sas_pda);
 
     // Verify the MetadataPointer extension.
     let metadata_pointer = mint_state.get_extension::<MetadataPointer>().unwrap();

@@ -16,6 +16,7 @@ use pinocchio_token::{
         metadata::{Field, InitializeTokenMetadata, UpdateField},
         metadata_pointer::Initialize as InitializeMetadataPointer,
         non_transferable::InitializeNonTransferableMint,
+        permanent_delegate::InitializePermanentDelegate,
         token_group::InitializeMember,
     },
     instructions::{InitializeMint2, MintToChecked, TokenProgramVariant},
@@ -98,7 +99,7 @@ pub fn process_create_tokenized_attestation(
     create_pda_account(
         payer_info,
         &Rent::get()?,
-        306, // Size before TokenGroupMember and TokenMetadata Extension
+        342, // Size before Token extensions after InitializeMint2
         &TOKEN_2022_PROGRAM_ID,
         attestation_mint_info,
         [
@@ -130,6 +131,13 @@ pub fn process_create_tokenized_attestation(
         mint: attestation_mint_info,
         authority: Some(*sas_pda_info.key()),
         metadata_address: Some(*attestation_mint_info.key()),
+    }
+    .invoke()?;
+
+    // Initialize Permanent Delegate extension
+    InitializePermanentDelegate {
+        mint: attestation_mint_info,
+        delegate: *sas_pda_info.key(),
     }
     .invoke()?;
 
