@@ -11,7 +11,7 @@ use super::{
     SchemaDataTypes,
 };
 
-// PDA ["attestation", credential, signer, schema, nonce]
+// PDA ["attestation", credential, schema, nonce]
 #[derive(Clone, Debug, PartialEq, ShankAccount)]
 #[repr(C)]
 pub struct Attestation {

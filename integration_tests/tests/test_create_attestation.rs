@@ -121,7 +121,6 @@ async fn create_attestation_success() {
         &[
             b"attestation",
             &credential.to_bytes(),
-            &authority.pubkey().to_bytes(),
             &schema.to_bytes(),
             &nonce.to_bytes(),
         ],
@@ -192,7 +191,6 @@ async fn create_attestation_fail_bad_data() {
         &[
             b"attestation",
             &credential.to_bytes(),
-            &authority.pubkey().to_bytes(),
             &schema.to_bytes(),
             &nonce.to_bytes(),
         ],

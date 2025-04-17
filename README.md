@@ -25,7 +25,7 @@ Generate IDL
 ```
 shank idl -r program -o idl
 // OR
-yarn generate-idl
+pnpm run generate-idl
 ```
 
 ## Generating Clients
