@@ -20,9 +20,9 @@ use spl_associated_token_account::{
 use spl_token_2022::{
     extension::{
         group_member_pointer::GroupMemberPointer, group_pointer::GroupPointer,
-        metadata_pointer::MetadataPointer, non_transferable::NonTransferable,
-        permanent_delegate::PermanentDelegate, BaseStateWithExtensions, ExtensionType,
-        StateWithExtensions,
+        metadata_pointer::MetadataPointer, mint_close_authority::MintCloseAuthority,
+        non_transferable::NonTransferable, permanent_delegate::PermanentDelegate,
+        BaseStateWithExtensions, ExtensionType, StateWithExtensions,
     },
     state::{Account, Mint},
     ID as TOKEN_2022_PROGRAM_ID,
@@ -349,6 +349,10 @@ async fn create_tokenized_attestation_success() {
     // Verify the Permanent Delegate extension.
     let permanent_delegate = mint_state.get_extension::<PermanentDelegate>().unwrap();
     assert_eq!(permanent_delegate.delegate.0, sas_pda);
+
+    // Verify the Mint Close extension.
+    let close_authority = mint_state.get_extension::<MintCloseAuthority>().unwrap();
+    assert_eq!(close_authority.close_authority.0, sas_pda);
 
     // Verify the MetadataPointer extension.
     let metadata_pointer = mint_state.get_extension::<MetadataPointer>().unwrap();
