@@ -27,6 +27,8 @@ pub struct Attestation {
     pub signer: Pubkey,
     /// Designates when the credential is expired. 0 means never expired
     pub expiry: i64,
+    /// The pubkey of Attestation token account if created. Otherwise set to default pubkey.
+    pub token_account: Pubkey,
 }
 
 impl Discriminator for Attestation {
@@ -43,6 +45,7 @@ impl AccountSerialize for Attestation {
         data.extend_from_slice(self.data.as_ref());
         data.extend_from_slice(self.signer.as_ref());
         data.extend_from_slice(&self.expiry.to_le_bytes());
+        data.extend_from_slice(self.token_account.as_ref());
 
         data
     }
@@ -180,6 +183,9 @@ impl Attestation {
         offset += 32;
 
         let expiry = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
+        offset += 8;
+
+        let token_account: Pubkey = data[offset..offset + 32].try_into().unwrap();
 
         Ok(Self {
             nonce,
@@ -188,6 +194,7 @@ impl Attestation {
             data: attestation_data,
             signer,
             expiry,
+            token_account,
         })
     }
 }
@@ -207,6 +214,7 @@ mod tests {
             data: Vec::new(),
             signer: Pubkey::default(),
             expiry: 0,
+            token_account: Pubkey::default(),
         };
 
         // u8

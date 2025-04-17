@@ -23,6 +23,8 @@ pub enum AttestationServiceError {
     InvalidMint,
     // Incorrect Program Signer
     InvalidProgramSigner,
+    // Incorrect Token Account
+    InvalidTokenAccount,
 }
 
 impl From<AttestationServiceError> for ProgramError {

@@ -20,7 +20,11 @@ use super::{
 };
 
 #[inline(always)]
-pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
+pub fn process_close_attestation(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    token_account: Option<Pubkey>,
+) -> ProgramResult {
     let [payer_info, authorized_signer, credential_info, attestation_info, event_authority_info, system_program, attestation_program] =
         accounts
     else {
@@ -48,6 +52,15 @@ pub fn process_close_attestation(program_id: &Pubkey, accounts: &[AccountInfo]) 
     let attestation_data = attestation_info.try_borrow_data()?;
     let attestation = Attestation::try_from_bytes(&attestation_data)?;
     drop(attestation_data); // Drop immutable borrow.
+
+    // Verify token_account matches address in Attestation
+    if let Some(token_account) = token_account {
+        if token_account.ne(&attestation.token_account) {
+            return Err(AttestationServiceError::InvalidTokenAccount.into());
+        }
+    } else if attestation.token_account.ne(&Pubkey::default()) {
+        return Err(AttestationServiceError::InvalidTokenAccount.into());
+    }
 
     // Check that credential matches attestation's.
     if !attestation.credential.eq(credential_info.key()) {
