@@ -2785,13 +2785,13 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pinocchio"
-version = "0.8.0"
-source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#d32deeefb1b7f5c0067c93acb4c7d0d728db8547"
+version = "0.8.3"
+source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#063c9c20c3c43ea9c2457e24ab12a2b93c7faed7"
 
 [[package]]
 name = "pinocchio-associated-token-account"
 version = "0.1.1"
-source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#d32deeefb1b7f5c0067c93acb4c7d0d728db8547"
+source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#063c9c20c3c43ea9c2457e24ab12a2b93c7faed7"
 dependencies = [
  "pinocchio",
  "pinocchio-pubkey",
@@ -2800,15 +2800,15 @@ dependencies = [
 [[package]]
 name = "pinocchio-log"
 version = "0.4.0"
-source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#d32deeefb1b7f5c0067c93acb4c7d0d728db8547"
+source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#063c9c20c3c43ea9c2457e24ab12a2b93c7faed7"
 dependencies = [
  "pinocchio-log-macro",
 ]
 
 [[package]]
 name = "pinocchio-log-macro"
-version = "0.4.0"
-source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#d32deeefb1b7f5c0067c93acb4c7d0d728db8547"
+version = "0.4.1"
+source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#063c9c20c3c43ea9c2457e24ab12a2b93c7faed7"
 dependencies = [
  "quote",
  "regex",
@@ -2818,7 +2818,7 @@ dependencies = [
 [[package]]
 name = "pinocchio-pubkey"
 version = "0.2.4"
-source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#d32deeefb1b7f5c0067c93acb4c7d0d728db8547"
+source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#063c9c20c3c43ea9c2457e24ab12a2b93c7faed7"
 dependencies = [
  "five8_const",
  "pinocchio",
@@ -2826,8 +2826,8 @@ dependencies = [
 
 [[package]]
 name = "pinocchio-system"
-version = "0.2.2"
-source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#d32deeefb1b7f5c0067c93acb4c7d0d728db8547"
+version = "0.2.3"
+source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#063c9c20c3c43ea9c2457e24ab12a2b93c7faed7"
 dependencies = [
  "pinocchio",
  "pinocchio-pubkey",
@@ -2836,7 +2836,7 @@ dependencies = [
 [[package]]
 name = "pinocchio-token"
 version = "0.3.0"
-source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#d32deeefb1b7f5c0067c93acb4c7d0d728db8547"
+source = "git+https://github.com/Nagaprasadvr/pinocchio?branch=feat-add-token-extensions#063c9c20c3c43ea9c2457e24ab12a2b93c7faed7"
 dependencies = [
  "pinocchio",
  "pinocchio-pubkey",

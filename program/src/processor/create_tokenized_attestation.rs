@@ -15,7 +15,9 @@ use pinocchio_token::{
         group_member_pointer::Initialize as InitializeGroupMemberPointer,
         metadata::{Field, InitializeTokenMetadata, UpdateField},
         metadata_pointer::Initialize as InitializeMetadataPointer,
+        mint_close_authority::InitializeMintCloseAuthority,
         non_transferable::InitializeNonTransferableMint,
+        permanent_delegate::InitializePermanentDelegate,
         token_group::InitializeMember,
     },
     instructions::{InitializeMint2, MintToChecked, TokenProgramVariant},
@@ -39,14 +41,19 @@ pub fn process_create_tokenized_attestation(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    // Create Attestation first
-    process_create_attestation(program_id, &accounts[0..6], instruction_data)?;
-
     let [payer_info, _authorized_signer, _credential_info, schema_info, attestation_info, system_program, schema_mint_info, attestation_mint_info, sas_pda_info, recipient_token_account_info, recipient_info, token_program, ata_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
+
+    // Create Attestation first
+    process_create_attestation(
+        program_id,
+        &accounts[0..6],
+        instruction_data,
+        Some(*recipient_token_account_info.key()),
+    )?;
 
     // Validate: should be owned by system account, empty, and writable
     verify_system_account(recipient_token_account_info, true)?;
@@ -98,7 +105,7 @@ pub fn process_create_tokenized_attestation(
     create_pda_account(
         payer_info,
         &Rent::get()?,
-        306, // Size before TokenGroupMember and TokenMetadata Extension
+        378, // Size before Token extensions after InitializeMint2
         &TOKEN_2022_PROGRAM_ID,
         attestation_mint_info,
         [
@@ -130,6 +137,20 @@ pub fn process_create_tokenized_attestation(
         mint: attestation_mint_info,
         authority: Some(*sas_pda_info.key()),
         metadata_address: Some(*attestation_mint_info.key()),
+    }
+    .invoke()?;
+
+    // Initialize Permanent Delegate extension
+    InitializePermanentDelegate {
+        mint: attestation_mint_info,
+        delegate: *sas_pda_info.key(),
+    }
+    .invoke()?;
+
+    // Initialize Mint Close extension
+    InitializeMintCloseAuthority {
+        mint: attestation_mint_info,
+        close_authority: Some(*sas_pda_info.key()),
     }
     .invoke()?;
 

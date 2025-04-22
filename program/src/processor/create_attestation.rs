@@ -23,6 +23,7 @@ pub fn process_create_attestation(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
     instruction_data: &[u8],
+    token_account: Option<Pubkey>,
 ) -> ProgramResult {
     let [payer_info, authorized_signer, credential_info, schema_info, attestation_info, system_program] =
         accounts
@@ -91,7 +92,8 @@ pub fn process_create_attestation(
     // data - 4 + len
     // signer - 32
     // expiry - 8
-    let space = 1 + 32 + 32 + 32 + (4 + data.len()) + 32 + 8;
+    // token account - 32
+    let space = 1 + 32 + 32 + 32 + (4 + data.len()) + 32 + 8 + 32;
 
     let bump_seed = [attestation_bump];
     let signer_seeds = [
@@ -120,6 +122,7 @@ pub fn process_create_attestation(
         data: data.to_vec(),
         signer: *authorized_signer.key(),
         expiry,
+        token_account: token_account.unwrap_or(Pubkey::default()),
     };
 
     // Validate the Attestation data matches the layout of the Schema
