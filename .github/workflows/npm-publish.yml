@@ -1,0 +1,46 @@
+name: NPM Publish
+
+on:
+  push:
+    branches:
+      - master
+      
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.10.0
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        shell: bash
+        run: pnpm install
+
+      - name: Build
+        shell: bash
+        run: pnpm build
+
+      - name: Configure NPM token
+        run: |
+          pnpm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create Changesets Pull Request or Trigger an NPM Publish
+        uses: changesets/action@v1
+        with:
+          publish: 'pnpm publish'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
