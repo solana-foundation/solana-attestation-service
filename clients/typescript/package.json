@@ -1,0 +1,6 @@
+{
+  "name": "sas-lib",
+  "version": "1.0.0",
+  "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
+  "main": "index.ts"
+}

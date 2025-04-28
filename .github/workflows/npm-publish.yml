@@ -1,35 +1,30 @@
 name: NPM Publish
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
         with:
           version: 9.10.0
 
-      - name: Setup node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
-          cache: "pnpm"
+          node-version: 'lts/*'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        shell: bash
         run: pnpm install
 
-      - name: Configure NPM token
-        run: |
-          pnpm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+      - name: Publish TypeScript Client (sas-lib)
+        working-directory: clients/typescript
+        run: pnpm publish --no-git-checks --access public
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
