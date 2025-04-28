@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      
 
 jobs:
   build-and-publish:
@@ -21,8 +20,8 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
-          cache: 'pnpm'
+          node-version: "lts/*"
+          cache: "pnpm"
 
       - name: Install dependencies
         shell: bash
@@ -34,9 +33,3 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create Changesets Pull Request or Trigger an NPM Publish
-        uses: changesets/action@v1
-        with:
-          publish: 'pnpm publish'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
