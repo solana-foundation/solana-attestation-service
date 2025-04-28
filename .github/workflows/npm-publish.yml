@@ -7,43 +7,27 @@ on:
       - master
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
         with:
           version: 9.10.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 'lts'
-      - name: Install dependencies
-        run: pnpm install
-      - name: Build
-        run: pnpm build
-        working-directory: ./clients/typescript
 
-  changesets:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 9.10.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 'lts'
+          node-version: 'lts/*'
+          cache: 'pnpm'
+
       - name: Install dependencies
         run: pnpm install
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: pnpm publish --no-git-checks
-          commit: "chore: version packages"
-          title: "chore: version packages"
+
+      - name: Generate TypeScript Client
+        run: pnpm run generate-clients
+
+      - name: Publish TypeScript Client (sas-lib)
+        working-directory: clients/typescript
+        run: pnpm publish --no-git-checks --access public
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-

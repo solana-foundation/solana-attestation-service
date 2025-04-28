@@ -2,7 +2,7 @@
   "name": "solana-attestation-service",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "git@github.com:exo-tech-xyz/solana-attestation-service.git",
+  "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
   "author": "Taylor123 <nftaylor11@gmail.com>",
   "license": "MIT",
   "scripts": {
