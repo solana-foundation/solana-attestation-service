@@ -23,8 +23,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Configure NPM token
+        run: |
+          pnpm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish TypeScript Client (sas-lib)
         working-directory: clients/typescript
         run: pnpm publish --no-git-checks --access public
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
