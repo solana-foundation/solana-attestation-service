@@ -9,4 +9,4 @@ use solana_program::{pubkey, pubkey::Pubkey};
 
 /// `solana_attestation_service` program ID.
 pub const SOLANA_ATTESTATION_SERVICE_ID: Pubkey =
-    pubkey!("DXaNS83fJzVYxaVzjeEQCp5p1txfU4fZPUcBR1X2p76o");
+    pubkey!("FJ8myMh9dRcgc2n8xBrWTbCrFYAbHQZCPtMzhhmvNo4M");
