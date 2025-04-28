@@ -60,9 +60,7 @@
           "name": "credential",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         },
         {
           "name": "schema",
@@ -112,17 +110,13 @@
           "name": "credential",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         },
         {
           "name": "schema",
           "isMut": true,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         }
       ],
       "args": [
@@ -153,9 +147,7 @@
           "name": "credential",
           "isMut": true,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         },
         {
           "name": "systemProgram",
@@ -188,17 +180,13 @@
           "name": "credential",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         },
         {
           "name": "schema",
           "isMut": true,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         },
         {
           "name": "systemProgram",
@@ -234,9 +222,7 @@
           "name": "credential",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         },
         {
           "name": "existingSchema",
@@ -283,25 +269,19 @@
           "name": "authority",
           "isMut": false,
           "isSigner": true,
-          "docs": [
-            "Authorized signer of the Schema's Credential"
-          ]
+          "docs": ["Authorized signer of the Schema's Credential"]
         },
         {
           "name": "credential",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         },
         {
           "name": "schema",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Schema the Attestation is associated with"
-          ]
+          "docs": ["Schema the Attestation is associated with"]
         },
         {
           "name": "attestation",
@@ -345,9 +325,7 @@
           "name": "authority",
           "isMut": false,
           "isSigner": true,
-          "docs": [
-            "Authorized signer of the Schema's Credential"
-          ]
+          "docs": ["Authorized signer of the Schema's Credential"]
         },
         {
           "name": "credential",
@@ -418,9 +396,7 @@
           "name": "credential",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         },
         {
           "name": "schema",
@@ -431,17 +407,13 @@
           "name": "mint",
           "isMut": true,
           "isSigner": false,
-          "docs": [
-            "Mint of Schema Token"
-          ]
+          "docs": ["Mint of Schema Token"]
         },
         {
           "name": "sasPda",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Program derived address used as program signer authority"
-          ]
+          "docs": ["Program derived address used as program signer authority"]
         },
         {
           "name": "systemProgram",
@@ -477,25 +449,19 @@
           "name": "authority",
           "isMut": false,
           "isSigner": true,
-          "docs": [
-            "Authorized signer of the Schema's Credential"
-          ]
+          "docs": ["Authorized signer of the Schema's Credential"]
         },
         {
           "name": "credential",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
+          "docs": ["Credential the Schema is associated with"]
         },
         {
           "name": "schema",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Schema the Attestation is associated with"
-          ]
+          "docs": ["Schema the Attestation is associated with"]
         },
         {
           "name": "attestation",
@@ -511,25 +477,19 @@
           "name": "schemaMint",
           "isMut": true,
           "isSigner": false,
-          "docs": [
-            "Mint of Schema Token"
-          ]
+          "docs": ["Mint of Schema Token"]
         },
         {
           "name": "attestationMint",
           "isMut": true,
           "isSigner": false,
-          "docs": [
-            "Mint of Attestation Token"
-          ]
+          "docs": ["Mint of Attestation Token"]
         },
         {
           "name": "sasPda",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Program derived address used as program signer authority"
-          ]
+          "docs": ["Program derived address used as program signer authority"]
         },
         {
           "name": "recipientTokenAccount",
@@ -543,9 +503,7 @@
           "name": "recipient",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Wallet to receive Attestation Token"
-          ]
+          "docs": ["Wallet to receive Attestation Token"]
         },
         {
           "name": "tokenProgram",
@@ -605,9 +563,7 @@
           "name": "authority",
           "isMut": false,
           "isSigner": true,
-          "docs": [
-            "Authorized signer of the Schema's Credential"
-          ]
+          "docs": ["Authorized signer of the Schema's Credential"]
         },
         {
           "name": "credential",
@@ -638,25 +594,19 @@
           "name": "attestationMint",
           "isMut": true,
           "isSigner": false,
-          "docs": [
-            "Mint of Attestation Token"
-          ]
+          "docs": ["Mint of Attestation Token"]
         },
         {
           "name": "sasPda",
           "isMut": false,
           "isSigner": false,
-          "docs": [
-            "Program derived address used as program signer authority"
-          ]
+          "docs": ["Program derived address used as program signer authority"]
         },
         {
           "name": "attestationTokenAccount",
           "isMut": true,
           "isSigner": false,
-          "docs": [
-            "Associated token account of the related Attestation Token"
-          ]
+          "docs": ["Associated token account of the related Attestation Token"]
         },
         {
           "name": "tokenProgram",
@@ -791,6 +741,7 @@
   ],
   "metadata": {
     "origin": "shank",
-    "address": "DXaNS83fJzVYxaVzjeEQCp5p1txfU4fZPUcBR1X2p76o"
+    "address": "FJ8myMh9dRcgc2n8xBrWTbCrFYAbHQZCPtMzhhmvNo4M"
   }
 }
+
