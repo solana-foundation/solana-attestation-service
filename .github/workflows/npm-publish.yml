@@ -23,9 +23,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Generate TypeScript Client
-        run: pnpm run generate-clients
-
       - name: Publish TypeScript Client (sas-lib)
         working-directory: clients/typescript
         run: pnpm publish --no-git-checks --access public
