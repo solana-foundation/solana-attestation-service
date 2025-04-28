@@ -28,10 +28,6 @@ jobs:
         shell: bash
         run: pnpm install
 
-      - name: Build
-        shell: bash
-        run: pnpm build
-
       - name: Configure NPM token
         run: |
           pnpm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
