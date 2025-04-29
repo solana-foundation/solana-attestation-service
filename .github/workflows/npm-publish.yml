@@ -16,10 +16,16 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: 'pnpm'
-          registry-url: 'https://registry.npmjs.org/'
-      - name: Install dependencies
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install root dependencies
         run: pnpm install
-      - name: Publish TypeScript Client (sas-lib)
+      - name: Install TypeScript client dependencies
+        working-directory: clients/typescript
+        run: pnpm install
+      - name: Build client
+        working-directory: clients/typescript
+        run: pnpm build
+      - name: Publish client
         working-directory: clients/typescript
         run: pnpm publish --no-git-checks --access public
         env:

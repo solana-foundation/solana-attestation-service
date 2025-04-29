@@ -1,7 +1,21 @@
 {
   "name": "sas-lib",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
-  "main": "src/generated/index.ts"
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@solana/kit": "^2.1.0",
+    "bn.js": "^5.2.1"
+  }
 }
-

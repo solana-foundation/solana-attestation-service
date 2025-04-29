@@ -15,21 +15,29 @@ const typescriptClientsDir = path.join(
   "typescript",
 );
 
-// Function to preserve package.json
-function preservePackageJson() {
-  const packageJsonPath = path.join(typescriptClientsDir, "package.json");
-  const tempPackageJsonPath = path.join(typescriptClientsDir, "package.json.temp");
+function preserveConfigFiles() {
+  const filesToPreserve = ['package.json', 'tsconfig.json', '.npmignore'];
+  const preservedFiles = new Map();
   
-  if (fs.existsSync(packageJsonPath)) {
-    fs.copyFileSync(packageJsonPath, tempPackageJsonPath);
-  }
+  filesToPreserve.forEach(filename => {
+    const filePath = path.join(typescriptClientsDir, filename);
+    const tempPath = path.join(typescriptClientsDir, `${filename}.temp`);
+    
+    if (fs.existsSync(filePath)) {
+      fs.copyFileSync(filePath, tempPath);
+      preservedFiles.set(filename, tempPath);
+    }
+  });
   
   return {
     restore: () => {
-      if (fs.existsSync(tempPackageJsonPath)) {
-        fs.copyFileSync(tempPackageJsonPath, packageJsonPath);
-        fs.unlinkSync(tempPackageJsonPath);
-      }
+      preservedFiles.forEach((tempPath, filename) => {
+        const filePath = path.join(typescriptClientsDir, filename);
+        if (fs.existsSync(tempPath)) {
+          fs.copyFileSync(tempPath, filePath);
+          fs.unlinkSync(tempPath);
+        }
+      });
     }
   };
 }
@@ -61,8 +69,7 @@ sasCodama.update(
   ]),
 );
 
-// Preserve package.json before Rust client generation
-const packageJsonPreserver = preservePackageJson();
+const configPreserver = preserveConfigFiles();
 
 sasCodama.accept(
   renderers.renderRustVisitor(path.join(rustClientsDir, "src", "generated"), {
@@ -83,5 +90,5 @@ sasCodama.accept(
   ),
 );
 
-// Restore package.json after generation
-packageJsonPreserver.restore();
+// Restore configuration files after generation
+configPreserver.restore();

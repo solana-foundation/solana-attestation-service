@@ -1,3 +1,4 @@
 /target
 *keypair.json
 node_modules
+dist/
