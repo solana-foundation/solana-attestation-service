@@ -12,4 +12,4 @@ pub mod state;
 #[cfg(not(feature = "no-entrypoint"))]
 pub mod entrypoint;
 
-pinocchio_pubkey::declare_id!("DXaNS83fJzVYxaVzjeEQCp5p1txfU4fZPUcBR1X2p76o");
+pinocchio_pubkey::declare_id!("FJ8myMh9dRcgc2n8xBrWTbCrFYAbHQZCPtMzhhmvNo4M");
