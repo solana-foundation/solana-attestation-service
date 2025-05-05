@@ -36,6 +36,8 @@ pub fn process_create_schema(
     verify_system_program(system_program)?;
 
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
+    // Verify PDA and that signer matches credential authority.
+    credential.verify_pda(credential_info, program_id)?;
     // Verify signer matches credential authority.
     if credential.authority.ne(authority_info.key()) {
         return Err(ProgramError::IncorrectAuthority);
