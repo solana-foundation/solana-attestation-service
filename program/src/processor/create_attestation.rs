@@ -54,6 +54,11 @@ pub fn process_create_attestation(
     // Validate Schema PDA
     schema.verify_pda(schema_info, program_id)?;
 
+    // Validate Schema is not paused
+    if schema.is_paused {
+        return Err(AttestationServiceError::SchemaPaused.into());
+    }
+
     // Validate Schema is owned by Credential
     if schema.credential.ne(credential_info.key()) {
         return Err(AttestationServiceError::InvalidCredential.into());
