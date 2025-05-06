@@ -5,7 +5,7 @@ use pinocchio::{
     instruction::Seed,
     program_error::ProgramError,
     pubkey::Pubkey,
-    sysvars::{rent::Rent, Sysvar},
+    sysvars::{clock::Clock, rent::Rent, Sysvar},
     ProgramResult,
 };
 use solana_program::pubkey::Pubkey as SolanaPubkey;
@@ -68,6 +68,12 @@ pub fn process_create_attestation(
     let nonce = args.nonce()?;
     let data = args.data()?;
     let expiry = args.expiry()?;
+
+    // Validate expiry is greater than current timestamp
+    let clock = Clock::get()?;
+    if expiry < clock.unix_timestamp {
+        return Err(AttestationServiceError::InvalidAttestationData.into());
+    }
 
     // NOTE: this could be optimized further by removing the `solana-program` dependency
     // and using `pubkey::checked_create_program_address` from Pinocchio to verify the

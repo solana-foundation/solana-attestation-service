@@ -10,12 +10,7 @@ use solana_attestation_service_client::{
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
-    instruction::InstructionError,
-    pubkey::Pubkey,
-    signature::Keypair,
-    signer::Signer,
-    system_program,
-    transaction::{Transaction, TransactionError},
+    clock::Clock, instruction::InstructionError, pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::{Transaction, TransactionError}
 };
 
 mod helpers;
@@ -114,7 +109,8 @@ async fn create_attestation_success() {
         name: "attest".to_string(),
         location: 11,
     };
-    let expiry: i64 = 1000;
+    let clock: Clock = ctx.banks_client.get_sysvar().await.unwrap();
+    let expiry: i64 = clock.unix_timestamp + 60;
     let mut serialized_attestation_data = Vec::new();
     attestation_data
         .serialize(&mut serialized_attestation_data)

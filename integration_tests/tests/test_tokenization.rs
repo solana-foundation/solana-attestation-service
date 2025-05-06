@@ -11,7 +11,7 @@ use solana_attestation_service_client::{
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
-    program_option::COption, program_pack::Pack, pubkey::Pubkey, signature::Keypair,
+    clock::Clock, program_option::COption, program_pack::Pack, pubkey::Pubkey, signature::Keypair,
     signer::Signer, system_program, transaction::Transaction,
 };
 use spl_associated_token_account::{
@@ -281,7 +281,8 @@ async fn create_tokenized_attestation_success() {
         .await
         .unwrap();
 
-    let expiry: i64 = 1000;
+    let clock: Clock = ctx.banks_client.get_sysvar().await.unwrap();
+    let expiry: i64 = clock.unix_timestamp + 60;
     let name = "Test Asset".to_string();
     let uri = "https://x.com".to_string();
     let symbol = "VAT".to_string();
@@ -449,7 +450,8 @@ async fn close_tokenized_attestation_success() {
         .token_program(TOKEN_2022_PROGRAM_ID)
         .instruction();
 
-    let expiry: i64 = 1000;
+    let clock: Clock = ctx.banks_client.get_sysvar().await.unwrap();
+    let expiry: i64 = clock.unix_timestamp + 60;
     let name = "Test Asset".to_string();
     let uri = "https://x.com".to_string();
     let symbol = "VAT".to_string();
@@ -575,7 +577,8 @@ async fn update_tokenized_attestation_success() {
         .token_program(TOKEN_2022_PROGRAM_ID)
         .instruction();
 
-    let expiry: i64 = 1000;
+    let clock: Clock = ctx.banks_client.get_sysvar().await.unwrap();
+    let expiry: i64 = clock.unix_timestamp + 60;
     let name = "Test Asset".to_string();
     let uri = "https://x.com".to_string();
     let symbol = "VAT".to_string();
