@@ -53,6 +53,11 @@ pub fn process_change_schema_version(
     let existing_schema_data = existing_schema_info.try_borrow_data()?;
     let existing_schema = Schema::try_from_bytes(&existing_schema_data)?;
 
+    // Verify that existing schema is under the same credential.
+    if existing_schema.credential.ne(credential_info.key()) {
+        return Err(AttestationServiceError::InvalidSchema.into());
+    }
+
     let args = ChangeSchemaVersionArgs::try_from_bytes(instruction_data)?;
     let layout = args.layout()?;
     let (field_names_count, field_names_bytes) = args.field_names()?;
