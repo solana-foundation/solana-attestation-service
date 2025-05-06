@@ -62,11 +62,6 @@ pub fn process_create_tokenized_attestation(
     verify_token22_program(token_program)?;
     verify_ata_program(ata_program)?;
 
-    if recipient_info.is_writable() {
-        log!("Recipient should not be writable");
-        return Err(ProgramError::InvalidAccountData);
-    }
-
     // Validate that mint matches expected PDA
     let (attestation_mint_pda, attestation_mint_bump) = SolanaPubkey::find_program_address(
         &[ATTESTATION_MINT_SEED, attestation_info.key()],
