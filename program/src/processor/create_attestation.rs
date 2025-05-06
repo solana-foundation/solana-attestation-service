@@ -187,7 +187,7 @@ impl CreateAttestationArgs<'_> {
         // SAFETY: the `bytes` length was validated in `try_from_bytes`.
         unsafe {
             let len = self._data_len();
-            let data_bytes = core::slice::from_raw_parts(self.raw.add(36), len as usize);
+            let data_bytes = core::slice::from_raw_parts(self.raw.add(36), len);
             Ok(data_bytes)
         }
     }

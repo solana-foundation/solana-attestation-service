@@ -124,7 +124,7 @@ impl AccountSerialize for Schema {
         data.extend(&(self.field_names.len() as u32).to_le_bytes());
         data.extend_from_slice(self.field_names.as_ref());
         data.extend_from_slice(&[self.is_paused as u8]);
-        data.extend_from_slice(&[self.version as u8]);
+        data.extend_from_slice(&[self.version]);
 
         data
     }
