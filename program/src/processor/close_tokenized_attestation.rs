@@ -5,14 +5,12 @@ use pinocchio::{
     pubkey::Pubkey,
     ProgramResult,
 };
-use pinocchio_log::log;
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::{ATTESTATION_MINT_SEED, SAS_SEED},
     error::AttestationServiceError,
     processor::verify_token22_program,
-    state::Attestation,
 };
 use pinocchio_token::instructions::{BurnChecked, CloseAccount, TokenProgramVariant};
 

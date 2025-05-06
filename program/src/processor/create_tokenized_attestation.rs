@@ -9,7 +9,6 @@ use pinocchio::{
     ProgramResult,
 };
 use pinocchio_associated_token_account::instructions::Create;
-use pinocchio_log::log;
 use pinocchio_token::{
     extensions::{
         group_member_pointer::Initialize as InitializeGroupMemberPointer,
@@ -32,7 +31,7 @@ use crate::{
 };
 
 use super::{
-    create_pda_account, verify_ata_program, verify_system_account, verify_token22_program,
+    create_pda_account, verify_ata_program, verify_token22_program,
 };
 
 #[inline(always)]
@@ -55,8 +54,10 @@ pub fn process_create_tokenized_attestation(
         Some(*recipient_token_account_info.key()),
     )?;
 
-    // Validate: should be owned by system account, empty, and writable
-    verify_system_account(recipient_token_account_info, true)?;
+    // Validate Recipient TokenAccount is writable
+    if !recipient_token_account_info.is_writable() {
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     // Verify token programs.
     verify_token22_program(token_program)?;
@@ -200,16 +201,21 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
-    // Create new associated token account to hold Attestation token.
-    Create {
-        funding_account: payer_info,
-        account: recipient_token_account_info,
-        wallet: recipient_info,
-        mint: attestation_mint_info,
-        system_program,
-        token_program,
+    // Only create the ATA when the TokenAccount is owned by the System program with empty data.
+    if recipient_token_account_info.is_owned_by(&pinocchio_system::ID)
+        && recipient_token_account_info.data_is_empty()
+    {
+        // Create new associated token account to hold Attestation token.
+        Create {
+            funding_account: payer_info,
+            account: recipient_token_account_info,
+            wallet: recipient_info,
+            mint: attestation_mint_info,
+            system_program,
+            token_program,
+        }
+        .invoke()?;
     }
-    .invoke()?;
 
     // Mint to recipient token account.
     MintToChecked {
