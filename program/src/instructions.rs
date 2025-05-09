@@ -63,19 +63,20 @@ pub enum AttestationServiceInstruction {
     ChangeAuthorizedSigners { signers: Vec<Pubkey> },
 
     /// Change description on a Schema
-    #[account(0, signer, name = "authority")]
+    #[account(0, writable, signer, name = "payer")]
+    #[account(1, signer, name = "authority")]
     #[account(
-        1,
+        2,
         name = "credential",
         desc = "Credential the Schema is associated with"
     )]
     #[account(
-        2,
+        3,
         writable,
         name = "schema",
         desc = "Credential the Schema is associated with"
     )]
-    #[account(3, name = "system_program")]
+    #[account(4, name = "system_program")]
     ChangeSchemaDescription { description: String },
 
     /// Change Schema version

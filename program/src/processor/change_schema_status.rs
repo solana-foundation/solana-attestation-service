@@ -33,7 +33,6 @@ pub fn process_change_schema_status(
         .eq(&1);
 
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
-    credential.verify_pda(credential_info, program_id)?;
 
     // Verify signer matches credential authority.
     if credential.authority.ne(authority_info.key()) {
@@ -42,7 +41,6 @@ pub fn process_change_schema_status(
 
     let mut schema_data = schema_info.try_borrow_mut_data()?;
     let mut schema = Schema::try_from_bytes(&schema_data)?;
-    schema.verify_pda(schema_info, program_id)?;
 
     // Verify that schema is under the same credential.
     if schema.credential.ne(credential_info.key()) {

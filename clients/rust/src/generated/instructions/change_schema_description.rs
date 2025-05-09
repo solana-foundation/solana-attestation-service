@@ -11,6 +11,8 @@ use borsh::BorshSerialize;
 /// Accounts.
 #[derive(Debug)]
 pub struct ChangeSchemaDescription {
+    pub payer: solana_program::pubkey::Pubkey,
+
     pub authority: solana_program::pubkey::Pubkey,
     /// Credential the Schema is associated with
     pub credential: solana_program::pubkey::Pubkey,
@@ -27,14 +29,16 @@ impl ChangeSchemaDescription {
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
-    #[allow(clippy::arithmetic_side_effects)]
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
         args: ChangeSchemaDescriptionInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.payer, true,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.authority,
             true,
@@ -92,12 +96,14 @@ pub struct ChangeSchemaDescriptionInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[signer]` authority
-///   1. `[]` credential
-///   2. `[writable]` schema
-///   3. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   0. `[writable, signer]` payer
+///   1. `[signer]` authority
+///   2. `[]` credential
+///   3. `[writable]` schema
+///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct ChangeSchemaDescriptionBuilder {
+    payer: Option<solana_program::pubkey::Pubkey>,
     authority: Option<solana_program::pubkey::Pubkey>,
     credential: Option<solana_program::pubkey::Pubkey>,
     schema: Option<solana_program::pubkey::Pubkey>,
@@ -109,6 +115,11 @@ pub struct ChangeSchemaDescriptionBuilder {
 impl ChangeSchemaDescriptionBuilder {
     pub fn new() -> Self {
         Self::default()
+    }
+    #[inline(always)]
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.payer = Some(payer);
+        self
     }
     #[inline(always)]
     pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -159,6 +170,7 @@ impl ChangeSchemaDescriptionBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = ChangeSchemaDescription {
+            payer: self.payer.expect("payer is not set"),
             authority: self.authority.expect("authority is not set"),
             credential: self.credential.expect("credential is not set"),
             schema: self.schema.expect("schema is not set"),
@@ -176,6 +188,8 @@ impl ChangeSchemaDescriptionBuilder {
 
 /// `change_schema_description` CPI accounts.
 pub struct ChangeSchemaDescriptionCpiAccounts<'a, 'b> {
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
     pub credential: &'b solana_program::account_info::AccountInfo<'a>,
@@ -189,6 +203,8 @@ pub struct ChangeSchemaDescriptionCpiAccounts<'a, 'b> {
 pub struct ChangeSchemaDescriptionCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
@@ -209,6 +225,7 @@ impl<'a, 'b> ChangeSchemaDescriptionCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
+            payer: accounts.payer,
             authority: accounts.authority,
             credential: accounts.credential,
             schema: accounts.schema,
@@ -238,7 +255,6 @@ impl<'a, 'b> ChangeSchemaDescriptionCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
     }
-    #[allow(clippy::arithmetic_side_effects)]
     #[allow(clippy::clone_on_copy)]
     #[allow(clippy::vec_init_then_push)]
     pub fn invoke_signed_with_remaining_accounts(
@@ -250,7 +266,11 @@ impl<'a, 'b> ChangeSchemaDescriptionCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.payer.key,
+            true,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.authority.key,
             true,
@@ -283,8 +303,9 @@ impl<'a, 'b> ChangeSchemaDescriptionCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(6 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
+        account_infos.push(self.payer.clone());
         account_infos.push(self.authority.clone());
         account_infos.push(self.credential.clone());
         account_infos.push(self.schema.clone());
@@ -305,10 +326,11 @@ impl<'a, 'b> ChangeSchemaDescriptionCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[signer]` authority
-///   1. `[]` credential
-///   2. `[writable]` schema
-///   3. `[]` system_program
+///   0. `[writable, signer]` payer
+///   1. `[signer]` authority
+///   2. `[]` credential
+///   3. `[writable]` schema
+///   4. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
     instruction: Box<ChangeSchemaDescriptionCpiBuilderInstruction<'a, 'b>>,
@@ -318,6 +340,7 @@ impl<'a, 'b> ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(ChangeSchemaDescriptionCpiBuilderInstruction {
             __program: program,
+            payer: None,
             authority: None,
             credential: None,
             schema: None,
@@ -326,6 +349,11 @@ impl<'a, 'b> ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
+    }
+    #[inline(always)]
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.payer = Some(payer);
+        self
     }
     #[inline(always)]
     pub fn authority(
@@ -417,6 +445,8 @@ impl<'a, 'b> ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
         let instruction = ChangeSchemaDescriptionCpi {
             __program: self.instruction.__program,
 
+            payer: self.instruction.payer.expect("payer is not set"),
+
             authority: self.instruction.authority.expect("authority is not set"),
 
             credential: self.instruction.credential.expect("credential is not set"),
@@ -439,6 +469,7 @@ impl<'a, 'b> ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
 #[derive(Clone, Debug)]
 struct ChangeSchemaDescriptionCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     credential: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     schema: Option<&'b solana_program::account_info::AccountInfo<'a>>,

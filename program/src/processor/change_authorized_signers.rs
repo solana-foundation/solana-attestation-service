@@ -3,8 +3,13 @@ extern crate alloc;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 use pinocchio::{
-    account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
+    account_info::AccountInfo,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    sysvars::{rent::Rent, Sysvar},
+    ProgramResult,
 };
+use pinocchio_system::instructions::Transfer;
 
 use crate::{
     processor::{verify_owner_mutability, verify_signer, verify_system_program},
@@ -17,7 +22,7 @@ pub fn process_change_authorized_signers(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let [_payer_info, authority_info, credential_info, system_program] = accounts else {
+    let [payer_info, authority_info, credential_info, system_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
@@ -32,8 +37,7 @@ pub fn process_change_authorized_signers(
     let mut credential = Credential::try_from_bytes(&data)?;
     drop(data); // Drop immutable borrow.
 
-    // Verify PDA and that signer matches credential authority.
-    credential.verify_pda(credential_info, program_id)?;
+    // Verify that signer matches credential authority.
     if credential.authority.ne(authority_info.key()) {
         return Err(ProgramError::IncorrectAuthority);
     }
@@ -44,7 +48,8 @@ pub fn process_change_authorized_signers(
     let signers = args.signers()?;
 
     // Resize account if needed.
-    let mut new_space = credential_info.data_len();
+    let prev_space = credential_info.data_len();
+    let mut new_space = prev_space;
     let prev_len = credential.authorized_signers.len();
     let new_len = signers.len();
     if new_len > prev_len {
@@ -54,6 +59,22 @@ pub fn process_change_authorized_signers(
     }
     if new_space != credential_info.data_len() {
         credential_info.realloc(new_space, false)?;
+        let diff = new_space.saturating_sub(prev_space);
+        if diff > 0 {
+            // top up lamports to account for additional rent.
+            let rent = Rent::get()?;
+            let min_rent = rent.minimum_balance(new_space);
+            let current_rent = credential_info.lamports();
+            let rent_diff = min_rent.saturating_sub(current_rent);
+            if rent_diff > 0 {
+                Transfer {
+                    from: payer_info,
+                    to: credential_info,
+                    lamports: rent_diff,
+                }
+                .invoke()?;
+            }
+        }
     }
 
     // Update authorized_signers on struct.

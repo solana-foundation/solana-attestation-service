@@ -5,7 +5,7 @@ use pinocchio::{
     instruction::Seed,
     program_error::ProgramError,
     pubkey::Pubkey,
-    sysvars::{rent::Rent, Sysvar},
+    sysvars::{clock::Clock, rent::Rent, Sysvar},
     ProgramResult,
 };
 use solana_program::pubkey::Pubkey as SolanaPubkey;
@@ -42,8 +42,6 @@ pub fn process_create_attestation(
 
     let credential_data = credential_info.try_borrow_data()?;
     let credential = Credential::try_from_bytes(&credential_data)?;
-    // Validate Credential PDA
-    credential.verify_pda(credential_info, program_id)?;
 
     // Validate Authority is an authorized signer
     credential.validate_authorized_signer(authorized_signer.key())?;
@@ -51,8 +49,10 @@ pub fn process_create_attestation(
     let schema_data = schema_info.try_borrow_data()?;
     let schema = Schema::try_from_bytes(&schema_data)?;
 
-    // Validate Schema PDA
-    schema.verify_pda(schema_info, program_id)?;
+    // Validate Schema is not paused
+    if schema.is_paused {
+        return Err(AttestationServiceError::SchemaPaused.into());
+    }
 
     // Validate Schema is owned by Credential
     if schema.credential.ne(credential_info.key()) {
@@ -63,6 +63,12 @@ pub fn process_create_attestation(
     let nonce = args.nonce()?;
     let data = args.data()?;
     let expiry = args.expiry()?;
+
+    // Validate expiry is greater than current timestamp
+    let clock = Clock::get()?;
+    if expiry < clock.unix_timestamp && expiry != 0 {
+        return Err(AttestationServiceError::InvalidAttestationData.into());
+    }
 
     // NOTE: this could be optimized further by removing the `solana-program` dependency
     // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
@@ -176,7 +182,7 @@ impl CreateAttestationArgs<'_> {
         // SAFETY: the `bytes` length was validated in `try_from_bytes`.
         unsafe {
             let len = self._data_len();
-            let data_bytes = core::slice::from_raw_parts(self.raw.add(36), len as usize);
+            let data_bytes = core::slice::from_raw_parts(self.raw.add(36), len);
             Ok(data_bytes)
         }
     }

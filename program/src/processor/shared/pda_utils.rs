@@ -18,7 +18,11 @@ pub fn create_pda_account<const N: usize>(
     min_rent_space: Option<usize>,
 ) -> ProgramResult {
     let signers = [Signer::from(&new_pda_signer_seeds)];
-    let required_lamports = rent.minimum_balance(min_rent_space.unwrap_or(space)).max(1);
+    let rent_space = match min_rent_space {
+        Some(min_space) => min_space.max(space),
+        None => space,
+    };
+    let required_lamports = rent.minimum_balance(rent_space).max(1);
 
     if new_pda_account.lamports() > 0 {
         // someone can transfer lamports to accounts before they're initialized

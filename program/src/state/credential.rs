@@ -1,12 +1,11 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::{account_info::AccountInfo, msg, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
 use pinocchio_log::log;
 use shank::ShankAccount;
-use solana_program::pubkey::Pubkey as SolanaPubkey;
 
-use crate::{acc_info_as_str, constants::CREDENTIAL_SEED, error::AttestationServiceError};
+use crate::error::AttestationServiceError;
 
 use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
@@ -49,22 +48,6 @@ impl AccountSerialize for Credential {
 }
 
 impl Credential {
-    pub fn verify_pda(
-        &self,
-        acc_info: &AccountInfo,
-        program_id: &Pubkey,
-    ) -> Result<(), ProgramError> {
-        let (credential_pda, _credential_bump) = SolanaPubkey::find_program_address(
-            &[CREDENTIAL_SEED, self.authority.as_ref(), self.name.as_ref()],
-            &SolanaPubkey::from(*program_id),
-        );
-        if acc_info.key().ne(&credential_pda.to_bytes()) {
-            log!("PDA Mismatch for {}", acc_info_as_str!(acc_info));
-            return Err(ProgramError::InvalidAccountData);
-        }
-        Ok(())
-    }
-
     pub fn validate_authority(&self, authority: &Pubkey) -> Result<(), ProgramError> {
         if self.authority.ne(authority) {
             log!("Authority Mismatch");

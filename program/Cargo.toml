@@ -11,6 +11,7 @@ no-entrypoint = []
 idl = []
 
 [dependencies]
+const-crypto = { workspace = true }
 pinocchio = { workspace = true }
 pinocchio-log = { workspace = true }
 pinocchio-pubkey = { workspace = true }

@@ -6,10 +6,9 @@ use pinocchio::{
     pubkey::Pubkey,
     ProgramResult,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
-    constants::EVENT_AUTHORITY_SEED,
+    constants::{event_authority_pda, EVENT_AUTHORITY_SEED},
     error::AttestationServiceError,
     events::{CloseAttestationEvent, EventDiscriminators},
     state::{Attestation, Credential},
@@ -76,14 +75,7 @@ pub fn process_close_attestation(
     attestation_info.close()?;
 
     // Check that event authority PDA is valid.
-    let (event_authority_pda, bump) = SolanaPubkey::find_program_address(
-        &[EVENT_AUTHORITY_SEED],
-        &SolanaPubkey::from(*program_id),
-    );
-    if event_authority_info
-        .key()
-        .ne(&event_authority_pda.to_bytes())
-    {
+    if event_authority_info.key().ne(&event_authority_pda::ID) {
         return Err(AttestationServiceError::InvalidEventAuthority.into());
     }
 
@@ -105,7 +97,7 @@ pub fn process_close_attestation(
         &[event_authority_info, attestation_program],
         &[Signer::from(&[
             Seed::from(EVENT_AUTHORITY_SEED),
-            Seed::from(&[bump]),
+            Seed::from(&[event_authority_pda::BUMP]),
         ])],
     )?;
 

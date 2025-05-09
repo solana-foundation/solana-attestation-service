@@ -147,7 +147,7 @@ pub fn verify_current_program(info: &AccountInfo) -> Result<(), ProgramError> {
 pub fn verify_owner_mutability(
     info: &AccountInfo,
     owner: &Pubkey,
-    is_writable: bool,
+    expect_writable: bool,
 ) -> Result<(), ProgramError> {
     if !info.is_owned_by(owner) {
         log!(
@@ -157,7 +157,7 @@ pub fn verify_owner_mutability(
         );
         return Err(ProgramError::InvalidAccountOwner);
     }
-    if is_writable != info.is_writable() {
+    if expect_writable && !info.is_writable() {
         log!(
             "{} does not have the right write access",
             acc_info_as_str!(info),

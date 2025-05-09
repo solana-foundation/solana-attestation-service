@@ -3,13 +3,12 @@ use pinocchio::{
 };
 
 use crate::{
-    constants::EVENT_AUTHORITY_SEED, error::AttestationServiceError, processor::verify_signer,
+    constants::event_authority_pda, error::AttestationServiceError, processor::verify_signer,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 #[inline(always)]
 pub fn process_emit_event(
-    program_id: &Pubkey,
+    _program_id: &Pubkey,
     accounts: &[AccountInfo],
     _instruction_data: &[u8],
 ) -> ProgramResult {
@@ -17,12 +16,7 @@ pub fn process_emit_event(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    let (event_authority_pda, _) = SolanaPubkey::find_program_address(
-        &[EVENT_AUTHORITY_SEED],
-        &SolanaPubkey::from(*program_id),
-    );
-
-    if event_authority.key().ne(&event_authority_pda.to_bytes()) {
+    if event_authority.key().ne(&event_authority_pda::ID) {
         return Err(AttestationServiceError::InvalidEventAuthority.into());
     }
 

@@ -87,8 +87,9 @@ async fn change_schema_description_success() {
         .await
         .unwrap();
 
-    let description = "new test";
+    let description = "new test new test new test";
     let change_ix = ChangeSchemaDescriptionBuilder::new()
+        .payer(ctx.payer.pubkey())
         .authority(authority.pubkey())
         .credential(credential_pda)
         .schema(schema_pda)

@@ -1,12 +1,11 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::{account_info::AccountInfo, msg, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
 use pinocchio_log::log;
 use shank::ShankAccount;
-use solana_program::pubkey::Pubkey as SolanaPubkey;
 
-use crate::{acc_info_as_str, constants::SCHEMA_SEED, error::AttestationServiceError};
+use crate::error::AttestationServiceError;
 
 use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
@@ -124,34 +123,13 @@ impl AccountSerialize for Schema {
         data.extend(&(self.field_names.len() as u32).to_le_bytes());
         data.extend_from_slice(self.field_names.as_ref());
         data.extend_from_slice(&[self.is_paused as u8]);
-        data.extend_from_slice(&[self.version as u8]);
+        data.extend_from_slice(&[self.version]);
 
         data
     }
 }
 
 impl Schema {
-    pub fn verify_pda(
-        &self,
-        acc_info: &AccountInfo,
-        program_id: &Pubkey,
-    ) -> Result<(), ProgramError> {
-        let (expected_schema_pda, _bump) = SolanaPubkey::find_program_address(
-            &[
-                SCHEMA_SEED,
-                self.credential.as_ref(),
-                self.name.as_ref(), // Convert Vec<u8> to UTF8 Array
-                &[self.version],
-            ],
-            &SolanaPubkey::from(*program_id),
-        );
-        if acc_info.key().ne(&expected_schema_pda.to_bytes()) {
-            log!("PDA Mismatch for {}", acc_info_as_str!(acc_info));
-            return Err(ProgramError::InvalidAccountData);
-        }
-        Ok(())
-    }
-
     pub fn validate(&self, field_names_count: u32) -> Result<(), ProgramError> {
         for data_type in &self.layout {
             if data_type > &SchemaDataTypes::max() {

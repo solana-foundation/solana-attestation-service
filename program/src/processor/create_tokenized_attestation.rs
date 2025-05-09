@@ -8,8 +8,7 @@ use pinocchio::{
     sysvars::{rent::Rent, Sysvar},
     ProgramResult,
 };
-use pinocchio_associated_token_account::instructions::Create;
-use pinocchio_log::log;
+use pinocchio_associated_token_account::instructions::CreateIdempotent;
 use pinocchio_token::{
     extensions::{
         group_member_pointer::Initialize as InitializeGroupMemberPointer,
@@ -26,14 +25,12 @@ use pinocchio_token::{
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
-    constants::{ATTESTATION_MINT_SEED, SAS_SEED, SCHEMA_MINT_SEED},
+    constants::{sas_pda, ATTESTATION_MINT_SEED, SAS_SEED, SCHEMA_MINT_SEED},
     error::AttestationServiceError,
     processor::process_create_attestation,
 };
 
-use super::{
-    create_pda_account, verify_ata_program, verify_system_account, verify_token22_program,
-};
+use super::{create_pda_account, verify_ata_program, verify_token22_program};
 
 #[inline(always)]
 pub fn process_create_tokenized_attestation(
@@ -55,17 +52,14 @@ pub fn process_create_tokenized_attestation(
         Some(*recipient_token_account_info.key()),
     )?;
 
-    // Validate: should be owned by system account, empty, and writable
-    verify_system_account(recipient_token_account_info, true)?;
+    // Validate Recipient TokenAccount is writable
+    if !recipient_token_account_info.is_writable() {
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     // Verify token programs.
     verify_token22_program(token_program)?;
     verify_ata_program(ata_program)?;
-
-    if recipient_info.is_writable() {
-        log!("Recipient should not be writable");
-        return Err(ProgramError::InvalidAccountData);
-    }
 
     // Validate that mint matches expected PDA
     let (attestation_mint_pda, attestation_mint_bump) = SolanaPubkey::find_program_address(
@@ -88,9 +82,7 @@ pub fn process_create_tokenized_attestation(
     }
 
     // Validate that sas_pda matches
-    let (sas_pda, sas_bump) =
-        SolanaPubkey::find_program_address(&[SAS_SEED], &SolanaPubkey::from(*program_id));
-    if sas_pda_info.key().ne(&sas_pda.to_bytes()) {
+    if sas_pda_info.key().ne(&sas_pda::ID) {
         return Err(AttestationServiceError::InvalidProgramSigner.into());
     }
 
@@ -121,7 +113,7 @@ pub fn process_create_tokenized_attestation(
     // Initialize GroupMemberPointer extension
     InitializeGroupMemberPointer {
         mint: attestation_mint_info,
-        authority: Some(sas_pda.to_bytes()),
+        authority: Some(sas_pda::ID),
         member_address: Some(*attestation_mint_info.key()),
     }
     .invoke()?;
@@ -164,7 +156,7 @@ pub fn process_create_tokenized_attestation(
     .invoke(TokenProgramVariant::Token2022)?;
 
     // Initialize TokenMetadata extension
-    let bump_seed = [sas_bump];
+    let bump_seed = [sas_pda::BUMP];
     let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
 
     InitializeTokenMetadata {
@@ -205,8 +197,9 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
+    // Only create the ATA when the TokenAccount is owned by the System program with empty data.
     // Create new associated token account to hold Attestation token.
-    Create {
+    CreateIdempotent {
         funding_account: payer_info,
         account: recipient_token_account_info,
         wallet: recipient_info,

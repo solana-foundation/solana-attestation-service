@@ -15,6 +15,7 @@ package.edition = "2021"
 
 [workspace.dependencies]
 borsh = "1.5.5"
+const-crypto = "0.3.0"
 pinocchio = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio" }
 pinocchio-log = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-log" }
 pinocchio-pubkey = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-pubkey" }
