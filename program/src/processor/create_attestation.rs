@@ -71,7 +71,7 @@ pub fn process_create_attestation(
 
     // Validate expiry is greater than current timestamp
     let clock = Clock::get()?;
-    if expiry < clock.unix_timestamp {
+    if expiry < clock.unix_timestamp && expiry != 0 {
         return Err(AttestationServiceError::InvalidAttestationData.into());
     }
 
