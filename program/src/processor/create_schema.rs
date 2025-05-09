@@ -17,6 +17,8 @@ use crate::{
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
+use super::verify_owner_mutability;
+
 #[inline(always)]
 pub fn process_create_schema(
     program_id: &Pubkey,
@@ -30,14 +32,15 @@ pub fn process_create_schema(
 
     // Validate: authority should have signed
     verify_signer(authority_info, false)?;
+    // Verify Credential is owned by current program.
+    verify_owner_mutability(credential_info, program_id, false)?;
     // Validate: schema should be owned by system account, empty, and writable
     verify_system_account(schema_info, true)?;
     // Validate: system program
     verify_system_program(system_program)?;
 
+    
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
-    // Verify PDA and that signer matches credential authority.
-    credential.verify_pda(credential_info, program_id)?;
     // Verify signer matches credential authority.
     if credential.authority.ne(authority_info.key()) {
         return Err(ProgramError::IncorrectAuthority);

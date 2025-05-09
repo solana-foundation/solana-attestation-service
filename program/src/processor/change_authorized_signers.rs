@@ -37,8 +37,7 @@ pub fn process_change_authorized_signers(
     let mut credential = Credential::try_from_bytes(&data)?;
     drop(data); // Drop immutable borrow.
 
-    // Verify PDA and that signer matches credential authority.
-    credential.verify_pda(credential_info, program_id)?;
+    // Verify that signer matches credential authority.
     if credential.authority.ne(authority_info.key()) {
         return Err(ProgramError::IncorrectAuthority);
     }

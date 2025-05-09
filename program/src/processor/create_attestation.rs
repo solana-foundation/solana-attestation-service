@@ -42,17 +42,12 @@ pub fn process_create_attestation(
 
     let credential_data = credential_info.try_borrow_data()?;
     let credential = Credential::try_from_bytes(&credential_data)?;
-    // Validate Credential PDA
-    credential.verify_pda(credential_info, program_id)?;
 
     // Validate Authority is an authorized signer
     credential.validate_authorized_signer(authorized_signer.key())?;
 
     let schema_data = schema_info.try_borrow_data()?;
     let schema = Schema::try_from_bytes(&schema_data)?;
-
-    // Validate Schema PDA
-    schema.verify_pda(schema_info, program_id)?;
 
     // Validate Schema is not paused
     if schema.is_paused {

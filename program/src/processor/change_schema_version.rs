@@ -43,7 +43,6 @@ pub fn process_change_schema_version(
     verify_owner_mutability(existing_schema_info, program_id, false)?;
 
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
-    credential.verify_pda(credential_info, program_id)?;
 
     // Verify signer matches credential authority.
     if credential.authority.ne(authority_info.key()) {
