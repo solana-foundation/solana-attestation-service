@@ -18,7 +18,7 @@ use pinocchio_token::{
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
-    constants::{SAS_SEED, SCHEMA_MINT_SEED},
+    constants::{sas_pda, SAS_SEED, SCHEMA_MINT_SEED},
     error::AttestationServiceError,
     processor::{create_pda_account, verify_signer, verify_system_program},
     state::{Credential, Schema},
@@ -69,9 +69,7 @@ pub fn process_tokenize_schema(
     }
 
     // Validate that sas_pda matches
-    let (sas_pda, sas_bump) =
-        SolanaPubkey::find_program_address(&[SAS_SEED], &SolanaPubkey::from(*program_id));
-    if sas_pda_info.key().ne(&sas_pda.to_bytes()) {
+    if sas_pda_info.key().ne(&sas_pda::ID) {
         return Err(AttestationServiceError::InvalidProgramSigner.into());
     }
 
@@ -112,8 +110,8 @@ pub fn process_tokenize_schema(
     .invoke(TokenProgramVariant::Token2022)?;
 
     // Initialize Group extension.
-    let bump_seed = [sas_bump];
-    let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
+    let bump_seed = [sas_pda::BUMP];
+    let sas_pda_seeds: [Seed<'_>; 2] = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
     InitializeGroup {
         group: mint_info,
         mint: mint_info,
