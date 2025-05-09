@@ -67,12 +67,14 @@ pub fn process_change_authorized_signers(
             let min_rent = rent.minimum_balance(new_space);
             let current_rent = credential_info.lamports();
             let rent_diff = min_rent.saturating_sub(current_rent);
-            Transfer {
-                from: payer_info,
-                to: credential_info,
-                lamports: rent_diff,
+            if rent_diff > 0 {
+                Transfer {
+                    from: payer_info,
+                    to: credential_info,
+                    lamports: rent_diff,
+                }
+                .invoke()?;
             }
-            .invoke()?;
         }
     }
 

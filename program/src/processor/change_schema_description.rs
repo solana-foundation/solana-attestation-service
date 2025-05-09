@@ -19,7 +19,8 @@ pub fn process_change_schema_description(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let [authority_info, credential_info, schema_info, system_program] = accounts else {
+    let [payer_info, authority_info, credential_info, schema_info, system_program] = accounts
+    else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
@@ -69,12 +70,14 @@ pub fn process_change_schema_description(
             let min_rent = rent.minimum_balance(new_space);
             let current_rent = schema_info.lamports();
             let rent_diff = min_rent.saturating_sub(current_rent);
-            Transfer {
-                from: authority_info,
-                to: schema_info,
-                lamports: rent_diff,
+            if rent_diff > 0 {
+                Transfer {
+                    from: payer_info,
+                    to: schema_info,
+                    lamports: rent_diff,
+                }
+                .invoke()?;
             }
-            .invoke()?;
         }
     }
 
