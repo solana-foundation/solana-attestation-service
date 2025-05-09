@@ -8,7 +8,7 @@ use pinocchio::{
     sysvars::{rent::Rent, Sysvar},
     ProgramResult,
 };
-use pinocchio_associated_token_account::instructions::Create;
+use pinocchio_associated_token_account::instructions::CreateIdempotent;
 use pinocchio_token::{
     extensions::{
         group_member_pointer::Initialize as InitializeGroupMemberPointer,
@@ -30,9 +30,7 @@ use crate::{
     processor::process_create_attestation,
 };
 
-use super::{
-    create_pda_account, verify_ata_program, verify_token22_program,
-};
+use super::{create_pda_account, verify_ata_program, verify_token22_program};
 
 #[inline(always)]
 pub fn process_create_tokenized_attestation(
@@ -200,20 +198,16 @@ pub fn process_create_tokenized_attestation(
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
     // Only create the ATA when the TokenAccount is owned by the System program with empty data.
-    if recipient_token_account_info.is_owned_by(&pinocchio_system::ID)
-        && recipient_token_account_info.data_is_empty()
-    {
-        // Create new associated token account to hold Attestation token.
-        Create {
-            funding_account: payer_info,
-            account: recipient_token_account_info,
-            wallet: recipient_info,
-            mint: attestation_mint_info,
-            system_program,
-            token_program,
-        }
-        .invoke()?;
+    // Create new associated token account to hold Attestation token.
+    CreateIdempotent {
+        funding_account: payer_info,
+        account: recipient_token_account_info,
+        wallet: recipient_info,
+        mint: attestation_mint_info,
+        system_program,
+        token_program,
     }
+    .invoke()?;
 
     // Mint to recipient token account.
     MintToChecked {
