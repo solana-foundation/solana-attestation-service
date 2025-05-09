@@ -68,7 +68,7 @@ pub fn process_change_schema_description(
             let rent = Rent::get()?;
             let min_rent = rent.minimum_balance(new_space);
             let current_rent = schema_info.lamports();
-            let rent_diff = current_rent.saturating_sub(min_rent);
+            let rent_diff = min_rent.saturating_sub(current_rent);
             Transfer {
                 from: authority_info,
                 to: schema_info,
