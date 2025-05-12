@@ -1,7 +1,6 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use core::marker::PhantomData;
 use pinocchio::{
     account_info::AccountInfo,
     instruction::Seed,

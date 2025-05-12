@@ -1,5 +1,3 @@
-use core::marker::PhantomData;
-
 use pinocchio::{
     account_info::AccountInfo,
     instruction::{Seed, Signer},
@@ -21,6 +19,7 @@ use crate::{
     constants::{sas_pda, SAS_SEED, SCHEMA_MINT_SEED},
     error::AttestationServiceError,
     processor::{create_pda_account, verify_signer, verify_system_program},
+    require_len,
     state::{Credential, Schema},
 };
 
@@ -32,6 +31,7 @@ pub fn process_tokenize_schema(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
+    let args = process_instruction_data(instruction_data)?;
     let [payer_info, authority_info, credential_info, schema_info, mint_info, sas_pda_info, system_program, token_program] =
         accounts
     else {
@@ -73,10 +73,6 @@ pub fn process_tokenize_schema(
         return Err(AttestationServiceError::InvalidProgramSigner.into());
     }
 
-    // Read instruction args
-    let args: TokenizeSchemaArgs<'_> = TokenizeSchemaArgs::try_from_bytes(instruction_data)?;
-    let max_size = args.max_size()?;
-
     // Initialize new account owned by token_program.
     create_pda_account(
         payer_info,
@@ -117,36 +113,20 @@ pub fn process_tokenize_schema(
         mint: mint_info,
         mint_authority: sas_pda_info,
         update_authority: Some(*sas_pda_info.key()),
-        max_size,
+        max_size: args.max_size,
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
     Ok(())
 }
 
-/// Instruction data for the `TokenizeSchema` instruction.
-pub struct TokenizeSchemaArgs<'a> {
-    raw: *const u8,
-
-    _data: PhantomData<&'a [u8]>,
+struct TokenizeSchemaArgs {
+    max_size: u64,
 }
 
-impl TokenizeSchemaArgs<'_> {
-    #[inline]
-    pub fn try_from_bytes(bytes: &[u8]) -> Result<TokenizeSchemaArgs, ProgramError> {
-        // max_size (8 bytes)
-        if bytes.len() < 8 {
-            return Err(ProgramError::InvalidInstructionData);
-        }
+fn process_instruction_data(data: &[u8]) -> Result<TokenizeSchemaArgs, ProgramError> {
+    require_len!(data, 8);
+    let max_size = u64::from_le_bytes(data[0..8].try_into().unwrap());
 
-        Ok(TokenizeSchemaArgs {
-            raw: bytes.as_ptr(),
-            _data: PhantomData,
-        })
-    }
-
-    #[inline]
-    pub fn max_size(&self) -> Result<u64, ProgramError> {
-        unsafe { Ok(*(self.raw as *const u64)) }
-    }
+    Ok(TokenizeSchemaArgs { max_size })
 }
