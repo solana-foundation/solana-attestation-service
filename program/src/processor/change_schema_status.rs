@@ -27,10 +27,7 @@ pub fn process_change_schema_status(
     verify_owner_mutability(schema_info, program_id, true)?;
 
     // Read is_paused from instruction data.
-    let is_paused = instruction_data
-        .get(0)
-        .ok_or(ProgramError::InvalidInstructionData)?
-        .eq(&1);
+    let args = process_instruction_data(instruction_data)?;
 
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
 
@@ -47,9 +44,22 @@ pub fn process_change_schema_status(
         return Err(AttestationServiceError::InvalidSchema.into());
     }
 
-    schema.is_paused = is_paused;
-    log!("Setting schema's is_paused to: {}", is_paused as u8);
+    schema.is_paused = args.is_paused;
+    log!("Setting schema's is_paused to: {}", args.is_paused as u8);
     schema_data.copy_from_slice(&schema.to_bytes());
 
     Ok(())
+}
+
+struct ChangeSchemaStatusArgs {
+    is_paused: bool,
+}
+
+fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaStatusArgs, ProgramError> {
+    let is_paused = data
+        .first()
+        .ok_or(ProgramError::InvalidInstructionData)?
+        .eq(&1);
+
+    Ok(ChangeSchemaStatusArgs { is_paused })
 }

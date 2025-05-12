@@ -1,7 +1,6 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use core::marker::PhantomData;
 use pinocchio::{
     account_info::AccountInfo,
     program_error::ProgramError,
@@ -43,9 +42,8 @@ pub fn process_change_authorized_signers(
     }
 
     // Read new authorized_signers from instruction data.
-    let args: ChangeAuthorizedSignersArgs<'_> =
-        ChangeAuthorizedSignersArgs::try_from_bytes(instruction_data)?;
-    let signers = args.signers()?;
+    let args = process_instruction_data(instruction_data)?;
+    let signers = args.signers;
 
     // Resize account if needed.
     let prev_space = credential_info.data_len();
@@ -87,43 +85,28 @@ pub fn process_change_authorized_signers(
     Ok(())
 }
 
-/// Instruction data for the `ChangeAuthorizedSigners` instruction.
-pub struct ChangeAuthorizedSignersArgs<'a> {
-    raw: *const u8,
-
-    _data: PhantomData<&'a [u8]>,
+struct ChangeAuthorizedSignersArgs {
+    signers: Vec<Pubkey>,
 }
 
-impl ChangeAuthorizedSignersArgs<'_> {
-    #[inline]
-    pub fn try_from_bytes(bytes: &[u8]) -> Result<ChangeAuthorizedSignersArgs, ProgramError> {
-        // The minimum expected size of the instruction data.
-        // - signers (36 bytes. 4 len, 32 pubkey)
-        if bytes.len() < 36 {
-            return Err(ProgramError::InvalidInstructionData);
-        }
+fn process_instruction_data(data: &[u8]) -> Result<ChangeAuthorizedSignersArgs, ProgramError> {
+    let mut offset: usize = 0;
 
-        Ok(ChangeAuthorizedSignersArgs {
-            raw: bytes.as_ptr(),
-            _data: PhantomData,
-        })
+    if data.len() < 4 {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+    let signers_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
+
+    if data.len() < 4 + signers_len * 32 {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+    let mut signers = Vec::with_capacity(signers_len);
+    for _ in 0..signers_len {
+        let signer: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        signers.push(signer);
+        offset += 32;
     }
 
-    #[inline]
-    pub fn signers(&self) -> Result<Vec<Pubkey>, ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let len = *(self.raw as *const u32);
-            let mut offset = 4; // Move past signers length field
-            let mut signers = Vec::with_capacity(len as usize);
-
-            for _ in 0..len {
-                let signer_ptr = self.raw.add(offset as usize) as *const Pubkey;
-                signers.push(*signer_ptr);
-                offset += 32;
-            }
-
-            Ok(signers)
-        }
-    }
+    Ok(ChangeAuthorizedSignersArgs { signers })
 }

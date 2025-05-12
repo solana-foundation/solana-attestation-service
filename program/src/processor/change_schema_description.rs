@@ -1,3 +1,6 @@
+extern crate alloc;
+
+use alloc::vec::Vec;
 use pinocchio::{
     account_info::AccountInfo,
     program_error::ProgramError,
@@ -50,9 +53,11 @@ pub fn process_change_schema_description(
 
     let prev_description_len = schema.description.len();
 
-    // Get and update description on struct.
-    let data_len = u32::from_le_bytes(instruction_data[0..4].try_into().unwrap()) as usize;
-    schema.description = instruction_data[4..4 + data_len].to_vec();
+    // Read instruction data
+    let args = process_instruction_data(instruction_data)?;
+
+    // Update description on struct.
+    schema.description = args.description;
 
     // Resize account if needed.
     let new_description_len = schema.description.len();
@@ -83,4 +88,25 @@ pub fn process_change_schema_description(
     schema_data.copy_from_slice(&schema.to_bytes());
 
     Ok(())
+}
+
+struct ChangeSchemaDescriptionArgs {
+    description: Vec<u8>,
+}
+
+fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaDescriptionArgs, ProgramError> {
+    let mut offset: usize = 0;
+
+    if data.len() < 4 {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+    let desc_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
+
+    if data.len() < offset + desc_len {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+    let description = data[offset..offset + desc_len].to_vec();
+
+    Ok(ChangeSchemaDescriptionArgs { description })
 }
