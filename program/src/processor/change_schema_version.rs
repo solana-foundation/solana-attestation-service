@@ -1,5 +1,3 @@
-use core::marker::PhantomData;
-
 use pinocchio::{
     account_info::AccountInfo,
     instruction::Seed,
@@ -17,6 +15,7 @@ use crate::{
         create_pda_account, verify_owner_mutability, verify_signer, verify_system_account,
         verify_system_program,
     },
+    require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
@@ -26,6 +25,7 @@ pub fn process_change_schema_version(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
+    let args = process_instruction_data(instruction_data)?;
     let [payer_info, authority_info, credential_info, existing_schema_info, new_schema_info, system_program] =
         accounts
     else {
@@ -57,10 +57,6 @@ pub fn process_change_schema_version(
         return Err(AttestationServiceError::InvalidSchema.into());
     }
 
-    let args = ChangeSchemaVersionArgs::try_from_bytes(instruction_data)?;
-    let layout = args.layout()?;
-    let (field_names_count, field_names_bytes) = args.field_names()?;
-
     let name = &existing_schema.name;
     let description = existing_schema.description;
     let version = &[existing_schema.version.checked_add(1).unwrap()];
@@ -91,8 +87,8 @@ pub fn process_change_schema_version(
         + 32
         + (4 + name.len())
         + (4 + description.len())
-        + (4 + layout.len())
-        + (4 + field_names_bytes.len())
+        + (4 + args.layout.len())
+        + (4 + args.field_names_bytes.len())
         + 1
         + 1;
     let rent = Rent::get()?;
@@ -118,14 +114,14 @@ pub fn process_change_schema_version(
         credential: *credential_info.key(),
         name: name.to_vec(),
         description,
-        layout: layout.to_vec(),
-        field_names: field_names_bytes.to_vec(),
+        layout: args.layout.to_vec(),
+        field_names: args.field_names_bytes.to_vec(),
         is_paused: false,
         version: version[0],
     };
 
     // Checks that layout and field names are valid.
-    schema.validate(field_names_count)?;
+    schema.validate(args.field_names_count)?;
 
     let mut schema_data = new_schema_info.try_borrow_mut_data()?;
     schema_data.copy_from_slice(&schema.to_bytes());
@@ -133,59 +129,43 @@ pub fn process_change_schema_version(
     Ok(())
 }
 
-/// Instruction data for the `CreateSchema` instruction.
-pub struct ChangeSchemaVersionArgs<'a> {
-    raw: *const u8,
-
-    _data: PhantomData<&'a [u8]>,
+struct ChangeSchemaVersionArgs<'a> {
+    layout: &'a [u8],
+    field_names_count: u32,
+    field_names_bytes: &'a [u8],
 }
 
-impl ChangeSchemaVersionArgs<'_> {
-    #[inline]
-    pub fn try_from_bytes(bytes: &[u8]) -> Result<ChangeSchemaVersionArgs, ProgramError> {
-        // The minimum expected size of the instruction data.
-        // - layout (5 bytes. 4 len, 1 field)
-        // - field_names (5 bytes. 4 len, 1 field)
-        if bytes.len() < 10 {
-            return Err(ProgramError::InvalidInstructionData);
-        }
+fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaVersionArgs, ProgramError> {
+    let mut offset: usize = 0;
 
-        Ok(ChangeSchemaVersionArgs {
-            raw: bytes.as_ptr(),
-            _data: PhantomData,
-        })
+    require_len!(data, 4);
+    let layout_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
+
+    require_len!(data, offset + layout_len);
+    let layout = &data[offset..offset + layout_len];
+    offset += layout_len;
+
+    require_len!(data, offset + 4);
+    let field_names_count = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap());
+    offset += 4;
+
+    let mut byte_len = 0;
+    for _ in 0..field_names_count {
+        let start = offset + byte_len;
+        let end = start + 4;
+        require_len!(data, end);
+
+        let name_len = u32::from_le_bytes(data[start..end].try_into().unwrap()) as usize;
+        byte_len += 4 + name_len;
     }
 
-    #[inline]
-    pub fn layout(&self) -> Result<&[u8], ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            // Len of layout
-            let len = *(self.raw as *const u32);
-            let layout_bytes = core::slice::from_raw_parts(self.raw.add(4), len as usize);
-            Ok(layout_bytes)
-        }
-    }
+    require_len!(data, offset + byte_len);
+    let field_names_bytes = &data[offset..offset + byte_len];
 
-    #[inline]
-    pub fn field_names(&self) -> Result<(u32, &[u8]), ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let layout_len = *(self.raw as *const u32);
-            let offset = 4 + layout_len;
-            // Number of field names.
-            let field_names_count = *(self.raw.add(offset as usize) as *const u32);
-            let offset = offset + 4;
-
-            let mut byte_len = 0;
-            for _ in 0..field_names_count {
-                let len = *(self.raw.add((offset + byte_len) as usize) as *const u32);
-                byte_len += 4 + len
-            }
-
-            let field_names_bytes =
-                core::slice::from_raw_parts(self.raw.add(offset as usize), byte_len as usize);
-            Ok((field_names_count, field_names_bytes))
-        }
-    }
+    Ok(ChangeSchemaVersionArgs {
+        layout,
+        field_names_count,
+        field_names_bytes,
+    })
 }

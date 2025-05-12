@@ -7,11 +7,7 @@ use crate::{
 };
 
 #[inline(always)]
-pub fn process_emit_event(
-    _program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    _instruction_data: &[u8],
-) -> ProgramResult {
+pub fn process_emit_event(_program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let [event_authority, _attestation_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };

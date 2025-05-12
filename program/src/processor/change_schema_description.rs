@@ -1,3 +1,6 @@
+extern crate alloc;
+
+use alloc::vec::Vec;
 use pinocchio::{
     account_info::AccountInfo,
     program_error::ProgramError,
@@ -10,6 +13,7 @@ use pinocchio_system::instructions::Transfer;
 use crate::{
     error::AttestationServiceError,
     processor::{verify_owner_mutability, verify_signer, verify_system_program},
+    require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
@@ -19,6 +23,7 @@ pub fn process_change_schema_description(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
+    let args = process_instruction_data(instruction_data)?;
     let [payer_info, authority_info, credential_info, schema_info, system_program] = accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -50,9 +55,8 @@ pub fn process_change_schema_description(
 
     let prev_description_len = schema.description.len();
 
-    // Get and update description on struct.
-    let data_len = u32::from_le_bytes(instruction_data[0..4].try_into().unwrap()) as usize;
-    schema.description = instruction_data[4..4 + data_len].to_vec();
+    // Update description on struct.
+    schema.description = args.description;
 
     // Resize account if needed.
     let new_description_len = schema.description.len();
@@ -83,4 +87,21 @@ pub fn process_change_schema_description(
     schema_data.copy_from_slice(&schema.to_bytes());
 
     Ok(())
+}
+
+struct ChangeSchemaDescriptionArgs {
+    description: Vec<u8>,
+}
+
+fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaDescriptionArgs, ProgramError> {
+    let mut offset: usize = 0;
+
+    require_len!(data, 4);
+    let desc_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
+
+    require_len!(data, offset + desc_len);
+    let description = data[offset..offset + desc_len].to_vec();
+
+    Ok(ChangeSchemaDescriptionArgs { description })
 }
