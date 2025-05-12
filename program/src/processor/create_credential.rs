@@ -86,12 +86,12 @@ pub fn process_create_credential(
     Ok(())
 }
 
-struct ChangeCreateCredentialArgs<'a> {
+struct CreateCredentialArgs<'a> {
     name: &'a [u8],
     signers: Vec<Pubkey>,
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<ChangeCreateCredentialArgs, ProgramError> {
+fn process_instruction_data(data: &[u8]) -> Result<CreateCredentialArgs, ProgramError> {
     let mut offset: usize = 0;
 
     require_len!(data, 4);
@@ -114,5 +114,5 @@ fn process_instruction_data(data: &[u8]) -> Result<ChangeCreateCredentialArgs, P
         offset += 32;
     }
 
-    Ok(ChangeCreateCredentialArgs { name, signers })
+    Ok(CreateCredentialArgs { name, signers })
 }
