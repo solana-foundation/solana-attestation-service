@@ -13,6 +13,7 @@ use pinocchio_system::instructions::Transfer;
 use crate::{
     error::AttestationServiceError,
     processor::{verify_owner_mutability, verify_signer, verify_system_program},
+    require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
@@ -22,6 +23,7 @@ pub fn process_change_schema_description(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
+    let args = process_instruction_data(instruction_data)?;
     let [payer_info, authority_info, credential_info, schema_info, system_program] = accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -52,9 +54,6 @@ pub fn process_change_schema_description(
     }
 
     let prev_description_len = schema.description.len();
-
-    // Read instruction data
-    let args = process_instruction_data(instruction_data)?;
 
     // Update description on struct.
     schema.description = args.description;
@@ -97,15 +96,11 @@ struct ChangeSchemaDescriptionArgs {
 fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaDescriptionArgs, ProgramError> {
     let mut offset: usize = 0;
 
-    if data.len() < 4 {
-        return Err(ProgramError::InvalidInstructionData);
-    }
+    require_len!(data, 4);
     let desc_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
     offset += 4;
 
-    if data.len() < offset + desc_len {
-        return Err(ProgramError::InvalidInstructionData);
-    }
+    require_len!(data, offset + desc_len);
     let description = data[offset..offset + desc_len].to_vec();
 
     Ok(ChangeSchemaDescriptionArgs { description })

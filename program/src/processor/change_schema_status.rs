@@ -6,6 +6,7 @@ use pinocchio_log::log;
 use crate::{
     error::AttestationServiceError,
     processor::{verify_owner_mutability, verify_signer},
+    require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
@@ -15,6 +16,7 @@ pub fn process_change_schema_status(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
+    let args = process_instruction_data(instruction_data)?;
     let [authority_info, credential_info, schema_info] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
@@ -25,9 +27,6 @@ pub fn process_change_schema_status(
     // Verify program ownership, mutability and PDAs.
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(schema_info, program_id, true)?;
-
-    // Read is_paused from instruction data.
-    let args = process_instruction_data(instruction_data)?;
 
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
 
@@ -56,6 +55,7 @@ struct ChangeSchemaStatusArgs {
 }
 
 fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaStatusArgs, ProgramError> {
+    require_len!(data, 1);
     let is_paused = data
         .first()
         .ok_or(ProgramError::InvalidInstructionData)?

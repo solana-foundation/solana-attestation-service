@@ -1,5 +1,3 @@
-use core::marker::PhantomData;
-
 use pinocchio::{
     account_info::AccountInfo,
     instruction::Seed,
@@ -14,6 +12,7 @@ use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
     processor::{create_pda_account, verify_signer, verify_system_account, verify_system_program},
+    require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
@@ -25,6 +24,7 @@ pub fn process_create_schema(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
+    let args = process_instruction_data(instruction_data)?;
     let [payer_info, authority_info, credential_info, schema_info, system_program] = accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -39,25 +39,18 @@ pub fn process_create_schema(
     // Validate: system program
     verify_system_program(system_program)?;
 
-    
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
     // Verify signer matches credential authority.
     if credential.authority.ne(authority_info.key()) {
         return Err(ProgramError::IncorrectAuthority);
     }
 
-    let args = CreateSchemaArgs::try_from_bytes(instruction_data)?;
-    let name = args.name()?;
-    let description = args.description()?;
-    let layout = args.layout()?;
-    let (field_names_count, field_names_bytes) = args.field_names()?;
-    let version = &[1];
-
     // NOTE: this could be optimized further by removing the `solana-program` dependency
     // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
     // pubkey and associated bump (needed to be added as arg) is valid.
+    let version = &[1];
     let (schema_pda, schema_bump) = SolanaPubkey::find_program_address(
-        &[SCHEMA_SEED, credential_info.key(), name, version],
+        &[SCHEMA_SEED, credential_info.key(), args.name, version],
         &SolanaPubkey::from(*program_id),
     );
 
@@ -77,10 +70,10 @@ pub fn process_create_schema(
     // version - 1
     let space = 1
         + 32
-        + (4 + name.len())
-        + (4 + description.len())
-        + (4 + layout.len())
-        + (4 + field_names_bytes.len())
+        + (4 + args.name.len())
+        + (4 + args.description.len())
+        + (4 + args.layout.len())
+        + (4 + args.field_names_bytes.len())
         + 1
         + 1;
     let rent = Rent::get()?;
@@ -88,7 +81,7 @@ pub fn process_create_schema(
     let signer_seeds = [
         Seed::from(SCHEMA_SEED),
         Seed::from(credential_info.key()),
-        Seed::from(name),
+        Seed::from(args.name),
         Seed::from(version),
         Seed::from(&bump_seed),
     ];
@@ -104,16 +97,16 @@ pub fn process_create_schema(
 
     let schema = Schema {
         credential: *credential_info.key(),
-        name: name.to_vec(),
-        description: description.to_vec(),
-        layout: layout.to_vec(),
-        field_names: field_names_bytes.to_vec(),
+        name: args.name.to_vec(),
+        description: args.description.to_vec(),
+        layout: args.layout.to_vec(),
+        field_names: args.field_names_bytes.to_vec(),
         is_paused: false,
-        version: 1,
+        version: version[0],
     };
 
     // Checks that layout and field names are valid.
-    schema.validate(field_names_count)?;
+    schema.validate(args.field_names_count)?;
 
     let mut schema_data = schema_info.try_borrow_mut_data()?;
     schema_data.copy_from_slice(&schema.to_bytes());
@@ -121,98 +114,63 @@ pub fn process_create_schema(
     Ok(())
 }
 
-/// Instruction data for the `CreateSchema` instruction.
-pub struct CreateSchemaArgs<'a> {
-    raw: *const u8,
-
-    _data: PhantomData<&'a [u8]>,
+struct CreateSchemaArgs<'a> {
+    name: &'a [u8],
+    description: &'a [u8],
+    layout: &'a [u8],
+    field_names_count: u32,
+    field_names_bytes: &'a [u8],
 }
 
-impl CreateSchemaArgs<'_> {
-    #[inline]
-    pub fn try_from_bytes(bytes: &[u8]) -> Result<CreateSchemaArgs, ProgramError> {
-        // TODO: KIV for further refactoring to enforce better byte len checks.
-        // The minimum expected size of the instruction data.
-        // - name (5 bytes. 4 len, 1 char)
-        // - description (5 bytes. 4 len, 1 char)
-        // - layout (5 bytes. 4 len, 1 field)
-        // - field_names (5 bytes. 4 len, 1 field)
-        if bytes.len() < 20 {
-            return Err(ProgramError::InvalidInstructionData);
-        }
+fn process_instruction_data(data: &[u8]) -> Result<CreateSchemaArgs, ProgramError> {
+    let mut offset: usize = 0;
 
-        Ok(CreateSchemaArgs {
-            raw: bytes.as_ptr(),
-            _data: PhantomData,
-        })
+    require_len!(data, 4);
+    let name_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
+
+    require_len!(data, offset + name_len);
+    let name = &data[offset..offset + name_len];
+    offset += name_len;
+
+    require_len!(data, offset + 4);
+    let desc_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
+
+    require_len!(data, offset + desc_len);
+    let description = &data[offset..offset + desc_len];
+    offset += desc_len;
+
+    require_len!(data, offset + 4);
+    let layout_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
+
+    require_len!(data, offset + layout_len);
+    let layout = &data[offset..offset + layout_len];
+    offset += layout_len;
+
+    require_len!(data, offset + 4);
+    let field_names_count = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap());
+    offset += 4;
+
+    let mut byte_len = 0;
+    for _ in 0..field_names_count {
+        let start = offset + byte_len;
+        let end = start + 4;
+        require_len!(data, end);
+
+        let name_len = u32::from_le_bytes(data[start..end].try_into().unwrap()) as usize;
+        byte_len += 4 + name_len;
     }
 
-    #[inline]
-    pub fn name(&self) -> Result<&[u8], ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let len = *(self.raw as *const u32);
-            let name_bytes = core::slice::from_raw_parts(self.raw.add(4), len as usize);
-            Ok(name_bytes)
-        }
-    }
+    require_len!(data, offset + byte_len);
+    let field_names_bytes = &data[offset..offset + byte_len];
 
-    #[inline]
-    pub fn description(&self) -> Result<&[u8], ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            // name length + 4 for encoded len
-            let offset = *(self.raw as *const u32) + 4;
-            // Len of description
-            let len = *(self.raw.add(offset as usize) as *const u32);
-            let offset = offset + 4;
-            let description_bytes =
-                core::slice::from_raw_parts(self.raw.add(offset as usize), len as usize);
-            Ok(description_bytes)
-        }
-    }
-
-    #[inline]
-    pub fn layout(&self) -> Result<&[u8], ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            // name length + 4 for encoded len
-            let offset = *(self.raw as *const u32) + 4;
-            let description_len = *(self.raw.add(offset as usize) as *const u32);
-            // offset for start of the layout
-            let offset = offset + 4 + description_len;
-            // Len of layout
-            let len = *(self.raw.add(offset as usize) as *const u32);
-            let offset = offset + 4;
-            let layout_bytes =
-                core::slice::from_raw_parts(self.raw.add(offset as usize), len as usize);
-            Ok(layout_bytes)
-        }
-    }
-
-    #[inline]
-    pub fn field_names(&self) -> Result<(u32, &[u8]), ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            // name length + 4 for encoded len
-            let offset = *(self.raw as *const u32) + 4;
-            let description_len = *(self.raw.add(offset as usize) as *const u32);
-            let offset = offset + 4 + description_len;
-            let layout_len = *(self.raw.add(offset as usize) as *const u32);
-            let offset = offset + 4 + layout_len;
-            // Number of field names.
-            let field_names_count = *(self.raw.add(offset as usize) as *const u32);
-            let offset = offset + 4;
-
-            let mut byte_len = 0;
-            for _ in 0..field_names_count {
-                let len = *(self.raw.add((offset + byte_len) as usize) as *const u32);
-                byte_len += 4 + len
-            }
-
-            let field_names_bytes =
-                core::slice::from_raw_parts(self.raw.add(offset as usize), byte_len as usize);
-            Ok((field_names_count, field_names_bytes))
-        }
-    }
+    Ok(CreateSchemaArgs {
+        name,
+        description,
+        layout,
+        field_names_count,
+        field_names_bytes,
+    })
 }

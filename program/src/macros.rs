@@ -11,3 +11,12 @@ macro_rules! key_as_str {
         bs58::encode($key).into_string().as_str()
     };
 }
+
+#[macro_export]
+macro_rules! require_len {
+    ($data:expr, $len:expr) => {
+        if $data.len() < $len {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+    };
+}
