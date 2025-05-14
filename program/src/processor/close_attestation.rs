@@ -88,13 +88,10 @@ pub fn process_close_attestation(
     invoke_signed(
         &Instruction {
             program_id,
-            accounts: &[
-                AccountMeta::new(event_authority_info.key(), false, true),
-                AccountMeta::new(program_id, false, false),
-            ],
+            accounts: &[AccountMeta::new(event_authority_info.key(), false, true)],
             data: event.to_bytes().as_slice(),
         },
-        &[event_authority_info, attestation_program],
+        &[event_authority_info],
         &[Signer::from(&[
             Seed::from(EVENT_AUTHORITY_SEED),
             Seed::from(&[event_authority_pda::BUMP]),
