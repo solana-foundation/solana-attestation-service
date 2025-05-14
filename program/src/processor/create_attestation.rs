@@ -1,11 +1,9 @@
-use core::marker::PhantomData;
-
 use pinocchio::{
     account_info::AccountInfo,
     instruction::Seed,
     program_error::ProgramError,
     pubkey::Pubkey,
-    sysvars::{rent::Rent, Sysvar},
+    sysvars::{clock::Clock, rent::Rent, Sysvar},
     ProgramResult,
 };
 use solana_program::pubkey::Pubkey as SolanaPubkey;
@@ -13,6 +11,7 @@ use solana_program::pubkey::Pubkey as SolanaPubkey;
 use crate::{
     constants::ATTESTATION_SEED,
     error::AttestationServiceError,
+    require_len,
     state::{discriminator::AccountSerialize, Attestation, Credential, Schema},
 };
 
@@ -25,6 +24,7 @@ pub fn process_create_attestation(
     instruction_data: &[u8],
     token_account: Option<Pubkey>,
 ) -> ProgramResult {
+    let args = process_instruction_data(instruction_data)?;
     let [payer_info, authorized_signer, credential_info, schema_info, attestation_info, system_program] =
         accounts
     else {
@@ -42,8 +42,6 @@ pub fn process_create_attestation(
 
     let credential_data = credential_info.try_borrow_data()?;
     let credential = Credential::try_from_bytes(&credential_data)?;
-    // Validate Credential PDA
-    credential.verify_pda(credential_info, program_id)?;
 
     // Validate Authority is an authorized signer
     credential.validate_authorized_signer(authorized_signer.key())?;
@@ -51,18 +49,21 @@ pub fn process_create_attestation(
     let schema_data = schema_info.try_borrow_data()?;
     let schema = Schema::try_from_bytes(&schema_data)?;
 
-    // Validate Schema PDA
-    schema.verify_pda(schema_info, program_id)?;
+    // Validate Schema is not paused
+    if schema.is_paused {
+        return Err(AttestationServiceError::SchemaPaused.into());
+    }
 
     // Validate Schema is owned by Credential
     if schema.credential.ne(credential_info.key()) {
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
-    let args = CreateAttestationArgs::try_from_bytes(instruction_data)?;
-    let nonce = args.nonce()?;
-    let data = args.data()?;
-    let expiry = args.expiry()?;
+    // Validate expiry is greater than current timestamp
+    let clock = Clock::get()?;
+    if args.expiry < clock.unix_timestamp && args.expiry != 0 {
+        return Err(AttestationServiceError::InvalidAttestationData.into());
+    }
 
     // NOTE: this could be optimized further by removing the `solana-program` dependency
     // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
@@ -72,7 +73,7 @@ pub fn process_create_attestation(
             ATTESTATION_SEED,
             credential_info.key(),
             schema_info.key(),
-            nonce,
+            &args.nonce,
         ],
         &SolanaPubkey::from(*program_id),
     );
@@ -93,14 +94,14 @@ pub fn process_create_attestation(
     // signer - 32
     // expiry - 8
     // token account - 32
-    let space = 1 + 32 + 32 + 32 + (4 + data.len()) + 32 + 8 + 32;
+    let space = 1 + 32 + 32 + 32 + (4 + args.data.len()) + 32 + 8 + 32;
 
     let bump_seed = [attestation_bump];
     let signer_seeds = [
         Seed::from(ATTESTATION_SEED),
         Seed::from(credential_info.key()),
         Seed::from(schema_info.key()),
-        Seed::from(nonce),
+        Seed::from(&args.nonce),
         Seed::from(&bump_seed),
     ];
 
@@ -116,13 +117,13 @@ pub fn process_create_attestation(
     )?;
 
     let attestation = Attestation {
-        nonce: *nonce,
+        nonce: args.nonce,
         credential: *credential_info.key(),
         schema: *schema_info.key(),
-        data: data.to_vec(),
+        data: args.data.to_vec(),
         signer: *authorized_signer.key(),
-        expiry,
-        token_account: token_account.unwrap_or(Pubkey::default()),
+        expiry: args.expiry,
+        token_account: token_account.unwrap_or_default(),
     };
 
     // Validate the Attestation data matches the layout of the Schema
@@ -134,61 +135,33 @@ pub fn process_create_attestation(
     Ok(())
 }
 
-/// Instruction data for the `CreateAttestation` instruction.
-pub struct CreateAttestationArgs<'a> {
-    raw: *const u8,
-
-    _data: PhantomData<&'a [u8]>,
+struct CreateAttestationArgs<'a> {
+    nonce: Pubkey,
+    data: &'a [u8],
+    expiry: i64,
 }
 
-impl CreateAttestationArgs<'_> {
-    #[inline]
-    pub fn try_from_bytes(bytes: &[u8]) -> Result<CreateAttestationArgs, ProgramError> {
-        // The minimum expected size of the instruction data.
-        // - nonce (32 bytes)
-        // - data (5 bytes. 4 len, 1 byte)
-        // - expiry (8 bytes)
-        if bytes.len() < 45 {
-            return Err(ProgramError::InvalidInstructionData);
-        }
+fn process_instruction_data(data: &[u8]) -> Result<CreateAttestationArgs, ProgramError> {
+    let mut offset: usize = 0;
 
-        Ok(CreateAttestationArgs {
-            raw: bytes.as_ptr(),
-            _data: PhantomData,
-        })
-    }
+    require_len!(data, 32);
+    let nonce: Pubkey = data[offset..offset + 32].try_into().unwrap();
+    offset += 32;
 
-    #[inline]
-    pub fn nonce(&self) -> Result<&Pubkey, ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let nonce = &*(self.raw as *const Pubkey);
-            Ok(nonce)
-        }
-    }
+    require_len!(data, offset + 4);
+    let data_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
 
-    pub fn _data_len(&self) -> usize {
-        unsafe { *(self.raw.add(32) as *const u32) as usize }
-    }
+    require_len!(data, offset + data_len);
+    let data_bytes = &data[offset..offset + data_len];
+    offset += data_len;
 
-    #[inline]
-    pub fn data(&self) -> Result<&[u8], ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let len = self._data_len();
-            let data_bytes = core::slice::from_raw_parts(self.raw.add(36), len as usize);
-            Ok(data_bytes)
-        }
-    }
+    require_len!(data, offset + 8);
+    let expiry = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
 
-    #[inline]
-    pub fn expiry(&self) -> Result<i64, ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let data_len = self._data_len();
-            let offset = 32 + 4 + data_len;
-            let expiry = *(self.raw.add(offset) as *const i64);
-            Ok(expiry)
-        }
-    }
+    Ok(CreateAttestationArgs {
+        nonce,
+        data: data_bytes,
+        expiry,
+    })
 }

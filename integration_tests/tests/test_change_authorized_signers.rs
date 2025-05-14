@@ -84,7 +84,7 @@ async fn change_authorized_signers_success() {
     }
 
     // Test upsizing authorized_signers.
-    let new_signers = vec![Keypair::new().pubkey(), Keypair::new().pubkey()];
+    let new_signers = vec![Keypair::new().pubkey(), Keypair::new().pubkey(), Keypair::new().pubkey()];
     let ix = ChangeAuthorizedSignersBuilder::new()
         .payer(ctx.payer.pubkey())
         .authority(authority.pubkey())

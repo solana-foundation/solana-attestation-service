@@ -38,7 +38,7 @@ import {
   type MaybeAccount,
   type MaybeEncodedAccount,
   type ReadonlyUint8Array,
-} from '@solana/kit';
+} from '@solana/web3.js';
 
 export type Credential = {
   discriminator: number;
