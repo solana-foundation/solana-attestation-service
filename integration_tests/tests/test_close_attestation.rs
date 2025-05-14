@@ -153,7 +153,7 @@ async fn close_attestation_success() {
         .unwrap();
 
     let (event_auth_pda, _bump) =
-        Pubkey::find_program_address(&[b"event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
 
     let initial_payer_lamports = ctx
         .banks_client
