@@ -9,14 +9,14 @@
 import {
   AccountRole,
   isProgramDerivedAddress,
-  isTransactionSigner as kitIsTransactionSigner,
+  isTransactionSigner as web3JsIsTransactionSigner,
   type Address,
   type IAccountMeta,
   type IAccountSignerMeta,
   type ProgramDerivedAddress,
   type TransactionSigner,
   upgradeRoleToSigner,
-} from '@solana/kit';
+} from '@solana/web3.js';
 
 /**
  * Asserts that the given value is not null or undefined.
@@ -159,6 +159,6 @@ export function isTransactionSigner<TAddress extends string = string>(
     !!value &&
     typeof value === 'object' &&
     'address' in value &&
-    kitIsTransactionSigner(value)
+    web3JsIsTransactionSigner(value)
   );
 }

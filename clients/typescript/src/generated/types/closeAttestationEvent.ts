@@ -25,7 +25,7 @@ import {
   type Decoder,
   type Encoder,
   type ReadonlyUint8Array,
-} from '@solana/kit';
+} from '@solana/web3.js';
 
 export type CloseAttestationEvent = {
   discriminator: number;
