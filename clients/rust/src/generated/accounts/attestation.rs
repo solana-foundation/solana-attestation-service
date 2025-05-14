@@ -64,7 +64,7 @@ impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Attestation
 #[cfg(feature = "fetch")]
 pub fn fetch_attestation(
     rpc: &solana_client::rpc_client::RpcClient,
-    address: &Pubkey,
+    address: &solana_program::pubkey::Pubkey,
 ) -> Result<crate::shared::DecodedAccount<Attestation>, std::io::Error> {
     let accounts = fetch_all_attestation(rpc, &[*address])?;
     Ok(accounts[0].clone())
@@ -73,10 +73,10 @@ pub fn fetch_attestation(
 #[cfg(feature = "fetch")]
 pub fn fetch_all_attestation(
     rpc: &solana_client::rpc_client::RpcClient,
-    addresses: &[Pubkey],
+    addresses: &[solana_program::pubkey::Pubkey],
 ) -> Result<Vec<crate::shared::DecodedAccount<Attestation>>, std::io::Error> {
     let accounts = rpc
-        .get_multiple_accounts(&addresses)
+        .get_multiple_accounts(addresses)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
     let mut decoded_accounts: Vec<crate::shared::DecodedAccount<Attestation>> = Vec::new();
     for i in 0..addresses.len() {
@@ -98,7 +98,7 @@ pub fn fetch_all_attestation(
 #[cfg(feature = "fetch")]
 pub fn fetch_maybe_attestation(
     rpc: &solana_client::rpc_client::RpcClient,
-    address: &Pubkey,
+    address: &solana_program::pubkey::Pubkey,
 ) -> Result<crate::shared::MaybeAccount<Attestation>, std::io::Error> {
     let accounts = fetch_all_maybe_attestation(rpc, &[*address])?;
     Ok(accounts[0].clone())
@@ -107,10 +107,10 @@ pub fn fetch_maybe_attestation(
 #[cfg(feature = "fetch")]
 pub fn fetch_all_maybe_attestation(
     rpc: &solana_client::rpc_client::RpcClient,
-    addresses: &[Pubkey],
+    addresses: &[solana_program::pubkey::Pubkey],
 ) -> Result<Vec<crate::shared::MaybeAccount<Attestation>>, std::io::Error> {
     let accounts = rpc
-        .get_multiple_accounts(&addresses)
+        .get_multiple_accounts(addresses)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
     let mut decoded_accounts: Vec<crate::shared::MaybeAccount<Attestation>> = Vec::new();
     for i in 0..addresses.len() {

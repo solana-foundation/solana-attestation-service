@@ -28,7 +28,7 @@ import {
   type ReadonlySignerAccount,
   type TransactionSigner,
   type WritableAccount,
-} from '@solana/web3.js';
+} from '@solana/kit';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 

@@ -27,6 +27,9 @@ struct TestFixtures {
     authority: Keypair,
 }
 
+pub const EVENT_IX_TAG: u64 = 0x1d9acb512ea545e4;
+pub const EVENT_IX_TAG_LE: &[u8] = EVENT_IX_TAG.to_le_bytes().as_slice();
+
 async fn setup() -> TestFixtures {
     let ctx = program_test_context().await;
 
@@ -150,7 +153,7 @@ async fn close_attestation_success() {
         .unwrap();
 
     let (event_auth_pda, _bump) =
-        Pubkey::find_program_address(&[b"eventAuthority"], &SOLANA_ATTESTATION_SERVICE_ID);
+        Pubkey::find_program_address(&[b"event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
 
     let initial_payer_lamports = ctx
         .banks_client
@@ -210,10 +213,10 @@ async fn close_attestation_success() {
                 let data = inner_instr.instruction.data;
 
                 // Check ix discriminator matches emit_event.
-                let match_event = data.starts_with(&[8]);
+                let match_event = data.starts_with(EVENT_IX_TAG_LE);
                 if match_event {
                     // Deserialize data in ix args (after discriminator).
-                    let event = CloseAttestationEvent::try_from_slice(&data[1..]).unwrap();
+                    let event = CloseAttestationEvent::try_from_slice(&data[8..]).unwrap();
                     assert_eq!(event.discriminator, 0);
                     assert_eq!(event.schema, schema);
                     assert_eq!(event.attestation_data, serialized_attestation_data);

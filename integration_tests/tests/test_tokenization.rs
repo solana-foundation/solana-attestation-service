@@ -491,7 +491,7 @@ async fn close_tokenized_attestation_success() {
         .unwrap();
 
     let (event_auth_pda, _bump) =
-        Pubkey::find_program_address(&[b"eventAuthority"], &SOLANA_ATTESTATION_SERVICE_ID);
+        Pubkey::find_program_address(&[b"event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
 
     let close_attestation_ix = CloseTokenizedAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -618,7 +618,7 @@ async fn update_tokenized_attestation_success() {
         .unwrap();
 
     let (event_auth_pda, _bump) =
-        Pubkey::find_program_address(&[b"eventAuthority"], &SOLANA_ATTESTATION_SERVICE_ID);
+        Pubkey::find_program_address(&[b"event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
 
     let close_attestation_ix = CloseTokenizedAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
