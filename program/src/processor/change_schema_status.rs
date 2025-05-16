@@ -6,6 +6,7 @@ use pinocchio_log::log;
 use crate::{
     error::AttestationServiceError,
     processor::{verify_owner_mutability, verify_signer},
+    require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
@@ -15,6 +16,7 @@ pub fn process_change_schema_status(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
+    let args = process_instruction_data(instruction_data)?;
     let [authority_info, credential_info, schema_info] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
@@ -26,14 +28,7 @@ pub fn process_change_schema_status(
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(schema_info, program_id, true)?;
 
-    // Read is_paused from instruction data.
-    let is_paused = instruction_data
-        .get(0)
-        .ok_or(ProgramError::InvalidInstructionData)?
-        .eq(&1);
-
     let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
-    credential.verify_pda(credential_info, program_id)?;
 
     // Verify signer matches credential authority.
     if credential.authority.ne(authority_info.key()) {
@@ -42,16 +37,29 @@ pub fn process_change_schema_status(
 
     let mut schema_data = schema_info.try_borrow_mut_data()?;
     let mut schema = Schema::try_from_bytes(&schema_data)?;
-    schema.verify_pda(schema_info, program_id)?;
 
     // Verify that schema is under the same credential.
     if schema.credential.ne(credential_info.key()) {
         return Err(AttestationServiceError::InvalidSchema.into());
     }
 
-    schema.is_paused = is_paused;
-    log!("Setting schema's is_paused to: {}", is_paused as u8);
+    schema.is_paused = args.is_paused;
+    log!("Setting schema's is_paused to: {}", args.is_paused as u8);
     schema_data.copy_from_slice(&schema.to_bytes());
 
     Ok(())
+}
+
+struct ChangeSchemaStatusArgs {
+    is_paused: bool,
+}
+
+fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaStatusArgs, ProgramError> {
+    require_len!(data, 1);
+    let is_paused = data
+        .first()
+        .ok_or(ProgramError::InvalidInstructionData)?
+        .eq(&1);
+
+    Ok(ChangeSchemaStatusArgs { is_paused })
 }

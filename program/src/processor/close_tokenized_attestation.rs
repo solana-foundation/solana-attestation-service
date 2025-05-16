@@ -5,14 +5,12 @@ use pinocchio::{
     pubkey::Pubkey,
     ProgramResult,
 };
-use pinocchio_log::log;
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
-    constants::{ATTESTATION_MINT_SEED, SAS_SEED},
+    constants::{sas_pda, ATTESTATION_MINT_SEED, SAS_SEED},
     error::AttestationServiceError,
     processor::verify_token22_program,
-    state::Attestation,
 };
 use pinocchio_token::instructions::{BurnChecked, CloseAccount, TokenProgramVariant};
 
@@ -45,13 +43,11 @@ pub fn process_close_tokenized_attestation(
     }
 
     // Validate that sas_pda matches
-    let (sas_pda, sas_bump) =
-        SolanaPubkey::find_program_address(&[SAS_SEED], &SolanaPubkey::from(*program_id));
-    if sas_pda_info.key().ne(&sas_pda.to_bytes()) {
+    if sas_pda_info.key().ne(&sas_pda::ID) {
         return Err(AttestationServiceError::InvalidProgramSigner.into());
     }
 
-    let bump_seed = [sas_bump];
+    let bump_seed = [sas_pda::BUMP];
     let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
 
     // Burn Attestation Token

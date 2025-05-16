@@ -32,6 +32,7 @@ import {
   type ReadonlySignerAccount,
   type TransactionSigner,
   type WritableAccount,
+  type WritableSignerAccount,
 } from '@solana/kit';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
@@ -44,6 +45,7 @@ export function getChangeSchemaDescriptionDiscriminatorBytes() {
 
 export type ChangeSchemaDescriptionInstruction<
   TProgram extends string = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+  TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountCredential extends string | IAccountMeta<string> = string,
   TAccountSchema extends string | IAccountMeta<string> = string,
@@ -55,6 +57,10 @@ export type ChangeSchemaDescriptionInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
       TAccountAuthority extends string
         ? ReadonlySignerAccount<TAccountAuthority> &
             IAccountSignerMeta<TAccountAuthority>
@@ -112,11 +118,13 @@ export function getChangeSchemaDescriptionInstructionDataCodec(): Codec<
 }
 
 export type ChangeSchemaDescriptionInput<
+  TAccountPayer extends string = string,
   TAccountAuthority extends string = string,
   TAccountCredential extends string = string,
   TAccountSchema extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
+  payer: TransactionSigner<TAccountPayer>;
   authority: TransactionSigner<TAccountAuthority>;
   /** Credential the Schema is associated with */
   credential: Address<TAccountCredential>;
@@ -127,6 +135,7 @@ export type ChangeSchemaDescriptionInput<
 };
 
 export function getChangeSchemaDescriptionInstruction<
+  TAccountPayer extends string,
   TAccountAuthority extends string,
   TAccountCredential extends string,
   TAccountSchema extends string,
@@ -135,6 +144,7 @@ export function getChangeSchemaDescriptionInstruction<
     Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 >(
   input: ChangeSchemaDescriptionInput<
+    TAccountPayer,
     TAccountAuthority,
     TAccountCredential,
     TAccountSchema,
@@ -143,6 +153,7 @@ export function getChangeSchemaDescriptionInstruction<
   config?: { programAddress?: TProgramAddress }
 ): ChangeSchemaDescriptionInstruction<
   TProgramAddress,
+  TAccountPayer,
   TAccountAuthority,
   TAccountCredential,
   TAccountSchema,
@@ -154,6 +165,7 @@ export function getChangeSchemaDescriptionInstruction<
 
   // Original accounts.
   const originalAccounts = {
+    payer: { value: input.payer ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: false },
     credential: { value: input.credential ?? null, isWritable: false },
     schema: { value: input.schema ?? null, isWritable: true },
@@ -176,6 +188,7 @@ export function getChangeSchemaDescriptionInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.authority),
       getAccountMeta(accounts.credential),
       getAccountMeta(accounts.schema),
@@ -187,6 +200,7 @@ export function getChangeSchemaDescriptionInstruction<
     ),
   } as ChangeSchemaDescriptionInstruction<
     TProgramAddress,
+    TAccountPayer,
     TAccountAuthority,
     TAccountCredential,
     TAccountSchema,
@@ -202,12 +216,13 @@ export type ParsedChangeSchemaDescriptionInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    authority: TAccountMetas[0];
+    payer: TAccountMetas[0];
+    authority: TAccountMetas[1];
     /** Credential the Schema is associated with */
-    credential: TAccountMetas[1];
+    credential: TAccountMetas[2];
     /** Credential the Schema is associated with */
-    schema: TAccountMetas[2];
-    systemProgram: TAccountMetas[3];
+    schema: TAccountMetas[3];
+    systemProgram: TAccountMetas[4];
   };
   data: ChangeSchemaDescriptionInstructionData;
 };
@@ -220,7 +235,7 @@ export function parseChangeSchemaDescriptionInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedChangeSchemaDescriptionInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -233,6 +248,7 @@ export function parseChangeSchemaDescriptionInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
+      payer: getNextAccount(),
       authority: getNextAccount(),
       credential: getNextAccount(),
       schema: getNextAccount(),

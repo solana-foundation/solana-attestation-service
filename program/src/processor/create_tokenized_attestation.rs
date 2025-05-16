@@ -1,5 +1,3 @@
-use core::marker::PhantomData;
-
 use pinocchio::{
     account_info::AccountInfo,
     instruction::{Seed, Signer},
@@ -8,8 +6,7 @@ use pinocchio::{
     sysvars::{rent::Rent, Sysvar},
     ProgramResult,
 };
-use pinocchio_associated_token_account::instructions::Create;
-use pinocchio_log::log;
+use pinocchio_associated_token_account::instructions::CreateIdempotent;
 use pinocchio_token::{
     extensions::{
         group_member_pointer::Initialize as InitializeGroupMemberPointer,
@@ -26,14 +23,13 @@ use pinocchio_token::{
 use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
-    constants::{ATTESTATION_MINT_SEED, SAS_SEED, SCHEMA_MINT_SEED},
+    constants::{sas_pda, ATTESTATION_MINT_SEED, SAS_SEED, SCHEMA_MINT_SEED},
     error::AttestationServiceError,
     processor::process_create_attestation,
+    require_len,
 };
 
-use super::{
-    create_pda_account, verify_ata_program, verify_system_account, verify_token22_program,
-};
+use super::{create_pda_account, verify_ata_program, verify_token22_program};
 
 #[inline(always)]
 pub fn process_create_tokenized_attestation(
@@ -55,17 +51,16 @@ pub fn process_create_tokenized_attestation(
         Some(*recipient_token_account_info.key()),
     )?;
 
-    // Validate: should be owned by system account, empty, and writable
-    verify_system_account(recipient_token_account_info, true)?;
+    let args = process_instruction_data(instruction_data)?;
+
+    // Validate Recipient TokenAccount is writable
+    if !recipient_token_account_info.is_writable() {
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     // Verify token programs.
     verify_token22_program(token_program)?;
     verify_ata_program(ata_program)?;
-
-    if recipient_info.is_writable() {
-        log!("Recipient should not be writable");
-        return Err(ProgramError::InvalidAccountData);
-    }
 
     // Validate that mint matches expected PDA
     let (attestation_mint_pda, attestation_mint_bump) = SolanaPubkey::find_program_address(
@@ -88,18 +83,9 @@ pub fn process_create_tokenized_attestation(
     }
 
     // Validate that sas_pda matches
-    let (sas_pda, sas_bump) =
-        SolanaPubkey::find_program_address(&[SAS_SEED], &SolanaPubkey::from(*program_id));
-    if sas_pda_info.key().ne(&sas_pda.to_bytes()) {
+    if sas_pda_info.key().ne(&sas_pda::ID) {
         return Err(AttestationServiceError::InvalidProgramSigner.into());
     }
-
-    // Read args from instruction data.
-    let args = CreateTokenizedAttestionArgs::try_from_bytes(instruction_data)?;
-    let name = args.name()?;
-    let uri = args.uri()?;
-    let symbol = args.symbol()?;
-    let mint_account_space = args.mint_account_space()?;
 
     // Initialize new account owned by token_program.
     create_pda_account(
@@ -115,13 +101,13 @@ pub fn process_create_tokenized_attestation(
         ],
         // Sufficient rent needs to be allocated or instruction fails with
         // "Lamport balance below rent-exempt threshold" or "InsufficientFundsForRent".
-        Some(mint_account_space.into()),
+        Some(args.mint_account_space.into()),
     )?;
 
     // Initialize GroupMemberPointer extension
     InitializeGroupMemberPointer {
         mint: attestation_mint_info,
-        authority: Some(sas_pda.to_bytes()),
+        authority: Some(sas_pda::ID),
         member_address: Some(*attestation_mint_info.key()),
     }
     .invoke()?;
@@ -164,7 +150,7 @@ pub fn process_create_tokenized_attestation(
     .invoke(TokenProgramVariant::Token2022)?;
 
     // Initialize TokenMetadata extension
-    let bump_seed = [sas_bump];
+    let bump_seed = [sas_pda::BUMP];
     let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
 
     InitializeTokenMetadata {
@@ -172,9 +158,9 @@ pub fn process_create_tokenized_attestation(
         update_authority: sas_pda_info,
         mint: attestation_mint_info,
         mint_authority: sas_pda_info,
-        name: core::str::from_utf8(name).unwrap(),
-        symbol: core::str::from_utf8(symbol).unwrap(),
-        uri: core::str::from_utf8(uri).unwrap(),
+        name: core::str::from_utf8(args.name).unwrap(),
+        symbol: core::str::from_utf8(args.symbol).unwrap(),
+        uri: core::str::from_utf8(args.uri).unwrap(),
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
@@ -205,8 +191,9 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
+    // Only create the ATA when the TokenAccount is owned by the System program with empty data.
     // Create new associated token account to hold Attestation token.
-    Create {
+    CreateIdempotent {
         funding_account: payer_info,
         account: recipient_token_account_info,
         wallet: recipient_info,
@@ -232,107 +219,52 @@ pub fn process_create_tokenized_attestation(
     Ok(())
 }
 
-/// Instruction data for the `CreateAttestationWithToken` instruction.
-pub struct CreateTokenizedAttestionArgs<'a> {
-    raw: *const u8,
-
-    _data: PhantomData<&'a [u8]>,
+struct CreateTokenizedAttestationArgs<'a> {
+    name: &'a [u8],
+    uri: &'a [u8],
+    symbol: &'a [u8],
+    mint_account_space: u16,
 }
 
-impl CreateTokenizedAttestionArgs<'_> {
-    #[inline]
-    pub fn try_from_bytes(bytes: &[u8]) -> Result<CreateTokenizedAttestionArgs, ProgramError> {
-        // The minimum expected size of the instruction data.
-        // - nonce (32 bytes)
-        // - data (5 bytes. 4 len, 1 byte)
-        // - expiry (8 bytes)
-        // - name (5 bytes. 4 len, 1 byte)
-        // - uri (5 bytes. 4 len, 1 byte)
-        // - symbol (5 bytes. 4 len, 1 byte)
-        // - mint_account_space (2 bytes)
-        if bytes.len() < 62 {
-            return Err(ProgramError::InvalidInstructionData);
-        }
+fn process_instruction_data(data: &[u8]) -> Result<CreateTokenizedAttestationArgs, ProgramError> {
+    let mut offset: usize = 32; // Skip Nonce
 
-        Ok(CreateTokenizedAttestionArgs {
-            raw: bytes.as_ptr(),
-            _data: PhantomData,
-        })
-    }
+    require_len!(data, offset + 4);
+    let data_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4 + data_len; // Skip Data field
+    offset += 8; // Skip Expiry
 
-    #[inline]
-    pub fn name(&self) -> Result<&[u8], ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let mut offset: u32 = 32; // Nonce
-            let data_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += data_len + 4; // Data
-            offset += 8; // Expiry
+    require_len!(data, offset + 4);
+    let name_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
 
-            let name_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += 4;
-            let name_bytes =
-                core::slice::from_raw_parts(self.raw.add(offset as usize), name_len as usize);
-            Ok(name_bytes)
-        }
-    }
+    require_len!(data, offset + name_len);
+    let name = &data[offset..offset + name_len];
+    offset += name_len;
 
-    #[inline]
-    pub fn uri(&self) -> Result<&[u8], ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let mut offset: u32 = 32; // Nonce
-            let data_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += data_len + 4; // Data
-            offset += 8; // Expiry
-            let name_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += name_len + 4; // Name
+    require_len!(data, offset + 4);
+    let uri_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
 
-            let uri_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += 4;
-            let uri_bytes =
-                core::slice::from_raw_parts(self.raw.add(offset as usize), uri_len as usize);
-            Ok(uri_bytes)
-        }
-    }
+    require_len!(data, offset + uri_len);
+    let uri = &data[offset..offset + uri_len];
+    offset += uri_len;
 
-    #[inline]
-    pub fn symbol(&self) -> Result<&[u8], ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let mut offset: u32 = 32; // Nonce
-            let data_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += data_len + 4; // Data
-            offset += 8; // Expiry
-            let name_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += name_len + 4; // Name
-            let uri_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += uri_len + 4; // Uri
+    require_len!(data, offset + 4);
+    let symbol_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+    offset += 4;
 
-            let symbol_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += 4;
-            let symbol_bytes =
-                core::slice::from_raw_parts(self.raw.add(offset as usize), symbol_len as usize);
-            Ok(symbol_bytes)
-        }
-    }
+    require_len!(data, offset + symbol_len);
+    let symbol = &data[offset..offset + symbol_len];
+    offset += symbol_len;
 
-    #[inline]
-    pub fn mint_account_space(&self) -> Result<u16, ProgramError> {
-        // SAFETY: the `bytes` length was validated in `try_from_bytes`.
-        unsafe {
-            let mut offset: u32 = 32; // Nonce
-            let data_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += data_len + 4; // Data
-            offset += 8; // Expiry
-            let name_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += name_len + 4; // Name
-            let uri_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += uri_len + 4; // Uri
-            let symbol_len = *(self.raw.add(offset as usize) as *const u32);
-            offset += symbol_len + 4; // Symbol
+    require_len!(data, offset + 2);
+    let mint_account_space = u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap());
 
-            Ok(*(self.raw.add(offset as usize) as *const u16))
-        }
-    }
+    Ok(CreateTokenizedAttestationArgs {
+        name,
+        uri,
+        symbol,
+        mint_account_space,
+    })
 }
