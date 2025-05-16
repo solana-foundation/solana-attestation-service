@@ -1,6 +1,6 @@
 {
   "name": "sas-lib",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -27,3 +27,4 @@
     "borsher": "^4.0.0"
   }
 }
+
