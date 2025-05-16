@@ -96,6 +96,9 @@ async fn create_schema_success() {
         .expect("get_account")
         .expect("account not none");
     let schema = Schema::try_from_slice(&schema_account.data).unwrap();
+    println!("**** raw: {:?}", &schema_account.data);
+    println!("**** layout: {:?}", &schema.layout);
+    println!("**** fieldNames: {:?}", &schema.field_names);
     assert_eq!(schema.credential, credential_pda);
     assert_eq!(schema.layout, schema_layout);
     assert_eq!(

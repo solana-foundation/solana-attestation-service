@@ -9,13 +9,21 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "mocha --require ts-node/register 'test/**/*'"
   },
   "devDependencies": {
+    "@types/chai": "^5.2.2",
+    "@types/mocha": "^10.0.10",
+    "chai": "^5.2.0",
+    "mocha": "^10.8.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "@solana/kit": "^2.1.0",
-    "bn.js": "^5.2.1"
+    "bn.js": "^5.2.1",
+    "borsh": "^2.0.0",
+    "borsher": "^4.0.0"
   }
 }
