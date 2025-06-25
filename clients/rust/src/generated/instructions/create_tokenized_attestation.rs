@@ -124,7 +124,7 @@ pub struct CreateTokenizedAttestationInstructionData {
 
 impl CreateTokenizedAttestationInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 9 }
+        Self { discriminator: 10 }
     }
 }
 

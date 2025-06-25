@@ -447,7 +447,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 8
+        "value": 9
       }
     },
     {
@@ -575,7 +575,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 9
+        "value": 10
       }
     },
     {
@@ -652,7 +652,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 10
+        "value": 11
       }
     },
     {
