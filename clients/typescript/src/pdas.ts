@@ -1,4 +1,4 @@
-import { Address, getProgramDerivedAddress } from "@solana/kit";
+import { Address, getAddressEncoder, getProgramDerivedAddress } from "@solana/kit";
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from "./generated/programs";
 
 export const ATTESTATION_SEED = "attestation";
@@ -51,7 +51,7 @@ export const deriveCredentialPda = ({
 }) =>
   getProgramDerivedAddress({
     programAddress: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-    seeds: [CREDENTIAL_SEED, authority, name],
+    seeds: [CREDENTIAL_SEED, getAddressEncoder().encode(authority), name],
   });
 
 /**
@@ -74,7 +74,7 @@ export const deriveSchemaPda = ({
   const versionSeed = Uint8Array.from([version]);
   return getProgramDerivedAddress({
     programAddress: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-    seeds: [SCHEMA_SEED, credential, name, versionSeed],
+    seeds: [SCHEMA_SEED, getAddressEncoder().encode(credential), name, versionSeed],
   });
 };
 
@@ -94,11 +94,13 @@ export const deriveAttestationPda = ({
   credential: Address;
   schema: Address;
   nonce: Address;
-}) =>
-  getProgramDerivedAddress({
+}) => {
+  const addressEncoder = getAddressEncoder();
+  return getProgramDerivedAddress({
     programAddress: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-    seeds: [ATTESTATION_SEED, credential, schema, nonce],
+    seeds: [ATTESTATION_SEED, addressEncoder.encode(credential), addressEncoder.encode(schema), addressEncoder.encode(nonce)],
   });
+}
 
 /* PDAs for tokenization */
 
@@ -110,7 +112,7 @@ export const deriveAttestationPda = ({
 export const deriveSchemaMintPda = ({ schema }: { schema: Address }) =>
   getProgramDerivedAddress({
     programAddress: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-    seeds: [SCHEMA_MINT_SEED, schema],
+    seeds: [SCHEMA_MINT_SEED, getAddressEncoder().encode(schema)],
   });
 
 /**
@@ -125,5 +127,5 @@ export const deriveAttestationMintPda = ({
 }) =>
   getProgramDerivedAddress({
     programAddress: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-    seeds: [ATTESTATION_MINT_SEED, attestation],
+    seeds: [ATTESTATION_MINT_SEED, getAddressEncoder().encode(attestation)],
   });
