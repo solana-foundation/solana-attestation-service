@@ -33,7 +33,7 @@ import {
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const TOKENIZE_SCHEMA_DISCRIMINATOR = 9;
+export const TOKENIZE_SCHEMA_DISCRIMINATOR = 229;
 
 export function getTokenizeSchemaDiscriminatorBytes() {
   return getU8Encoder().encode(TOKENIZE_SCHEMA_DISCRIMINATOR);

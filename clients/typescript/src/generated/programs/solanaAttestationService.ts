@@ -79,16 +79,16 @@ export function identifySolanaAttestationServiceInstruction(
   if (containsBytes(data, getU8Encoder().encode(7), 0)) {
     return SolanaAttestationServiceInstruction.CloseAttestation;
   }
-  if (containsBytes(data, getU8Encoder().encode(8), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(228), 0)) {
     return SolanaAttestationServiceInstruction.EmitEvent;
   }
-  if (containsBytes(data, getU8Encoder().encode(9), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(229), 0)) {
     return SolanaAttestationServiceInstruction.TokenizeSchema;
   }
-  if (containsBytes(data, getU8Encoder().encode(10), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(230), 0)) {
     return SolanaAttestationServiceInstruction.CreateTokenizedAttestation;
   }
-  if (containsBytes(data, getU8Encoder().encode(11), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(231), 0)) {
     return SolanaAttestationServiceInstruction.CloseTokenizedAttestation;
   }
   throw new Error(
