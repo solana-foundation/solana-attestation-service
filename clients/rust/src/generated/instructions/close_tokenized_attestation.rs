@@ -105,7 +105,7 @@ pub struct CloseTokenizedAttestationInstructionData {
 
 impl CloseTokenizedAttestationInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 231 }
+        Self { discriminator: 10 }
     }
 }
 

@@ -90,7 +90,7 @@ pub struct TokenizeSchemaInstructionData {
 
 impl TokenizeSchemaInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 229 }
+        Self { discriminator: 8 }
     }
 }
 
