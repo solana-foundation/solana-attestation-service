@@ -1,6 +1,6 @@
 {
   "name": "solana-attestation-service",
-  "version": "1.0.0",
+  "version": "1.0.7",
   "main": "index.js",
   "description": "Solana Attestation Service",
   "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
