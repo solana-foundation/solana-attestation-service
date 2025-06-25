@@ -11,28 +11,28 @@ use borsh::BorshSerialize;
 /// Accounts.
 #[derive(Debug)]
 pub struct TokenizeSchema {
-    pub payer: solana_program::pubkey::Pubkey,
+    pub payer: solana_pubkey::Pubkey,
 
-    pub authority: solana_program::pubkey::Pubkey,
+    pub authority: solana_pubkey::Pubkey,
     /// Credential the Schema is associated with
-    pub credential: solana_program::pubkey::Pubkey,
+    pub credential: solana_pubkey::Pubkey,
 
-    pub schema: solana_program::pubkey::Pubkey,
+    pub schema: solana_pubkey::Pubkey,
     /// Mint of Schema Token
-    pub mint: solana_program::pubkey::Pubkey,
+    pub mint: solana_pubkey::Pubkey,
     /// Program derived address used as program signer authority
-    pub sas_pda: solana_program::pubkey::Pubkey,
+    pub sas_pda: solana_pubkey::Pubkey,
 
-    pub system_program: solana_program::pubkey::Pubkey,
+    pub system_program: solana_pubkey::Pubkey,
 
-    pub token_program: solana_program::pubkey::Pubkey,
+    pub token_program: solana_pubkey::Pubkey,
 }
 
 impl TokenizeSchema {
     pub fn instruction(
         &self,
         args: TokenizeSchemaInstructionArgs,
-    ) -> solana_program::instruction::Instruction {
+    ) -> solana_instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -40,36 +40,32 @@ impl TokenizeSchema {
     pub fn instruction_with_remaining_accounts(
         &self,
         args: TokenizeSchemaInstructionArgs,
-        remaining_accounts: &[solana_program::instruction::AccountMeta],
-    ) -> solana_program::instruction::Instruction {
+        remaining_accounts: &[solana_instruction::AccountMeta],
+    ) -> solana_instruction::Instruction {
         let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new(self.payer, true));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.authority,
             true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.credential,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.schema,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.mint, false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new(self.mint, false));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.sas_pda,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.system_program,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.token_program,
             false,
         ));
@@ -78,7 +74,7 @@ impl TokenizeSchema {
         let mut args = borsh::to_vec(&args).unwrap();
         data.append(&mut args);
 
-        solana_program::instruction::Instruction {
+        solana_instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
             accounts,
             data,
@@ -94,7 +90,7 @@ pub struct TokenizeSchemaInstructionData {
 
 impl TokenizeSchemaInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 9 }
+        Self { discriminator: 8 }
     }
 }
 
@@ -124,16 +120,16 @@ pub struct TokenizeSchemaInstructionArgs {
 ///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
 pub struct TokenizeSchemaBuilder {
-    payer: Option<solana_program::pubkey::Pubkey>,
-    authority: Option<solana_program::pubkey::Pubkey>,
-    credential: Option<solana_program::pubkey::Pubkey>,
-    schema: Option<solana_program::pubkey::Pubkey>,
-    mint: Option<solana_program::pubkey::Pubkey>,
-    sas_pda: Option<solana_program::pubkey::Pubkey>,
-    system_program: Option<solana_program::pubkey::Pubkey>,
-    token_program: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<solana_pubkey::Pubkey>,
+    authority: Option<solana_pubkey::Pubkey>,
+    credential: Option<solana_pubkey::Pubkey>,
+    schema: Option<solana_pubkey::Pubkey>,
+    mint: Option<solana_pubkey::Pubkey>,
+    sas_pda: Option<solana_pubkey::Pubkey>,
+    system_program: Option<solana_pubkey::Pubkey>,
+    token_program: Option<solana_pubkey::Pubkey>,
     max_size: Option<u64>,
-    __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
+    __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
 impl TokenizeSchemaBuilder {
@@ -141,47 +137,47 @@ impl TokenizeSchemaBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn payer(&mut self, payer: solana_pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
         self
     }
     #[inline(always)]
-    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn authority(&mut self, authority: solana_pubkey::Pubkey) -> &mut Self {
         self.authority = Some(authority);
         self
     }
     /// Credential the Schema is associated with
     #[inline(always)]
-    pub fn credential(&mut self, credential: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn credential(&mut self, credential: solana_pubkey::Pubkey) -> &mut Self {
         self.credential = Some(credential);
         self
     }
     #[inline(always)]
-    pub fn schema(&mut self, schema: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn schema(&mut self, schema: solana_pubkey::Pubkey) -> &mut Self {
         self.schema = Some(schema);
         self
     }
     /// Mint of Schema Token
     #[inline(always)]
-    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn mint(&mut self, mint: solana_pubkey::Pubkey) -> &mut Self {
         self.mint = Some(mint);
         self
     }
     /// Program derived address used as program signer authority
     #[inline(always)]
-    pub fn sas_pda(&mut self, sas_pda: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn sas_pda(&mut self, sas_pda: solana_pubkey::Pubkey) -> &mut Self {
         self.sas_pda = Some(sas_pda);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
     #[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn system_program(&mut self, system_program: solana_pubkey::Pubkey) -> &mut Self {
         self.system_program = Some(system_program);
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     #[inline(always)]
-    pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn token_program(&mut self, token_program: solana_pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
         self
     }
@@ -192,10 +188,7 @@ impl TokenizeSchemaBuilder {
     }
     /// Add an additional account to the instruction.
     #[inline(always)]
-    pub fn add_remaining_account(
-        &mut self,
-        account: solana_program::instruction::AccountMeta,
-    ) -> &mut Self {
+    pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
         self.__remaining_accounts.push(account);
         self
     }
@@ -203,13 +196,13 @@ impl TokenizeSchemaBuilder {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[solana_program::instruction::AccountMeta],
+        accounts: &[solana_instruction::AccountMeta],
     ) -> &mut Self {
         self.__remaining_accounts.extend_from_slice(accounts);
         self
     }
     #[allow(clippy::clone_on_copy)]
-    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+    pub fn instruction(&self) -> solana_instruction::Instruction {
         let accounts = TokenizeSchema {
             payer: self.payer.expect("payer is not set"),
             authority: self.authority.expect("authority is not set"),
@@ -219,8 +212,8 @@ impl TokenizeSchemaBuilder {
             sas_pda: self.sas_pda.expect("sas_pda is not set"),
             system_program: self
                 .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
+                .unwrap_or(solana_pubkey::pubkey!("11111111111111111111111111111111")),
+            token_program: self.token_program.unwrap_or(solana_pubkey::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
         };
@@ -234,50 +227,50 @@ impl TokenizeSchemaBuilder {
 
 /// `tokenize_schema` CPI accounts.
 pub struct TokenizeSchemaCpiAccounts<'a, 'b> {
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub payer: &'b solana_account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub authority: &'b solana_account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
-    pub credential: &'b solana_program::account_info::AccountInfo<'a>,
+    pub credential: &'b solana_account_info::AccountInfo<'a>,
 
-    pub schema: &'b solana_program::account_info::AccountInfo<'a>,
+    pub schema: &'b solana_account_info::AccountInfo<'a>,
     /// Mint of Schema Token
-    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    pub mint: &'b solana_account_info::AccountInfo<'a>,
     /// Program derived address used as program signer authority
-    pub sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sas_pda: &'b solana_account_info::AccountInfo<'a>,
 
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub system_program: &'b solana_account_info::AccountInfo<'a>,
 
-    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_program: &'b solana_account_info::AccountInfo<'a>,
 }
 
 /// `tokenize_schema` CPI instruction.
 pub struct TokenizeSchemaCpi<'a, 'b> {
     /// The program to invoke.
-    pub __program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub __program: &'b solana_account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub payer: &'b solana_account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub authority: &'b solana_account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
-    pub credential: &'b solana_program::account_info::AccountInfo<'a>,
+    pub credential: &'b solana_account_info::AccountInfo<'a>,
 
-    pub schema: &'b solana_program::account_info::AccountInfo<'a>,
+    pub schema: &'b solana_account_info::AccountInfo<'a>,
     /// Mint of Schema Token
-    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    pub mint: &'b solana_account_info::AccountInfo<'a>,
     /// Program derived address used as program signer authority
-    pub sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sas_pda: &'b solana_account_info::AccountInfo<'a>,
 
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub system_program: &'b solana_account_info::AccountInfo<'a>,
 
-    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_program: &'b solana_account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: TokenizeSchemaInstructionArgs,
 }
 
 impl<'a, 'b> TokenizeSchemaCpi<'a, 'b> {
     pub fn new(
-        program: &'b solana_program::account_info::AccountInfo<'a>,
+        program: &'b solana_account_info::AccountInfo<'a>,
         accounts: TokenizeSchemaCpiAccounts<'a, 'b>,
         args: TokenizeSchemaInstructionArgs,
     ) -> Self {
@@ -295,25 +288,21 @@ impl<'a, 'b> TokenizeSchemaCpi<'a, 'b> {
         }
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program_entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], &[])
     }
     #[inline(always)]
     pub fn invoke_with_remaining_accounts(
         &self,
-        remaining_accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
-    ) -> solana_program::entrypoint::ProgramResult {
+        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> solana_program_entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
     }
     #[inline(always)]
     pub fn invoke_signed(
         &self,
         signers_seeds: &[&[&[u8]]],
-    ) -> solana_program::entrypoint::ProgramResult {
+    ) -> solana_program_entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -322,47 +311,37 @@ impl<'a, 'b> TokenizeSchemaCpi<'a, 'b> {
     pub fn invoke_signed_with_remaining_accounts(
         &self,
         signers_seeds: &[&[&[u8]]],
-        remaining_accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
-    ) -> solana_program::entrypoint::ProgramResult {
+        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> solana_program_entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new(*self.payer.key, true));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.authority.key,
             true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.credential.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.schema.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.mint.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new(*self.mint.key, false));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.sas_pda.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.system_program.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
-            accounts.push(solana_program::instruction::AccountMeta {
+            accounts.push(solana_instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
                 is_signer: remaining_account.1,
                 is_writable: remaining_account.2,
@@ -372,7 +351,7 @@ impl<'a, 'b> TokenizeSchemaCpi<'a, 'b> {
         let mut args = borsh::to_vec(&self.__args).unwrap();
         data.append(&mut args);
 
-        let instruction = solana_program::instruction::Instruction {
+        let instruction = solana_instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
             accounts,
             data,
@@ -392,9 +371,9 @@ impl<'a, 'b> TokenizeSchemaCpi<'a, 'b> {
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
         if signers_seeds.is_empty() {
-            solana_program::program::invoke(&instruction, &account_infos)
+            solana_cpi::invoke(&instruction, &account_infos)
         } else {
-            solana_program::program::invoke_signed(&instruction, &account_infos, signers_seeds)
+            solana_cpi::invoke_signed(&instruction, &account_infos, signers_seeds)
         }
     }
 }
@@ -417,7 +396,7 @@ pub struct TokenizeSchemaCpiBuilder<'a, 'b> {
 }
 
 impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
-    pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
+    pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(TokenizeSchemaCpiBuilderInstruction {
             __program: program,
             payer: None,
@@ -434,15 +413,12 @@ impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+    pub fn payer(&mut self, payer: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
         self
     }
     #[inline(always)]
-    pub fn authority(
-        &mut self,
-        authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.authority = Some(authority);
         self
     }
@@ -450,38 +426,32 @@ impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn credential(
         &mut self,
-        credential: &'b solana_program::account_info::AccountInfo<'a>,
+        credential: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.credential = Some(credential);
         self
     }
     #[inline(always)]
-    pub fn schema(
-        &mut self,
-        schema: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn schema(&mut self, schema: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.schema = Some(schema);
         self
     }
     /// Mint of Schema Token
     #[inline(always)]
-    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+    pub fn mint(&mut self, mint: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.mint = Some(mint);
         self
     }
     /// Program derived address used as program signer authority
     #[inline(always)]
-    pub fn sas_pda(
-        &mut self,
-        sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn sas_pda(&mut self, sas_pda: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.sas_pda = Some(sas_pda);
         self
     }
     #[inline(always)]
     pub fn system_program(
         &mut self,
-        system_program: &'b solana_program::account_info::AccountInfo<'a>,
+        system_program: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program = Some(system_program);
         self
@@ -489,7 +459,7 @@ impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn token_program(
         &mut self,
-        token_program: &'b solana_program::account_info::AccountInfo<'a>,
+        token_program: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_program = Some(token_program);
         self
@@ -503,7 +473,7 @@ impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,
-        account: &'b solana_program::account_info::AccountInfo<'a>,
+        account: &'b solana_account_info::AccountInfo<'a>,
         is_writable: bool,
         is_signer: bool,
     ) -> &mut Self {
@@ -519,11 +489,7 @@ impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
+        accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
     ) -> &mut Self {
         self.instruction
             .__remaining_accounts
@@ -531,7 +497,7 @@ impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program_entrypoint::ProgramResult {
         self.invoke_signed(&[])
     }
     #[allow(clippy::clone_on_copy)]
@@ -539,7 +505,7 @@ impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
     pub fn invoke_signed(
         &self,
         signers_seeds: &[&[&[u8]]],
-    ) -> solana_program::entrypoint::ProgramResult {
+    ) -> solana_program_entrypoint::ProgramResult {
         let args = TokenizeSchemaInstructionArgs {
             max_size: self
                 .instruction
@@ -582,20 +548,16 @@ impl<'a, 'b> TokenizeSchemaCpiBuilder<'a, 'b> {
 
 #[derive(Clone, Debug)]
 struct TokenizeSchemaCpiBuilderInstruction<'a, 'b> {
-    __program: &'b solana_program::account_info::AccountInfo<'a>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    credential: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    schema: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    sas_pda: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    __program: &'b solana_account_info::AccountInfo<'a>,
+    payer: Option<&'b solana_account_info::AccountInfo<'a>>,
+    authority: Option<&'b solana_account_info::AccountInfo<'a>>,
+    credential: Option<&'b solana_account_info::AccountInfo<'a>>,
+    schema: Option<&'b solana_account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_account_info::AccountInfo<'a>>,
+    sas_pda: Option<&'b solana_account_info::AccountInfo<'a>>,
+    system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+    token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
     max_size: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
-    __remaining_accounts: Vec<(
-        &'b solana_program::account_info::AccountInfo<'a>,
-        bool,
-        bool,
-    )>,
+    __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }

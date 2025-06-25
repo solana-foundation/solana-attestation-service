@@ -132,11 +132,6 @@ pub enum AttestationServiceInstruction {
     #[account(6, name = "attestation_program")]
     CloseAttestation {},
 
-    /// Invoked via CPI from SAS Program to log event via instruction data.
-    #[account(0, signer, name = "event_authority")]
-    #[account(1, name = "attestation_program")]
-    EmitEvent {},
-
     /// Enable tokenization for a Schema
     #[account(0, writable, signer, name = "payer")]
     #[account(1, signer, name = "authority")]
@@ -235,4 +230,9 @@ pub enum AttestationServiceInstruction {
     )]
     #[account(10, name = "token_program")]
     CloseTokenizedAttestation {},
+
+    /// Invoked via CPI from SAS Program to log event via instruction data.
+    #[account(0, signer, name = "event_authority")]
+    #[account(1, name = "attestation_program")]
+    EmitEvent {} = 228,
 }

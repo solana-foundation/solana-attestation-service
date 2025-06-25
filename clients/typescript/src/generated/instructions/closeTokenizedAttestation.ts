@@ -31,7 +31,7 @@ import {
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const CLOSE_TOKENIZED_ATTESTATION_DISCRIMINATOR = 11;
+export const CLOSE_TOKENIZED_ATTESTATION_DISCRIMINATOR = 10;
 
 export function getCloseTokenizedAttestationDiscriminatorBytes() {
   return getU8Encoder().encode(CLOSE_TOKENIZED_ATTESTATION_DISCRIMINATOR);

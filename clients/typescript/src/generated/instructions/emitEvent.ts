@@ -29,7 +29,7 @@ import {
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const EMIT_EVENT_DISCRIMINATOR = 8;
+export const EMIT_EVENT_DISCRIMINATOR = 228;
 
 export function getEmitEventDiscriminatorBytes() {
   return getU8Encoder().encode(EMIT_EVENT_DISCRIMINATOR);

@@ -45,10 +45,10 @@ export enum SolanaAttestationServiceInstruction {
   ChangeSchemaVersion,
   CreateAttestation,
   CloseAttestation,
-  EmitEvent,
   TokenizeSchema,
   CreateTokenizedAttestation,
   CloseTokenizedAttestation,
+  EmitEvent,
 }
 
 export function identifySolanaAttestationServiceInstruction(
@@ -80,16 +80,16 @@ export function identifySolanaAttestationServiceInstruction(
     return SolanaAttestationServiceInstruction.CloseAttestation;
   }
   if (containsBytes(data, getU8Encoder().encode(8), 0)) {
-    return SolanaAttestationServiceInstruction.EmitEvent;
-  }
-  if (containsBytes(data, getU8Encoder().encode(9), 0)) {
     return SolanaAttestationServiceInstruction.TokenizeSchema;
   }
-  if (containsBytes(data, getU8Encoder().encode(10), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(9), 0)) {
     return SolanaAttestationServiceInstruction.CreateTokenizedAttestation;
   }
-  if (containsBytes(data, getU8Encoder().encode(11), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(10), 0)) {
     return SolanaAttestationServiceInstruction.CloseTokenizedAttestation;
+  }
+  if (containsBytes(data, getU8Encoder().encode(228), 0)) {
+    return SolanaAttestationServiceInstruction.EmitEvent;
   }
   throw new Error(
     'The provided instruction could not be identified as a solanaAttestationService instruction.'
@@ -124,9 +124,6 @@ export type ParsedSolanaAttestationServiceInstruction<
       instructionType: SolanaAttestationServiceInstruction.CloseAttestation;
     } & ParsedCloseAttestationInstruction<TProgram>)
   | ({
-      instructionType: SolanaAttestationServiceInstruction.EmitEvent;
-    } & ParsedEmitEventInstruction<TProgram>)
-  | ({
       instructionType: SolanaAttestationServiceInstruction.TokenizeSchema;
     } & ParsedTokenizeSchemaInstruction<TProgram>)
   | ({
@@ -134,4 +131,7 @@ export type ParsedSolanaAttestationServiceInstruction<
     } & ParsedCreateTokenizedAttestationInstruction<TProgram>)
   | ({
       instructionType: SolanaAttestationServiceInstruction.CloseTokenizedAttestation;
-    } & ParsedCloseTokenizedAttestationInstruction<TProgram>);
+    } & ParsedCloseTokenizedAttestationInstruction<TProgram>)
+  | ({
+      instructionType: SolanaAttestationServiceInstruction.EmitEvent;
+    } & ParsedEmitEventInstruction<TProgram>);

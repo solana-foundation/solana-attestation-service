@@ -387,26 +387,6 @@
       }
     },
     {
-      "name": "EmitEvent",
-      "accounts": [
-        {
-          "name": "eventAuthority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "attestationProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 8
-      }
-    },
-    {
       "name": "TokenizeSchema",
       "accounts": [
         {
@@ -467,7 +447,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 9
+        "value": 8
       }
     },
     {
@@ -595,7 +575,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 10
+        "value": 9
       }
     },
     {
@@ -672,7 +652,27 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 11
+        "value": 10
+      }
+    },
+    {
+      "name": "EmitEvent",
+      "accounts": [
+        {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "attestationProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 228
       }
     }
   ],
