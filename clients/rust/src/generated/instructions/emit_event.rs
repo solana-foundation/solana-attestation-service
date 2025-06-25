@@ -11,34 +11,34 @@ use borsh::BorshSerialize;
 /// Accounts.
 #[derive(Debug)]
 pub struct EmitEvent {
-    pub event_authority: solana_pubkey::Pubkey,
+    pub event_authority: solana_program::pubkey::Pubkey,
 
-    pub attestation_program: solana_pubkey::Pubkey,
+    pub attestation_program: solana_program::pubkey::Pubkey,
 }
 
 impl EmitEvent {
-    pub fn instruction(&self) -> solana_instruction::Instruction {
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(&[])
     }
     #[allow(clippy::arithmetic_side_effects)]
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        remaining_accounts: &[solana_instruction::AccountMeta],
-    ) -> solana_instruction::Instruction {
+        remaining_accounts: &[solana_program::instruction::AccountMeta],
+    ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.event_authority,
             true,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.attestation_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let data = borsh::to_vec(&EmitEventInstructionData::new()).unwrap();
 
-        solana_instruction::Instruction {
+        solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
             accounts,
             data,
@@ -72,9 +72,9 @@ impl Default for EmitEventInstructionData {
 ///   1. `[]` attestation_program
 #[derive(Clone, Debug, Default)]
 pub struct EmitEventBuilder {
-    event_authority: Option<solana_pubkey::Pubkey>,
-    attestation_program: Option<solana_pubkey::Pubkey>,
-    __remaining_accounts: Vec<solana_instruction::AccountMeta>,
+    event_authority: Option<solana_program::pubkey::Pubkey>,
+    attestation_program: Option<solana_program::pubkey::Pubkey>,
+    __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
 impl EmitEventBuilder {
@@ -82,18 +82,27 @@ impl EmitEventBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn event_authority(&mut self, event_authority: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn event_authority(
+        &mut self,
+        event_authority: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
         self.event_authority = Some(event_authority);
         self
     }
     #[inline(always)]
-    pub fn attestation_program(&mut self, attestation_program: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn attestation_program(
+        &mut self,
+        attestation_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
         self.attestation_program = Some(attestation_program);
         self
     }
     /// Add an additional account to the instruction.
     #[inline(always)]
-    pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
+    pub fn add_remaining_account(
+        &mut self,
+        account: solana_program::instruction::AccountMeta,
+    ) -> &mut Self {
         self.__remaining_accounts.push(account);
         self
     }
@@ -101,13 +110,13 @@ impl EmitEventBuilder {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[solana_instruction::AccountMeta],
+        accounts: &[solana_program::instruction::AccountMeta],
     ) -> &mut Self {
         self.__remaining_accounts.extend_from_slice(accounts);
         self
     }
     #[allow(clippy::clone_on_copy)]
-    pub fn instruction(&self) -> solana_instruction::Instruction {
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = EmitEvent {
             event_authority: self.event_authority.expect("event_authority is not set"),
             attestation_program: self
@@ -121,24 +130,24 @@ impl EmitEventBuilder {
 
 /// `emit_event` CPI accounts.
 pub struct EmitEventCpiAccounts<'a, 'b> {
-    pub event_authority: &'b solana_account_info::AccountInfo<'a>,
+    pub event_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub attestation_program: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `emit_event` CPI instruction.
 pub struct EmitEventCpi<'a, 'b> {
     /// The program to invoke.
-    pub __program: &'b solana_account_info::AccountInfo<'a>,
+    pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub event_authority: &'b solana_account_info::AccountInfo<'a>,
+    pub event_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub attestation_program: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> EmitEventCpi<'a, 'b> {
     pub fn new(
-        program: &'b solana_account_info::AccountInfo<'a>,
+        program: &'b solana_program::account_info::AccountInfo<'a>,
         accounts: EmitEventCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
@@ -148,21 +157,25 @@ impl<'a, 'b> EmitEventCpi<'a, 'b> {
         }
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program_entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], &[])
     }
     #[inline(always)]
     pub fn invoke_with_remaining_accounts(
         &self,
-        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
-    ) -> solana_program_entrypoint::ProgramResult {
+        remaining_accounts: &[(
+            &'b solana_program::account_info::AccountInfo<'a>,
+            bool,
+            bool,
+        )],
+    ) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
     }
     #[inline(always)]
     pub fn invoke_signed(
         &self,
         signers_seeds: &[&[&[u8]]],
-    ) -> solana_program_entrypoint::ProgramResult {
+    ) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -171,19 +184,23 @@ impl<'a, 'b> EmitEventCpi<'a, 'b> {
     pub fn invoke_signed_with_remaining_accounts(
         &self,
         signers_seeds: &[&[&[u8]]],
-        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
-    ) -> solana_program_entrypoint::ProgramResult {
+        remaining_accounts: &[(
+            &'b solana_program::account_info::AccountInfo<'a>,
+            bool,
+            bool,
+        )],
+    ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.event_authority.key,
             true,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.attestation_program.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
-            accounts.push(solana_instruction::AccountMeta {
+            accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
                 is_signer: remaining_account.1,
                 is_writable: remaining_account.2,
@@ -191,7 +208,7 @@ impl<'a, 'b> EmitEventCpi<'a, 'b> {
         });
         let data = borsh::to_vec(&EmitEventInstructionData::new()).unwrap();
 
-        let instruction = solana_instruction::Instruction {
+        let instruction = solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
             accounts,
             data,
@@ -205,9 +222,9 @@ impl<'a, 'b> EmitEventCpi<'a, 'b> {
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
         if signers_seeds.is_empty() {
-            solana_cpi::invoke(&instruction, &account_infos)
+            solana_program::program::invoke(&instruction, &account_infos)
         } else {
-            solana_cpi::invoke_signed(&instruction, &account_infos, signers_seeds)
+            solana_program::program::invoke_signed(&instruction, &account_infos, signers_seeds)
         }
     }
 }
@@ -224,7 +241,7 @@ pub struct EmitEventCpiBuilder<'a, 'b> {
 }
 
 impl<'a, 'b> EmitEventCpiBuilder<'a, 'b> {
-    pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
+    pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(EmitEventCpiBuilderInstruction {
             __program: program,
             event_authority: None,
@@ -236,7 +253,7 @@ impl<'a, 'b> EmitEventCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn event_authority(
         &mut self,
-        event_authority: &'b solana_account_info::AccountInfo<'a>,
+        event_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.event_authority = Some(event_authority);
         self
@@ -244,7 +261,7 @@ impl<'a, 'b> EmitEventCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn attestation_program(
         &mut self,
-        attestation_program: &'b solana_account_info::AccountInfo<'a>,
+        attestation_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.attestation_program = Some(attestation_program);
         self
@@ -253,7 +270,7 @@ impl<'a, 'b> EmitEventCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,
-        account: &'b solana_account_info::AccountInfo<'a>,
+        account: &'b solana_program::account_info::AccountInfo<'a>,
         is_writable: bool,
         is_signer: bool,
     ) -> &mut Self {
@@ -269,7 +286,11 @@ impl<'a, 'b> EmitEventCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+        accounts: &[(
+            &'b solana_program::account_info::AccountInfo<'a>,
+            bool,
+            bool,
+        )],
     ) -> &mut Self {
         self.instruction
             .__remaining_accounts
@@ -277,7 +298,7 @@ impl<'a, 'b> EmitEventCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program_entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed(&[])
     }
     #[allow(clippy::clone_on_copy)]
@@ -285,7 +306,7 @@ impl<'a, 'b> EmitEventCpiBuilder<'a, 'b> {
     pub fn invoke_signed(
         &self,
         signers_seeds: &[&[&[u8]]],
-    ) -> solana_program_entrypoint::ProgramResult {
+    ) -> solana_program::entrypoint::ProgramResult {
         let instruction = EmitEventCpi {
             __program: self.instruction.__program,
 
@@ -308,9 +329,13 @@ impl<'a, 'b> EmitEventCpiBuilder<'a, 'b> {
 
 #[derive(Clone, Debug)]
 struct EmitEventCpiBuilderInstruction<'a, 'b> {
-    __program: &'b solana_account_info::AccountInfo<'a>,
-    event_authority: Option<&'b solana_account_info::AccountInfo<'a>>,
-    attestation_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+    __program: &'b solana_program::account_info::AccountInfo<'a>,
+    event_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    attestation_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
-    __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
+    __remaining_accounts: Vec<(
+        &'b solana_program::account_info::AccountInfo<'a>,
+        bool,
+        bool,
+    )>,
 }

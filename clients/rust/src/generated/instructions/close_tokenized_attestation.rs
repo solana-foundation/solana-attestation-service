@@ -11,85 +11,87 @@ use borsh::BorshSerialize;
 /// Accounts.
 #[derive(Debug)]
 pub struct CloseTokenizedAttestation {
-    pub payer: solana_pubkey::Pubkey,
+    pub payer: solana_program::pubkey::Pubkey,
     /// Authorized signer of the Schema's Credential
-    pub authority: solana_pubkey::Pubkey,
+    pub authority: solana_program::pubkey::Pubkey,
 
-    pub credential: solana_pubkey::Pubkey,
+    pub credential: solana_program::pubkey::Pubkey,
 
-    pub attestation: solana_pubkey::Pubkey,
+    pub attestation: solana_program::pubkey::Pubkey,
 
-    pub event_authority: solana_pubkey::Pubkey,
+    pub event_authority: solana_program::pubkey::Pubkey,
 
-    pub system_program: solana_pubkey::Pubkey,
+    pub system_program: solana_program::pubkey::Pubkey,
 
-    pub attestation_program: solana_pubkey::Pubkey,
+    pub attestation_program: solana_program::pubkey::Pubkey,
     /// Mint of Attestation Token
-    pub attestation_mint: solana_pubkey::Pubkey,
+    pub attestation_mint: solana_program::pubkey::Pubkey,
     /// Program derived address used as program signer authority
-    pub sas_pda: solana_pubkey::Pubkey,
+    pub sas_pda: solana_program::pubkey::Pubkey,
     /// Associated token account of the related Attestation Token
-    pub attestation_token_account: solana_pubkey::Pubkey,
+    pub attestation_token_account: solana_program::pubkey::Pubkey,
 
-    pub token_program: solana_pubkey::Pubkey,
+    pub token_program: solana_program::pubkey::Pubkey,
 }
 
 impl CloseTokenizedAttestation {
-    pub fn instruction(&self) -> solana_instruction::Instruction {
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(&[])
     }
     #[allow(clippy::arithmetic_side_effects)]
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        remaining_accounts: &[solana_instruction::AccountMeta],
-    ) -> solana_instruction::Instruction {
+        remaining_accounts: &[solana_program::instruction::AccountMeta],
+    ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
-        accounts.push(solana_instruction::AccountMeta::new(self.payer, true));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.payer, true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.authority,
             true,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.credential,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.attestation,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.event_authority,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.attestation_program,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.attestation_mint,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.sas_pda,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.attestation_token_account,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let data = borsh::to_vec(&CloseTokenizedAttestationInstructionData::new()).unwrap();
 
-        solana_instruction::Instruction {
+        solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
             accounts,
             data,
@@ -132,18 +134,18 @@ impl Default for CloseTokenizedAttestationInstructionData {
 ///   10. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
 pub struct CloseTokenizedAttestationBuilder {
-    payer: Option<solana_pubkey::Pubkey>,
-    authority: Option<solana_pubkey::Pubkey>,
-    credential: Option<solana_pubkey::Pubkey>,
-    attestation: Option<solana_pubkey::Pubkey>,
-    event_authority: Option<solana_pubkey::Pubkey>,
-    system_program: Option<solana_pubkey::Pubkey>,
-    attestation_program: Option<solana_pubkey::Pubkey>,
-    attestation_mint: Option<solana_pubkey::Pubkey>,
-    sas_pda: Option<solana_pubkey::Pubkey>,
-    attestation_token_account: Option<solana_pubkey::Pubkey>,
-    token_program: Option<solana_pubkey::Pubkey>,
-    __remaining_accounts: Vec<solana_instruction::AccountMeta>,
+    payer: Option<solana_program::pubkey::Pubkey>,
+    authority: Option<solana_program::pubkey::Pubkey>,
+    credential: Option<solana_program::pubkey::Pubkey>,
+    attestation: Option<solana_program::pubkey::Pubkey>,
+    event_authority: Option<solana_program::pubkey::Pubkey>,
+    system_program: Option<solana_program::pubkey::Pubkey>,
+    attestation_program: Option<solana_program::pubkey::Pubkey>,
+    attestation_mint: Option<solana_program::pubkey::Pubkey>,
+    sas_pda: Option<solana_program::pubkey::Pubkey>,
+    attestation_token_account: Option<solana_program::pubkey::Pubkey>,
+    token_program: Option<solana_program::pubkey::Pubkey>,
+    __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
 impl CloseTokenizedAttestationBuilder {
@@ -151,51 +153,60 @@ impl CloseTokenizedAttestationBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
         self
     }
     /// Authorized signer of the Schema's Credential
     #[inline(always)]
-    pub fn authority(&mut self, authority: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
         self.authority = Some(authority);
         self
     }
     #[inline(always)]
-    pub fn credential(&mut self, credential: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn credential(&mut self, credential: solana_program::pubkey::Pubkey) -> &mut Self {
         self.credential = Some(credential);
         self
     }
     #[inline(always)]
-    pub fn attestation(&mut self, attestation: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn attestation(&mut self, attestation: solana_program::pubkey::Pubkey) -> &mut Self {
         self.attestation = Some(attestation);
         self
     }
     #[inline(always)]
-    pub fn event_authority(&mut self, event_authority: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn event_authority(
+        &mut self,
+        event_authority: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
         self.event_authority = Some(event_authority);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
     #[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.system_program = Some(system_program);
         self
     }
     #[inline(always)]
-    pub fn attestation_program(&mut self, attestation_program: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn attestation_program(
+        &mut self,
+        attestation_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
         self.attestation_program = Some(attestation_program);
         self
     }
     /// Mint of Attestation Token
     #[inline(always)]
-    pub fn attestation_mint(&mut self, attestation_mint: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn attestation_mint(
+        &mut self,
+        attestation_mint: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
         self.attestation_mint = Some(attestation_mint);
         self
     }
     /// Program derived address used as program signer authority
     #[inline(always)]
-    pub fn sas_pda(&mut self, sas_pda: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn sas_pda(&mut self, sas_pda: solana_program::pubkey::Pubkey) -> &mut Self {
         self.sas_pda = Some(sas_pda);
         self
     }
@@ -203,20 +214,23 @@ impl CloseTokenizedAttestationBuilder {
     #[inline(always)]
     pub fn attestation_token_account(
         &mut self,
-        attestation_token_account: solana_pubkey::Pubkey,
+        attestation_token_account: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.attestation_token_account = Some(attestation_token_account);
         self
     }
     /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     #[inline(always)]
-    pub fn token_program(&mut self, token_program: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
         self
     }
     /// Add an additional account to the instruction.
     #[inline(always)]
-    pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
+    pub fn add_remaining_account(
+        &mut self,
+        account: solana_program::instruction::AccountMeta,
+    ) -> &mut Self {
         self.__remaining_accounts.push(account);
         self
     }
@@ -224,13 +238,13 @@ impl CloseTokenizedAttestationBuilder {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[solana_instruction::AccountMeta],
+        accounts: &[solana_program::instruction::AccountMeta],
     ) -> &mut Self {
         self.__remaining_accounts.extend_from_slice(accounts);
         self
     }
     #[allow(clippy::clone_on_copy)]
-    pub fn instruction(&self) -> solana_instruction::Instruction {
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = CloseTokenizedAttestation {
             payer: self.payer.expect("payer is not set"),
             authority: self.authority.expect("authority is not set"),
@@ -239,7 +253,7 @@ impl CloseTokenizedAttestationBuilder {
             event_authority: self.event_authority.expect("event_authority is not set"),
             system_program: self
                 .system_program
-                .unwrap_or(solana_pubkey::pubkey!("11111111111111111111111111111111")),
+                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
             attestation_program: self
                 .attestation_program
                 .expect("attestation_program is not set"),
@@ -248,7 +262,7 @@ impl CloseTokenizedAttestationBuilder {
             attestation_token_account: self
                 .attestation_token_account
                 .expect("attestation_token_account is not set"),
-            token_program: self.token_program.unwrap_or(solana_pubkey::pubkey!(
+            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
         };
@@ -259,60 +273,60 @@ impl CloseTokenizedAttestationBuilder {
 
 /// `close_tokenized_attestation` CPI accounts.
 pub struct CloseTokenizedAttestationCpiAccounts<'a, 'b> {
-    pub payer: &'b solana_account_info::AccountInfo<'a>,
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authorized signer of the Schema's Credential
-    pub authority: &'b solana_account_info::AccountInfo<'a>,
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub credential: &'b solana_account_info::AccountInfo<'a>,
+    pub credential: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub attestation: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub event_authority: &'b solana_account_info::AccountInfo<'a>,
+    pub event_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub system_program: &'b solana_account_info::AccountInfo<'a>,
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub attestation_program: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Mint of Attestation Token
-    pub attestation_mint: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation_mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Program derived address used as program signer authority
-    pub sas_pda: &'b solana_account_info::AccountInfo<'a>,
+    pub sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
     /// Associated token account of the related Attestation Token
-    pub attestation_token_account: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation_token_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub token_program: &'b solana_account_info::AccountInfo<'a>,
+    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `close_tokenized_attestation` CPI instruction.
 pub struct CloseTokenizedAttestationCpi<'a, 'b> {
     /// The program to invoke.
-    pub __program: &'b solana_account_info::AccountInfo<'a>,
+    pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_account_info::AccountInfo<'a>,
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authorized signer of the Schema's Credential
-    pub authority: &'b solana_account_info::AccountInfo<'a>,
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub credential: &'b solana_account_info::AccountInfo<'a>,
+    pub credential: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub attestation: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub event_authority: &'b solana_account_info::AccountInfo<'a>,
+    pub event_authority: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub system_program: &'b solana_account_info::AccountInfo<'a>,
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub attestation_program: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Mint of Attestation Token
-    pub attestation_mint: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation_mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Program derived address used as program signer authority
-    pub sas_pda: &'b solana_account_info::AccountInfo<'a>,
+    pub sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
     /// Associated token account of the related Attestation Token
-    pub attestation_token_account: &'b solana_account_info::AccountInfo<'a>,
+    pub attestation_token_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub token_program: &'b solana_account_info::AccountInfo<'a>,
+    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> CloseTokenizedAttestationCpi<'a, 'b> {
     pub fn new(
-        program: &'b solana_account_info::AccountInfo<'a>,
+        program: &'b solana_program::account_info::AccountInfo<'a>,
         accounts: CloseTokenizedAttestationCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
@@ -331,21 +345,25 @@ impl<'a, 'b> CloseTokenizedAttestationCpi<'a, 'b> {
         }
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program_entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], &[])
     }
     #[inline(always)]
     pub fn invoke_with_remaining_accounts(
         &self,
-        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
-    ) -> solana_program_entrypoint::ProgramResult {
+        remaining_accounts: &[(
+            &'b solana_program::account_info::AccountInfo<'a>,
+            bool,
+            bool,
+        )],
+    ) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
     }
     #[inline(always)]
     pub fn invoke_signed(
         &self,
         signers_seeds: &[&[&[u8]]],
-    ) -> solana_program_entrypoint::ProgramResult {
+    ) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -354,52 +372,59 @@ impl<'a, 'b> CloseTokenizedAttestationCpi<'a, 'b> {
     pub fn invoke_signed_with_remaining_accounts(
         &self,
         signers_seeds: &[&[&[u8]]],
-        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
-    ) -> solana_program_entrypoint::ProgramResult {
+        remaining_accounts: &[(
+            &'b solana_program::account_info::AccountInfo<'a>,
+            bool,
+            bool,
+        )],
+    ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
-        accounts.push(solana_instruction::AccountMeta::new(*self.payer.key, true));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.payer.key,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.authority.key,
             true,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.credential.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.attestation.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.event_authority.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.system_program.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.attestation_program.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.attestation_mint.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.sas_pda.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.attestation_token_account.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
-            accounts.push(solana_instruction::AccountMeta {
+            accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
                 is_signer: remaining_account.1,
                 is_writable: remaining_account.2,
@@ -407,7 +432,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpi<'a, 'b> {
         });
         let data = borsh::to_vec(&CloseTokenizedAttestationInstructionData::new()).unwrap();
 
-        let instruction = solana_instruction::Instruction {
+        let instruction = solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
             accounts,
             data,
@@ -430,9 +455,9 @@ impl<'a, 'b> CloseTokenizedAttestationCpi<'a, 'b> {
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
         if signers_seeds.is_empty() {
-            solana_cpi::invoke(&instruction, &account_infos)
+            solana_program::program::invoke(&instruction, &account_infos)
         } else {
-            solana_cpi::invoke_signed(&instruction, &account_infos, signers_seeds)
+            solana_program::program::invoke_signed(&instruction, &account_infos, signers_seeds)
         }
     }
 }
@@ -458,7 +483,7 @@ pub struct CloseTokenizedAttestationCpiBuilder<'a, 'b> {
 }
 
 impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
-    pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
+    pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(CloseTokenizedAttestationCpiBuilderInstruction {
             __program: program,
             payer: None,
@@ -477,20 +502,23 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
         self
     }
     /// Authorized signer of the Schema's Credential
     #[inline(always)]
-    pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+    pub fn authority(
+        &mut self,
+        authority: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
         self.instruction.authority = Some(authority);
         self
     }
     #[inline(always)]
     pub fn credential(
         &mut self,
-        credential: &'b solana_account_info::AccountInfo<'a>,
+        credential: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.credential = Some(credential);
         self
@@ -498,7 +526,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn attestation(
         &mut self,
-        attestation: &'b solana_account_info::AccountInfo<'a>,
+        attestation: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.attestation = Some(attestation);
         self
@@ -506,7 +534,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn event_authority(
         &mut self,
-        event_authority: &'b solana_account_info::AccountInfo<'a>,
+        event_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.event_authority = Some(event_authority);
         self
@@ -514,7 +542,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn system_program(
         &mut self,
-        system_program: &'b solana_account_info::AccountInfo<'a>,
+        system_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program = Some(system_program);
         self
@@ -522,7 +550,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn attestation_program(
         &mut self,
-        attestation_program: &'b solana_account_info::AccountInfo<'a>,
+        attestation_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.attestation_program = Some(attestation_program);
         self
@@ -531,14 +559,17 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn attestation_mint(
         &mut self,
-        attestation_mint: &'b solana_account_info::AccountInfo<'a>,
+        attestation_mint: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.attestation_mint = Some(attestation_mint);
         self
     }
     /// Program derived address used as program signer authority
     #[inline(always)]
-    pub fn sas_pda(&mut self, sas_pda: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+    pub fn sas_pda(
+        &mut self,
+        sas_pda: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
         self.instruction.sas_pda = Some(sas_pda);
         self
     }
@@ -546,7 +577,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn attestation_token_account(
         &mut self,
-        attestation_token_account: &'b solana_account_info::AccountInfo<'a>,
+        attestation_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.attestation_token_account = Some(attestation_token_account);
         self
@@ -554,7 +585,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn token_program(
         &mut self,
-        token_program: &'b solana_account_info::AccountInfo<'a>,
+        token_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_program = Some(token_program);
         self
@@ -563,7 +594,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,
-        account: &'b solana_account_info::AccountInfo<'a>,
+        account: &'b solana_program::account_info::AccountInfo<'a>,
         is_writable: bool,
         is_signer: bool,
     ) -> &mut Self {
@@ -579,7 +610,11 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+        accounts: &[(
+            &'b solana_program::account_info::AccountInfo<'a>,
+            bool,
+            bool,
+        )],
     ) -> &mut Self {
         self.instruction
             .__remaining_accounts
@@ -587,7 +622,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program_entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed(&[])
     }
     #[allow(clippy::clone_on_copy)]
@@ -595,7 +630,7 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
     pub fn invoke_signed(
         &self,
         signers_seeds: &[&[&[u8]]],
-    ) -> solana_program_entrypoint::ProgramResult {
+    ) -> solana_program::entrypoint::ProgramResult {
         let instruction = CloseTokenizedAttestationCpi {
             __program: self.instruction.__program,
 
@@ -651,18 +686,22 @@ impl<'a, 'b> CloseTokenizedAttestationCpiBuilder<'a, 'b> {
 
 #[derive(Clone, Debug)]
 struct CloseTokenizedAttestationCpiBuilderInstruction<'a, 'b> {
-    __program: &'b solana_account_info::AccountInfo<'a>,
-    payer: Option<&'b solana_account_info::AccountInfo<'a>>,
-    authority: Option<&'b solana_account_info::AccountInfo<'a>>,
-    credential: Option<&'b solana_account_info::AccountInfo<'a>>,
-    attestation: Option<&'b solana_account_info::AccountInfo<'a>>,
-    event_authority: Option<&'b solana_account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-    attestation_program: Option<&'b solana_account_info::AccountInfo<'a>>,
-    attestation_mint: Option<&'b solana_account_info::AccountInfo<'a>>,
-    sas_pda: Option<&'b solana_account_info::AccountInfo<'a>>,
-    attestation_token_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-    token_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+    __program: &'b solana_program::account_info::AccountInfo<'a>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    credential: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    attestation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    event_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    attestation_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    attestation_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    sas_pda: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    attestation_token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
-    __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
+    __remaining_accounts: Vec<(
+        &'b solana_program::account_info::AccountInfo<'a>,
+        bool,
+        bool,
+    )>,
 }

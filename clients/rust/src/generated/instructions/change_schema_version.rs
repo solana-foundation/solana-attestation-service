@@ -11,24 +11,24 @@ use borsh::BorshSerialize;
 /// Accounts.
 #[derive(Debug)]
 pub struct ChangeSchemaVersion {
-    pub payer: solana_pubkey::Pubkey,
+    pub payer: solana_program::pubkey::Pubkey,
 
-    pub authority: solana_pubkey::Pubkey,
+    pub authority: solana_program::pubkey::Pubkey,
     /// Credential the Schema is associated with
-    pub credential: solana_pubkey::Pubkey,
+    pub credential: solana_program::pubkey::Pubkey,
 
-    pub existing_schema: solana_pubkey::Pubkey,
+    pub existing_schema: solana_program::pubkey::Pubkey,
 
-    pub new_schema: solana_pubkey::Pubkey,
+    pub new_schema: solana_program::pubkey::Pubkey,
 
-    pub system_program: solana_pubkey::Pubkey,
+    pub system_program: solana_program::pubkey::Pubkey,
 }
 
 impl ChangeSchemaVersion {
     pub fn instruction(
         &self,
         args: ChangeSchemaVersionInstructionArgs,
-    ) -> solana_instruction::Instruction {
+    ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -36,24 +36,29 @@ impl ChangeSchemaVersion {
     pub fn instruction_with_remaining_accounts(
         &self,
         args: ChangeSchemaVersionInstructionArgs,
-        remaining_accounts: &[solana_instruction::AccountMeta],
-    ) -> solana_instruction::Instruction {
+        remaining_accounts: &[solana_program::instruction::AccountMeta],
+    ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
-        accounts.push(solana_instruction::AccountMeta::new(self.payer, true));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.payer, true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.authority,
             true,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.credential,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.existing_schema,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(self.new_schema, false));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.new_schema,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
             false,
         ));
@@ -62,7 +67,7 @@ impl ChangeSchemaVersion {
         let mut args = borsh::to_vec(&args).unwrap();
         data.append(&mut args);
 
-        solana_instruction::Instruction {
+        solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
             accounts,
             data,
@@ -107,15 +112,15 @@ pub struct ChangeSchemaVersionInstructionArgs {
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct ChangeSchemaVersionBuilder {
-    payer: Option<solana_pubkey::Pubkey>,
-    authority: Option<solana_pubkey::Pubkey>,
-    credential: Option<solana_pubkey::Pubkey>,
-    existing_schema: Option<solana_pubkey::Pubkey>,
-    new_schema: Option<solana_pubkey::Pubkey>,
-    system_program: Option<solana_pubkey::Pubkey>,
+    payer: Option<solana_program::pubkey::Pubkey>,
+    authority: Option<solana_program::pubkey::Pubkey>,
+    credential: Option<solana_program::pubkey::Pubkey>,
+    existing_schema: Option<solana_program::pubkey::Pubkey>,
+    new_schema: Option<solana_program::pubkey::Pubkey>,
+    system_program: Option<solana_program::pubkey::Pubkey>,
     layout: Option<Vec<u8>>,
     field_names: Option<Vec<String>>,
-    __remaining_accounts: Vec<solana_instruction::AccountMeta>,
+    __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
 impl ChangeSchemaVersionBuilder {
@@ -123,34 +128,37 @@ impl ChangeSchemaVersionBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
         self.payer = Some(payer);
         self
     }
     #[inline(always)]
-    pub fn authority(&mut self, authority: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
         self.authority = Some(authority);
         self
     }
     /// Credential the Schema is associated with
     #[inline(always)]
-    pub fn credential(&mut self, credential: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn credential(&mut self, credential: solana_program::pubkey::Pubkey) -> &mut Self {
         self.credential = Some(credential);
         self
     }
     #[inline(always)]
-    pub fn existing_schema(&mut self, existing_schema: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn existing_schema(
+        &mut self,
+        existing_schema: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
         self.existing_schema = Some(existing_schema);
         self
     }
     #[inline(always)]
-    pub fn new_schema(&mut self, new_schema: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn new_schema(&mut self, new_schema: solana_program::pubkey::Pubkey) -> &mut Self {
         self.new_schema = Some(new_schema);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
     #[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_pubkey::Pubkey) -> &mut Self {
+    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.system_program = Some(system_program);
         self
     }
@@ -166,7 +174,10 @@ impl ChangeSchemaVersionBuilder {
     }
     /// Add an additional account to the instruction.
     #[inline(always)]
-    pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
+    pub fn add_remaining_account(
+        &mut self,
+        account: solana_program::instruction::AccountMeta,
+    ) -> &mut Self {
         self.__remaining_accounts.push(account);
         self
     }
@@ -174,13 +185,13 @@ impl ChangeSchemaVersionBuilder {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[solana_instruction::AccountMeta],
+        accounts: &[solana_program::instruction::AccountMeta],
     ) -> &mut Self {
         self.__remaining_accounts.extend_from_slice(accounts);
         self
     }
     #[allow(clippy::clone_on_copy)]
-    pub fn instruction(&self) -> solana_instruction::Instruction {
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = ChangeSchemaVersion {
             payer: self.payer.expect("payer is not set"),
             authority: self.authority.expect("authority is not set"),
@@ -189,7 +200,7 @@ impl ChangeSchemaVersionBuilder {
             new_schema: self.new_schema.expect("new_schema is not set"),
             system_program: self
                 .system_program
-                .unwrap_or(solana_pubkey::pubkey!("11111111111111111111111111111111")),
+                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
         let args = ChangeSchemaVersionInstructionArgs {
             layout: self.layout.clone().expect("layout is not set"),
@@ -202,42 +213,42 @@ impl ChangeSchemaVersionBuilder {
 
 /// `change_schema_version` CPI accounts.
 pub struct ChangeSchemaVersionCpiAccounts<'a, 'b> {
-    pub payer: &'b solana_account_info::AccountInfo<'a>,
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_account_info::AccountInfo<'a>,
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
-    pub credential: &'b solana_account_info::AccountInfo<'a>,
+    pub credential: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub existing_schema: &'b solana_account_info::AccountInfo<'a>,
+    pub existing_schema: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub new_schema: &'b solana_account_info::AccountInfo<'a>,
+    pub new_schema: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub system_program: &'b solana_account_info::AccountInfo<'a>,
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `change_schema_version` CPI instruction.
 pub struct ChangeSchemaVersionCpi<'a, 'b> {
     /// The program to invoke.
-    pub __program: &'b solana_account_info::AccountInfo<'a>,
+    pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_account_info::AccountInfo<'a>,
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_account_info::AccountInfo<'a>,
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Credential the Schema is associated with
-    pub credential: &'b solana_account_info::AccountInfo<'a>,
+    pub credential: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub existing_schema: &'b solana_account_info::AccountInfo<'a>,
+    pub existing_schema: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub new_schema: &'b solana_account_info::AccountInfo<'a>,
+    pub new_schema: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub system_program: &'b solana_account_info::AccountInfo<'a>,
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: ChangeSchemaVersionInstructionArgs,
 }
 
 impl<'a, 'b> ChangeSchemaVersionCpi<'a, 'b> {
     pub fn new(
-        program: &'b solana_account_info::AccountInfo<'a>,
+        program: &'b solana_program::account_info::AccountInfo<'a>,
         accounts: ChangeSchemaVersionCpiAccounts<'a, 'b>,
         args: ChangeSchemaVersionInstructionArgs,
     ) -> Self {
@@ -253,21 +264,25 @@ impl<'a, 'b> ChangeSchemaVersionCpi<'a, 'b> {
         }
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program_entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], &[])
     }
     #[inline(always)]
     pub fn invoke_with_remaining_accounts(
         &self,
-        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
-    ) -> solana_program_entrypoint::ProgramResult {
+        remaining_accounts: &[(
+            &'b solana_program::account_info::AccountInfo<'a>,
+            bool,
+            bool,
+        )],
+    ) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
     }
     #[inline(always)]
     pub fn invoke_signed(
         &self,
         signers_seeds: &[&[&[u8]]],
-    ) -> solana_program_entrypoint::ProgramResult {
+    ) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -276,32 +291,39 @@ impl<'a, 'b> ChangeSchemaVersionCpi<'a, 'b> {
     pub fn invoke_signed_with_remaining_accounts(
         &self,
         signers_seeds: &[&[&[u8]]],
-        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
-    ) -> solana_program_entrypoint::ProgramResult {
+        remaining_accounts: &[(
+            &'b solana_program::account_info::AccountInfo<'a>,
+            bool,
+            bool,
+        )],
+    ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
-        accounts.push(solana_instruction::AccountMeta::new(*self.payer.key, true));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.payer.key,
+            true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.authority.key,
             true,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.credential.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.existing_schema.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.new_schema.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.system_program.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
-            accounts.push(solana_instruction::AccountMeta {
+            accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
                 is_signer: remaining_account.1,
                 is_writable: remaining_account.2,
@@ -311,7 +333,7 @@ impl<'a, 'b> ChangeSchemaVersionCpi<'a, 'b> {
         let mut args = borsh::to_vec(&self.__args).unwrap();
         data.append(&mut args);
 
-        let instruction = solana_instruction::Instruction {
+        let instruction = solana_program::instruction::Instruction {
             program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
             accounts,
             data,
@@ -329,9 +351,9 @@ impl<'a, 'b> ChangeSchemaVersionCpi<'a, 'b> {
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
         if signers_seeds.is_empty() {
-            solana_cpi::invoke(&instruction, &account_infos)
+            solana_program::program::invoke(&instruction, &account_infos)
         } else {
-            solana_cpi::invoke_signed(&instruction, &account_infos, signers_seeds)
+            solana_program::program::invoke_signed(&instruction, &account_infos, signers_seeds)
         }
     }
 }
@@ -352,7 +374,7 @@ pub struct ChangeSchemaVersionCpiBuilder<'a, 'b> {
 }
 
 impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
-    pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
+    pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(ChangeSchemaVersionCpiBuilderInstruction {
             __program: program,
             payer: None,
@@ -368,12 +390,15 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.payer = Some(payer);
         self
     }
     #[inline(always)]
-    pub fn authority(&mut self, authority: &'b solana_account_info::AccountInfo<'a>) -> &mut Self {
+    pub fn authority(
+        &mut self,
+        authority: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
         self.instruction.authority = Some(authority);
         self
     }
@@ -381,7 +406,7 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn credential(
         &mut self,
-        credential: &'b solana_account_info::AccountInfo<'a>,
+        credential: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.credential = Some(credential);
         self
@@ -389,7 +414,7 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn existing_schema(
         &mut self,
-        existing_schema: &'b solana_account_info::AccountInfo<'a>,
+        existing_schema: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.existing_schema = Some(existing_schema);
         self
@@ -397,7 +422,7 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn new_schema(
         &mut self,
-        new_schema: &'b solana_account_info::AccountInfo<'a>,
+        new_schema: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.new_schema = Some(new_schema);
         self
@@ -405,7 +430,7 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn system_program(
         &mut self,
-        system_program: &'b solana_account_info::AccountInfo<'a>,
+        system_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program = Some(system_program);
         self
@@ -424,7 +449,7 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,
-        account: &'b solana_account_info::AccountInfo<'a>,
+        account: &'b solana_program::account_info::AccountInfo<'a>,
         is_writable: bool,
         is_signer: bool,
     ) -> &mut Self {
@@ -440,7 +465,11 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+        accounts: &[(
+            &'b solana_program::account_info::AccountInfo<'a>,
+            bool,
+            bool,
+        )],
     ) -> &mut Self {
         self.instruction
             .__remaining_accounts
@@ -448,7 +477,7 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program_entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed(&[])
     }
     #[allow(clippy::clone_on_copy)]
@@ -456,7 +485,7 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
     pub fn invoke_signed(
         &self,
         signers_seeds: &[&[&[u8]]],
-    ) -> solana_program_entrypoint::ProgramResult {
+    ) -> solana_program::entrypoint::ProgramResult {
         let args = ChangeSchemaVersionInstructionArgs {
             layout: self.instruction.layout.clone().expect("layout is not set"),
             field_names: self
@@ -496,15 +525,19 @@ impl<'a, 'b> ChangeSchemaVersionCpiBuilder<'a, 'b> {
 
 #[derive(Clone, Debug)]
 struct ChangeSchemaVersionCpiBuilderInstruction<'a, 'b> {
-    __program: &'b solana_account_info::AccountInfo<'a>,
-    payer: Option<&'b solana_account_info::AccountInfo<'a>>,
-    authority: Option<&'b solana_account_info::AccountInfo<'a>>,
-    credential: Option<&'b solana_account_info::AccountInfo<'a>>,
-    existing_schema: Option<&'b solana_account_info::AccountInfo<'a>>,
-    new_schema: Option<&'b solana_account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_account_info::AccountInfo<'a>>,
+    __program: &'b solana_program::account_info::AccountInfo<'a>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    credential: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    existing_schema: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    new_schema: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     layout: Option<Vec<u8>>,
     field_names: Option<Vec<String>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
-    __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
+    __remaining_accounts: Vec<(
+        &'b solana_program::account_info::AccountInfo<'a>,
+        bool,
+        bool,
+    )>,
 }
