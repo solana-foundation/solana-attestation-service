@@ -5,7 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use solana_program::{pubkey, pubkey::Pubkey};
+use solana_pubkey::{pubkey, Pubkey};
 
 /// `solana_attestation_service` program ID.
 pub const SOLANA_ATTESTATION_SERVICE_ID: Pubkey =

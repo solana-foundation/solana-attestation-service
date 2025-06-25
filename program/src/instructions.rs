@@ -16,7 +16,7 @@ pub enum AttestationServiceInstruction {
     #[account(1, writable, name = "credential")]
     #[account(2, signer, name = "authority")]
     #[account(3, name = "system_program")]
-    CreateCredential { name: String, signers: Vec<Pubkey> },
+    CreateCredential { name: String, signers: Vec<Pubkey> } = 0,
 
     /// Create a Schema for a Credential that can eventually be attested to.
     #[account(0, writable, signer, name = "payer")]
@@ -33,7 +33,7 @@ pub enum AttestationServiceInstruction {
         description: String,
         layout: Vec<u8>,
         field_names: Vec<String>,
-    },
+    } = 1,
 
     /// Sets Schema is_paused status
     #[account(0, signer, name = "authority")]
@@ -48,7 +48,7 @@ pub enum AttestationServiceInstruction {
         name = "schema",
         desc = "Credential the Schema is associated with"
     )]
-    ChangeSchemaStatus { is_paused: bool },
+    ChangeSchemaStatus { is_paused: bool } = 2,
 
     /// Sets Credential authorized_signers
     #[account(0, writable, signer, name = "payer")]
@@ -60,7 +60,7 @@ pub enum AttestationServiceInstruction {
         desc = "Credential the Schema is associated with"
     )]
     #[account(3, name = "system_program")]
-    ChangeAuthorizedSigners { signers: Vec<Pubkey> },
+    ChangeAuthorizedSigners { signers: Vec<Pubkey> } = 3,
 
     /// Change description on a Schema
     #[account(0, writable, signer, name = "payer")]
@@ -77,7 +77,7 @@ pub enum AttestationServiceInstruction {
         desc = "Credential the Schema is associated with"
     )]
     #[account(4, name = "system_program")]
-    ChangeSchemaDescription { description: String },
+    ChangeSchemaDescription { description: String } = 4,
 
     /// Change Schema version
     #[account(0, writable, signer, name = "payer")]
@@ -93,7 +93,7 @@ pub enum AttestationServiceInstruction {
     ChangeSchemaVersion {
         layout: Vec<u8>,
         field_names: Vec<String>,
-    },
+    } = 5,
 
     /// Create an Attestation for a Schema by an authorized signer.
     #[account(0, writable, signer, name = "payer")]
@@ -115,7 +115,7 @@ pub enum AttestationServiceInstruction {
         nonce: Pubkey,
         data: Vec<u8>,
         expiry: i64,
-    },
+    } = 6,
 
     /// Close an Attestation account.
     #[account(0, writable, signer, name = "payer")]
@@ -130,12 +130,7 @@ pub enum AttestationServiceInstruction {
     #[account(4, name = "event_authority")]
     #[account(5, name = "system_program")]
     #[account(6, name = "attestation_program")]
-    CloseAttestation {},
-
-    /// Invoked via CPI from SAS Program to log event via instruction data.
-    #[account(0, signer, name = "event_authority")]
-    #[account(1, name = "attestation_program")]
-    EmitEvent {},
+    CloseAttestation {} = 7,
 
     /// Enable tokenization for a Schema
     #[account(0, writable, signer, name = "payer")]
@@ -154,7 +149,7 @@ pub enum AttestationServiceInstruction {
     )]
     #[account(6, name = "system_program")]
     #[account(7, name = "token_program")]
-    TokenizeSchema { max_size: u64 },
+    TokenizeSchema { max_size: u64 } = 9,
 
     /// Create attestation with token.
     #[account(0, writable, signer, name = "payer")]
@@ -201,7 +196,7 @@ pub enum AttestationServiceInstruction {
         uri: String,
         symbol: String,
         mint_account_space: u16,
-    },
+    } = 10,
 
     /// Close an Attestation and Attestation token.
     #[account(0, writable, signer, name = "payer")]
@@ -234,5 +229,10 @@ pub enum AttestationServiceInstruction {
         desc = "Associated token account of the related Attestation Token"
     )]
     #[account(10, name = "token_program")]
-    CloseTokenizedAttestation {},
+    CloseTokenizedAttestation {} = 11,
+
+    /// Invoked via CPI from SAS Program to log event via instruction data.
+    #[account(0, signer, name = "event_authority")]
+    #[account(1, name = "attestation_program")]
+    EmitEvent {} = 228,
 }

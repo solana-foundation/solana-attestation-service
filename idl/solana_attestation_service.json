@@ -387,26 +387,6 @@
       }
     },
     {
-      "name": "EmitEvent",
-      "accounts": [
-        {
-          "name": "eventAuthority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "attestationProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 8
-      }
-    },
-    {
       "name": "TokenizeSchema",
       "accounts": [
         {
@@ -673,6 +653,26 @@
       "discriminant": {
         "type": "u8",
         "value": 11
+      }
+    },
+    {
+      "name": "EmitEvent",
+      "accounts": [
+        {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "attestationProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 228
       }
     }
   ],
