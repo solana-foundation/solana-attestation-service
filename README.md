@@ -1,6 +1,6 @@
 # Solana Attestation Service
 
-Built by [Exo Technologies](https://exotechnologies.xyz) with support from Solana Foundation
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/solana-foundation/solana-attestation-service)
 
 ## Running Tests
 
