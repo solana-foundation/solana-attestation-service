@@ -22,7 +22,6 @@ import {
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
-  type ReadonlyAccount,
   type ReadonlySignerAccount,
   type TransactionSigner,
 } from '@solana/kit';
@@ -38,7 +37,6 @@ export function getEmitEventDiscriminatorBytes() {
 export type EmitEventInstruction<
   TProgram extends string = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
   TAccountEventAuthority extends string | IAccountMeta<string> = string,
-  TAccountAttestationProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -48,9 +46,6 @@ export type EmitEventInstruction<
         ? ReadonlySignerAccount<TAccountEventAuthority> &
             IAccountSignerMeta<TAccountEventAuthority>
         : TAccountEventAuthority,
-      TAccountAttestationProgram extends string
-        ? ReadonlyAccount<TAccountAttestationProgram>
-        : TAccountAttestationProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -80,27 +75,18 @@ export function getEmitEventInstructionDataCodec(): Codec<
   );
 }
 
-export type EmitEventInput<
-  TAccountEventAuthority extends string = string,
-  TAccountAttestationProgram extends string = string,
-> = {
+export type EmitEventInput<TAccountEventAuthority extends string = string> = {
   eventAuthority: TransactionSigner<TAccountEventAuthority>;
-  attestationProgram: Address<TAccountAttestationProgram>;
 };
 
 export function getEmitEventInstruction<
   TAccountEventAuthority extends string,
-  TAccountAttestationProgram extends string,
   TProgramAddress extends
     Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 >(
-  input: EmitEventInput<TAccountEventAuthority, TAccountAttestationProgram>,
+  input: EmitEventInput<TAccountEventAuthority>,
   config?: { programAddress?: TProgramAddress }
-): EmitEventInstruction<
-  TProgramAddress,
-  TAccountEventAuthority,
-  TAccountAttestationProgram
-> {
+): EmitEventInstruction<TProgramAddress, TAccountEventAuthority> {
   // Program address.
   const programAddress =
     config?.programAddress ?? SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS;
@@ -108,10 +94,6 @@ export function getEmitEventInstruction<
   // Original accounts.
   const originalAccounts = {
     eventAuthority: { value: input.eventAuthority ?? null, isWritable: false },
-    attestationProgram: {
-      value: input.attestationProgram ?? null,
-      isWritable: false,
-    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -120,17 +102,10 @@ export function getEmitEventInstruction<
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
-    accounts: [
-      getAccountMeta(accounts.eventAuthority),
-      getAccountMeta(accounts.attestationProgram),
-    ],
+    accounts: [getAccountMeta(accounts.eventAuthority)],
     programAddress,
     data: getEmitEventInstructionDataEncoder().encode({}),
-  } as EmitEventInstruction<
-    TProgramAddress,
-    TAccountEventAuthority,
-    TAccountAttestationProgram
-  >;
+  } as EmitEventInstruction<TProgramAddress, TAccountEventAuthority>;
 
   return instruction;
 }
@@ -142,7 +117,6 @@ export type ParsedEmitEventInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     eventAuthority: TAccountMetas[0];
-    attestationProgram: TAccountMetas[1];
   };
   data: EmitEventInstructionData;
 };
@@ -155,7 +129,7 @@ export function parseEmitEventInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedEmitEventInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 2) {
+  if (instruction.accounts.length < 1) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -169,7 +143,6 @@ export function parseEmitEventInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       eventAuthority: getNextAccount(),
-      attestationProgram: getNextAccount(),
     },
     data: getEmitEventInstructionDataDecoder().decode(instruction.data),
   };

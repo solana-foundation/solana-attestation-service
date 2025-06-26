@@ -662,11 +662,6 @@
           "name": "eventAuthority",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "attestationProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [],
