@@ -233,6 +233,5 @@ pub enum AttestationServiceInstruction {
 
     /// Invoked via CPI from SAS Program to log event via instruction data.
     #[account(0, signer, name = "event_authority")]
-    #[account(1, name = "attestation_program")]
     EmitEvent {} = 228,
 }
