@@ -2,7 +2,7 @@ import { assert } from "chai";
 import { getSchemaDecoder } from "../src/generated";
 import { convertSasSchemaToBorshSchema } from "../src/utils";
 import { Address, address, ProgramDerivedAddressBump } from "@solana/kit";
-import { deriveAttestationMintPda, deriveAttestationPda, deriveCredentialPda, deriveSchemaMintPda, deriveSchemaPda } from "../src";
+import { deriveAttestationMintPda, deriveAttestationPda, deriveCredentialPda, deriveEventAuthorityAddress, deriveSchemaMintPda, deriveSchemaPda } from "../src";
 
 describe("Utils", () => {
   const schemaAccountBytes = Uint8Array.from([
@@ -74,6 +74,11 @@ describe("Utils", () => {
       const testPda = await deriveAttestationMintPda({
         attestation,
       })
+      assert.deepEqual(testPda, expectedPda);
+    });
+    it("should derive event authority pda PDA", async () => {
+      const expectedPda = 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g' ;
+      const testPda = await deriveEventAuthorityAddress()
       assert.deepEqual(testPda, expectedPda);
     });
   })
