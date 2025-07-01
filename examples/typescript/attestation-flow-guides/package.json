@@ -3,14 +3,19 @@
   "version": "1.0.0",
   "description": "demonstration of solana attestation flow",
   "scripts": {
-    "demo:tokenized": "ts-node src/tokenized-attestation-demo.ts",
-    "demo:standard":  "ts-node src/attestation-demo.ts",
+    "gill:standard": "ts-node src/gill/sas-standard-gill-demo.ts",
+    "gill:tokenized": "ts-node src/gill/sas-tokenized-gill-demo.ts",
+    "kit:standard": "ts-node src/kit/sas-standard-kit-demo.ts",
+    "kit:tokenized": "ts-node src/kit/sas-tokenized-kit-demo.ts",
     "dump": "mkdir -p programs && solana program dump -um 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
     "start-local": "solana-test-validator -r --bpf-program 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
     "build": "tsc"
   },
   "packageManager": "pnpm@10.12.3",
   "dependencies": {
+    "@solana-program/compute-budget": "^0.8.0",
+    "@solana-program/token-2022": "^0.4.2",
+    "@solana/kit": "^2.1.1",
     "gill": "^0.10.2",
     "sas-lib": "^1.0.9"
   },

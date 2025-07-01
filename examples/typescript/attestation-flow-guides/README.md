@@ -4,8 +4,10 @@ This repository contains the companion code for Solana Attestation Service (SAS)
 
 | Title | File | Guide | Description |
 |-------|------|-------|-------------|
-| Standard Attestation Demo | `src/attestation-demo.ts` | [How to Build Digital Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/how-to-create-digital-credentials) | Basic credential and attestation workflow |
-| Tokenized Attestation Demo | `src/tokenized-attestation-demo.ts` | [How to Create Tokenized Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/tokenized-attestations) | Create credentials as SPL tokens using Token-2022 |
+| Standard Attestation Demo | `src/gill/sas-tokenized-gill-demo.ts` | [How to Build Digital Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/how-to-create-digital-credentials) | Basic credential and attestation workflow |
+| Tokenized Attestation Demo | `src/gill/sas-standard-gill-demo.ts` | [How to Create Tokenized Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/tokenized-attestations) | Create credentials as SPL tokens using Token-2022 |
+
+Additionally, Solana Kit examples are provided in `src/kit`.
 
 ## Requirements
 
@@ -30,14 +32,20 @@ pnpm install
 The simplest way to get started is using Solana devnet:
 
 ```bash
-# Run the standard attestation demo
-pnpm demo:standard
+# Run the standard attestation demo with Gill
+pnpm gill:standard
 
-# Run the tokenized attestation demo  
-pnpm demo:tokenized
+# Run the tokenized attestation demo will Gill
+pnpm gill:tokenized
+
+# Run the standard attestation demo with Kit
+pnpm kit:standard
+
+# Run the tokenized attestation demo will Kit
+pnpm kit:tokenized
 ```
 
-Both scripts will automatically:
+All of these scripts will automatically:
 - Create test wallets
 - Request devnet SOL airdrops
 - Execute the full attestation workflow
@@ -66,17 +74,15 @@ For local development and testing:
 
 4. **Run the demos:**
    ```bash
-   pnpm demo:standard
-   # or
-   pnpm demo:tokenized
+    # Run the standard attestation demo with Gill
+    pnpm gill:standard
+
+    # Run the tokenized attestation demo will Gill
+    pnpm gill:tokenized
+
+    # Run the standard attestation demo with Kit
+    pnpm kit:standard
+
+    # Run the tokenized attestation demo will Kit
+    pnpm kit:tokenized
    ```
-
-## Available Scripts
-
-| Script | Description |
-|--------|-------------|
-| `pnpm demo:standard` | Run the basic attestation workflow demo |
-| `pnpm demo:tokenized` | Run the tokenized attestation demo with Token-2022 |
-| `pnpm dump` | Download SAS program for local development |
-| `pnpm start-local` | Start local test validator with SAS program |
-| `pnpm build` | Compile TypeScript to JavaScript |
