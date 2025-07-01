@@ -1,0 +1,22 @@
+{
+  "name": "solana-attestation-demo-ts",
+  "version": "1.0.0",
+  "description": "demonstration of solana attestation flow",
+  "scripts": {
+    "demo:tokenized": "ts-node src/tokenized-attestation-demo.ts",
+    "demo:standard":  "ts-node src/attestation-demo.ts",
+    "dump": "mkdir -p programs && solana program dump -um 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
+    "start-local": "solana-test-validator -r --bpf-program 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
+    "build": "tsc"
+  },
+  "packageManager": "pnpm@10.12.3",
+  "dependencies": {
+    "gill": "^0.10.2",
+    "sas-lib": "^1.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
