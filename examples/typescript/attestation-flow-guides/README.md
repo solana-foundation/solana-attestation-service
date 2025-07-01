@@ -25,7 +25,7 @@ pnpm install
 
 ## Usage
 
-### Run on Devnet (Recommended)
+### Run on Devnet
 
 The simplest way to get started is using Solana devnet:
 
@@ -42,7 +42,7 @@ Both scripts will automatically:
 - Request devnet SOL airdrops
 - Execute the full attestation workflow
 
-### Option 2: Local Development
+### Local Development
 
 For local development and testing:
 
