@@ -101,9 +101,9 @@ impl Default for CloseAttestationInstructionData {
 ///   1. `[signer]` authority
 ///   2. `[]` credential
 ///   3. `[writable]` attestation
-///   4. `[]` event_authority
+///   4. `[optional]` event_authority (default to `DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g`)
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   6. `[]` attestation_program
+///   6. `[optional]` attestation_program (default to `22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG`)
 #[derive(Clone, Debug, Default)]
 pub struct CloseAttestationBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
@@ -141,6 +141,7 @@ impl CloseAttestationBuilder {
         self.attestation = Some(attestation);
         self
     }
+    /// `[optional account, default to 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g']`
     #[inline(always)]
     pub fn event_authority(
         &mut self,
@@ -155,6 +156,7 @@ impl CloseAttestationBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG']`
     #[inline(always)]
     pub fn attestation_program(
         &mut self,
@@ -188,13 +190,15 @@ impl CloseAttestationBuilder {
             authority: self.authority.expect("authority is not set"),
             credential: self.credential.expect("credential is not set"),
             attestation: self.attestation.expect("attestation is not set"),
-            event_authority: self.event_authority.expect("event_authority is not set"),
+            event_authority: self.event_authority.unwrap_or(solana_program::pubkey!(
+                "DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            attestation_program: self
-                .attestation_program
-                .expect("attestation_program is not set"),
+            attestation_program: self.attestation_program.unwrap_or(solana_program::pubkey!(
+                "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG"
+            )),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
