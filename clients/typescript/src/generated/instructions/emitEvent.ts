@@ -36,7 +36,9 @@ export function getEmitEventDiscriminatorBytes() {
 
 export type EmitEventInstruction<
   TProgram extends string = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-  TAccountEventAuthority extends string | IAccountMeta<string> = string,
+  TAccountEventAuthority extends
+    | string
+    | IAccountMeta<string> = 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -76,7 +78,7 @@ export function getEmitEventInstructionDataCodec(): Codec<
 }
 
 export type EmitEventInput<TAccountEventAuthority extends string = string> = {
-  eventAuthority: TransactionSigner<TAccountEventAuthority>;
+  eventAuthority?: TransactionSigner<TAccountEventAuthority>;
 };
 
 export function getEmitEventInstruction<
@@ -99,6 +101,12 @@ export function getEmitEventInstruction<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
+
+  // Resolve default values.
+  if (!accounts.eventAuthority.value) {
+    accounts.eventAuthority.value =
+      'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g' as Address<'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {

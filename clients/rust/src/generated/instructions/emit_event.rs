@@ -62,7 +62,7 @@ impl Default for EmitEventInstructionData {
 ///
 /// ### Accounts:
 ///
-///   0. `[signer]` event_authority
+///   0. `[signer, optional]` event_authority (default to `DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g`)
 #[derive(Clone, Debug, Default)]
 pub struct EmitEventBuilder {
     event_authority: Option<solana_program::pubkey::Pubkey>,
@@ -73,6 +73,7 @@ impl EmitEventBuilder {
     pub fn new() -> Self {
         Self::default()
     }
+    /// `[optional account, default to 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g']`
     #[inline(always)]
     pub fn event_authority(
         &mut self,
@@ -102,7 +103,9 @@ impl EmitEventBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = EmitEvent {
-            event_authority: self.event_authority.expect("event_authority is not set"),
+            event_authority: self.event_authority.unwrap_or(solana_program::pubkey!(
+                "DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g"
+            )),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)

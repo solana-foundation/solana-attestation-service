@@ -43,11 +43,15 @@ export type CloseTokenizedAttestationInstruction<
   TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountCredential extends string | IAccountMeta<string> = string,
   TAccountAttestation extends string | IAccountMeta<string> = string,
-  TAccountEventAuthority extends string | IAccountMeta<string> = string,
+  TAccountEventAuthority extends
+    | string
+    | IAccountMeta<string> = 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
-  TAccountAttestationProgram extends string | IAccountMeta<string> = string,
+  TAccountAttestationProgram extends
+    | string
+    | IAccountMeta<string> = '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG',
   TAccountAttestationMint extends string | IAccountMeta<string> = string,
   TAccountSasPda extends string | IAccountMeta<string> = string,
   TAccountAttestationTokenAccount extends
@@ -55,7 +59,7 @@ export type CloseTokenizedAttestationInstruction<
     | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
-    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -148,9 +152,9 @@ export type CloseTokenizedAttestationInput<
   authority: TransactionSigner<TAccountAuthority>;
   credential: Address<TAccountCredential>;
   attestation: Address<TAccountAttestation>;
-  eventAuthority: Address<TAccountEventAuthority>;
+  eventAuthority?: Address<TAccountEventAuthority>;
   systemProgram?: Address<TAccountSystemProgram>;
-  attestationProgram: Address<TAccountAttestationProgram>;
+  attestationProgram?: Address<TAccountAttestationProgram>;
   /** Mint of Attestation Token */
   attestationMint: Address<TAccountAttestationMint>;
   /** Program derived address used as program signer authority */
@@ -233,13 +237,21 @@ export function getCloseTokenizedAttestationInstruction<
   >;
 
   // Resolve default values.
+  if (!accounts.eventAuthority.value) {
+    accounts.eventAuthority.value =
+      'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g' as Address<'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
+  if (!accounts.attestationProgram.value) {
+    accounts.attestationProgram.value =
+      '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG' as Address<'22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG'>;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

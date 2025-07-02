@@ -125,13 +125,13 @@ impl Default for CloseTokenizedAttestationInstructionData {
 ///   1. `[signer]` authority
 ///   2. `[]` credential
 ///   3. `[writable]` attestation
-///   4. `[]` event_authority
+///   4. `[optional]` event_authority (default to `DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g`)
 ///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   6. `[]` attestation_program
+///   6. `[optional]` attestation_program (default to `22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG`)
 ///   7. `[writable]` attestation_mint
 ///   8. `[]` sas_pda
 ///   9. `[writable]` attestation_token_account
-///   10. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   10. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 #[derive(Clone, Debug, Default)]
 pub struct CloseTokenizedAttestationBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
@@ -173,6 +173,7 @@ impl CloseTokenizedAttestationBuilder {
         self.attestation = Some(attestation);
         self
     }
+    /// `[optional account, default to 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g']`
     #[inline(always)]
     pub fn event_authority(
         &mut self,
@@ -187,6 +188,7 @@ impl CloseTokenizedAttestationBuilder {
         self.system_program = Some(system_program);
         self
     }
+    /// `[optional account, default to '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG']`
     #[inline(always)]
     pub fn attestation_program(
         &mut self,
@@ -219,7 +221,7 @@ impl CloseTokenizedAttestationBuilder {
         self.attestation_token_account = Some(attestation_token_account);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
@@ -250,20 +252,22 @@ impl CloseTokenizedAttestationBuilder {
             authority: self.authority.expect("authority is not set"),
             credential: self.credential.expect("credential is not set"),
             attestation: self.attestation.expect("attestation is not set"),
-            event_authority: self.event_authority.expect("event_authority is not set"),
+            event_authority: self.event_authority.unwrap_or(solana_program::pubkey!(
+                "DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g"
+            )),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            attestation_program: self
-                .attestation_program
-                .expect("attestation_program is not set"),
+            attestation_program: self.attestation_program.unwrap_or(solana_program::pubkey!(
+                "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG"
+            )),
             attestation_mint: self.attestation_mint.expect("attestation_mint is not set"),
             sas_pda: self.sas_pda.expect("sas_pda is not set"),
             attestation_token_account: self
                 .attestation_token_account
                 .expect("attestation_token_account is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
         };
 
