@@ -4,7 +4,7 @@ import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from "./generated/programs
 export const ATTESTATION_SEED = "attestation";
 export const CREDENTIAL_SEED = "credential";
 export const SCHEMA_SEED = "schema";
-export const EVENT_AUTHORITY_SEED = "eventAuthority";
+export const EVENT_AUTHORITY_SEED = "__event_authority";
 export const SAS_SEED = "sas";
 export const SCHEMA_MINT_SEED = "schemaMint";
 export const ATTESTATION_MINT_SEED = "attestationMint";
