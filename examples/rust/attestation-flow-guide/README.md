@@ -26,7 +26,7 @@ cd examples/rust/attestation-flow-guide
 
 All demos will automatically:
 - Create test wallets
-- Request devnet SOL airdrops  
+- Request airdrop for payer wallet  
 - Execute the full attestation workflow
 
 ### Local Development
