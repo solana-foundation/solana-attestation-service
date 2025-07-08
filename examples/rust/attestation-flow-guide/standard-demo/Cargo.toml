@@ -1,0 +1,23 @@
+[package]
+name = "sas-standard-demo"
+version = "0.1.0"
+edition = "2021"
+ 
+[dependencies]
+# Solana core dependencies
+solana-sdk = "2.3.1"
+solana-client = "2.3.2"
+solana-program = "2.3.0"
+solana-system-interface = "1.0.0"
+ 
+# Solana Attestation Service client
+solana-attestation-service-client = "1.0.9"
+ 
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+ 
+# Serialization
+borsh = "0.10"
+ 
+# Error handling
+anyhow = "1.0"
