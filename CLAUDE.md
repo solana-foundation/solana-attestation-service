@@ -361,7 +361,7 @@ All instruction processors MUST implement these security validations:
 
 - All operations require authorized signer verification against credential's authorized signers list
 - Credential owners control schema creation and management 
-- Only authorized signers can create, modify, and close attestations
+- Only authorized signers can create and close attestations
 - Schema pause/resume functionality restricted to credential authority
 
 ### Data Validation
