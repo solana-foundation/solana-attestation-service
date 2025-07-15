@@ -250,9 +250,41 @@ When implementing new instructions:
 ### Schema Design
 
 Schema layouts use numeric type identifiers:
-- Primitive types: 0-11 (u8, u16, u32, u64, u128, i8, i16, i32, i64, i128, bool, char)
-- String: 12
-- Vectors: 13-25 (Vec<primitive_type>, Vec<String>)
+### Schema Layout Data Types
+
+The `layout` field uses numeric values to specify data types for each field in the schema:
+
+| Value | Data Type | Description |
+|-------|-----------|-------------|
+| 0 | U8 | Unsigned 8-bit integer |
+| 1 | U16 | Unsigned 16-bit integer |
+| 2 | U32 | Unsigned 32-bit integer |
+| 3 | U64 | Unsigned 64-bit integer |
+| 4 | U128 | Unsigned 128-bit integer |
+| 5 | I8 | Signed 8-bit integer |
+| 6 | I16 | Signed 16-bit integer |
+| 7 | I32 | Signed 32-bit integer |
+| 8 | I64 | Signed 64-bit integer |
+| 9 | I128 | Signed 128-bit integer |
+| 10 | Bool | Boolean value |
+| 11 | Char | Single character |
+| 12 | String | Variable-length string |
+| 13 | VecU8 | Vector of unsigned 8-bit integers |
+| 14 | VecU16 | Vector of unsigned 16-bit integers |
+| 15 | VecU32 | Vector of unsigned 32-bit integers |
+| 16 | VecU64 | Vector of unsigned 64-bit integers |
+| 17 | VecU128 | Vector of unsigned 128-bit integers |
+| 18 | VecI8 | Vector of signed 8-bit integers |
+| 19 | VecI16 | Vector of signed 16-bit integers |
+| 20 | VecI32 | Vector of signed 32-bit integers |
+| 21 | VecI64 | Vector of signed 64-bit integers |
+| 22 | VecI128 | Vector of signed 128-bit integers |
+| 23 | VecBool | Vector of boolean values |
+| 24 | VecChar | Vector of characters |
+| 25 | VecString | Vector of strings |
+
+For example, a layout of `[12, 0, 12]` would define three fields: a String, followed by a U8 integer, followed by another String. The `fieldNames` array provides human-readable names that correspond positionally to each layout value, so with field names `["name", "age", "country"]`, the first String field would be named "name", the U8 field would be "age", and the second String field would be "country". Here's an example of how those would be utilized when creating a Schema:
+
 
 ### Tokenization Flow
 
