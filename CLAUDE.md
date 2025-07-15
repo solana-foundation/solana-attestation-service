@@ -133,7 +133,7 @@ The system consists of three main components:
 
 ### Program Framework
 
-The program uses **Pinocchio** instead of Anchor, chosen for:
+The program uses [**Pinocchio**](https://github.com/anza-xyz/pinocchio) instead of Anchor, chosen for:
 - Smaller program size and reduced compute costs
 - More control over instruction parsing and execution
 - Direct account validation and manipulation
