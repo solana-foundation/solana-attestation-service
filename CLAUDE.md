@@ -140,8 +140,8 @@ The program uses [**Pinocchio**](https://github.com/anza-xyz/pinocchio) instead 
 
 ### IDL and Client Generation
 
-- **Shank**: Used for IDL generation with `#[derive(ShankInstruction)]` and `#[account()]` attributes
-- **Codama**: Transforms Shank-generated IDL into TypeScript and Rust clients
+- [**Shank**](https://github.com/metaplex-foundation/shank): Used for IDL generation with `#[derive(ShankInstruction)]` and `#[account()]` attributes
+- [**Codama**](https://github.com/codama-idl/codama): Transforms Shank-generated IDL into TypeScript and Rust clients
 - Automated generation pipeline ensures clients stay in sync with program changes
 
 ### Token Extensions
