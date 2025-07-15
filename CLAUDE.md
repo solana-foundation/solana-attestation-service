@@ -69,7 +69,7 @@ The system consists of three main components:
 2. **Schema**: Defines the structure and metadata for attestations
    - Includes field definitions, layout, and validation rules
    - Can be paused/resumed and versioned
-   - Supports tokenization for creating NFT-like attestations
+   - Supports tokenization for creating NFT attestations utilizing Token 2022
 
 3. **Attestation**: Actual attestation data conforming to a schema
    - Contains structured data, expiry time, and nonce
