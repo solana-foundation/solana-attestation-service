@@ -290,11 +290,9 @@ For example, a layout of `[12, 0, 12]` would define three fields: a String, foll
 
 For tokenized attestations:
 
-1. Create regular attestation first
-2. Initialize Token-2022 mint with required extensions
-3. Set up metadata and group membership
-4. Create associated token account for recipient
-5. Mint exactly 1 token to recipient
+1. Create regular Credential and Schema
+2. Tokenize Schema
+3. Utilize Create Tokenize Attestation instruction (this will create the Attestation and Token)
 
 ### Testing Practices
 
