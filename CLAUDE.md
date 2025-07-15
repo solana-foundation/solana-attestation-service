@@ -317,6 +317,8 @@ Key seeds and identifiers are defined in `program/src/constants.rs`:
 - `ATTESTATION_SEED`: For attestation PDA derivation
 - `SCHEMA_MINT_SEED`: For tokenized schema mints
 - `ATTESTATION_MINT_SEED`: For tokenized attestation mints
+- `EVENT_AUTHORITY_SEED`: For event authority PDA
+-  `SAS_SEED`: For SAS Program Authority PDA;
 
 ### Development Environment
 
