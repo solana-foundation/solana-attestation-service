@@ -20,14 +20,16 @@ import {
     lamports,
     Signature,
     TransactionSigner,
-    IInstruction,
+    Instruction,
     Address,
     Blockhash,
-    getComputeUnitEstimateForTransactionMessageFactory,
     createSolanaClient,
     createTransaction,
     SolanaClient,
 } from "gill";
+import {
+    estimateComputeUnitLimitFactory
+} from "gill/programs";
  
 const CONFIG = {
     CLUSTER_OR_RPC: 'devnet',
@@ -70,7 +72,7 @@ async function setupWallets(client: SolanaClient) {
 async function sendAndConfirmInstructions(
     client: SolanaClient,
     payer: TransactionSigner,
-    instructions: IInstruction[],
+    instructions: Instruction[],
     description: string
 ): Promise<Signature> {
     try {
@@ -86,7 +88,7 @@ async function sendAndConfirmInstructions(
             computeUnitPrice: 1,
         });
  
-        const estimateCompute = getComputeUnitEstimateForTransactionMessageFactory({ rpc: client.rpc });
+        const estimateCompute = estimateComputeUnitLimitFactory({ rpc: client.rpc });
         const computeUnitLimit = await estimateCompute(simulationTx);
         const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
         const tx = createTransaction({

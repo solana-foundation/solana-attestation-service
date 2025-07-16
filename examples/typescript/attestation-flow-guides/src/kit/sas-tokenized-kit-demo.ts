@@ -16,20 +16,20 @@ import {
     RpcSubscriptions,
     Signature,
     TransactionSigner,
-    IInstruction,
+    Instruction,
     Commitment,
     signTransactionMessageWithSigners,
     CompilableTransactionMessage,
     TransactionMessageWithBlockhashLifetime,
     getSignatureFromTransaction,
     Address,
-    getComputeUnitEstimateForTransactionMessageFactory,
     MicroLamports,
 } from "@solana/kit";
 import { 
     updateOrAppendSetComputeUnitLimitInstruction, 
     updateOrAppendSetComputeUnitPriceInstruction,
-    MAX_COMPUTE_UNIT_LIMIT
+    MAX_COMPUTE_UNIT_LIMIT,
+    estimateComputeUnitLimitFactory
 } from "@solana-program/compute-budget";
 import {
     ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
@@ -142,7 +142,7 @@ export const signAndSendTransaction = async (
 async function sendAndConfirmInstructions(
     client: Client,
     payer: TransactionSigner,
-    instructions: IInstruction[],
+    instructions: Instruction[],
     description: string
 ): Promise<Signature> {
     try {
@@ -150,7 +150,7 @@ async function sendAndConfirmInstructions(
             await createDefaultTransaction(client, payer),
             (tx) => appendTransactionMessageInstructions(instructions, tx),
         );
-        const estimateCompute = getComputeUnitEstimateForTransactionMessageFactory({ rpc: client.rpc });
+        const estimateCompute = estimateComputeUnitLimitFactory({ rpc: client.rpc });
         const computeUnitLimit = await estimateCompute(simulationTx);
         const signature = await pipe(
             await createDefaultTransaction(client, payer, computeUnitLimit),
