@@ -17,6 +17,7 @@ import {
   type ParsedChangeSchemaDescriptionInstruction,
   type ParsedChangeSchemaStatusInstruction,
   type ParsedChangeSchemaVersionInstruction,
+  type ParsedChangeTokenizedSchemaSizeInstruction,
   type ParsedCloseAttestationInstruction,
   type ParsedCloseTokenizedAttestationInstruction,
   type ParsedCreateAttestationInstruction,
@@ -48,6 +49,7 @@ export enum SolanaAttestationServiceInstruction {
   TokenizeSchema,
   CreateTokenizedAttestation,
   CloseTokenizedAttestation,
+  ChangeTokenizedSchemaSize,
   EmitEvent,
 }
 
@@ -87,6 +89,9 @@ export function identifySolanaAttestationServiceInstruction(
   }
   if (containsBytes(data, getU8Encoder().encode(11), 0)) {
     return SolanaAttestationServiceInstruction.CloseTokenizedAttestation;
+  }
+  if (containsBytes(data, getU8Encoder().encode(12), 0)) {
+    return SolanaAttestationServiceInstruction.ChangeTokenizedSchemaSize;
   }
   if (containsBytes(data, getU8Encoder().encode(228), 0)) {
     return SolanaAttestationServiceInstruction.EmitEvent;
@@ -132,6 +137,9 @@ export type ParsedSolanaAttestationServiceInstruction<
   | ({
       instructionType: SolanaAttestationServiceInstruction.CloseTokenizedAttestation;
     } & ParsedCloseTokenizedAttestationInstruction<TProgram>)
+  | ({
+      instructionType: SolanaAttestationServiceInstruction.ChangeTokenizedSchemaSize;
+    } & ParsedChangeTokenizedSchemaSizeInstruction<TProgram>)
   | ({
       instructionType: SolanaAttestationServiceInstruction.EmitEvent;
     } & ParsedEmitEventInstruction<TProgram>);

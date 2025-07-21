@@ -656,6 +656,57 @@
       }
     },
     {
+      "name": "ChangeTokenizedSchemaSize",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "schemaMint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Mint of Schema Token"
+          ]
+        },
+        {
+          "name": "schema",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sasPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Program derived address used as program signer authority"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "maxSize",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 12
+      }
+    },
+    {
       "name": "EmitEvent",
       "accounts": [
         {

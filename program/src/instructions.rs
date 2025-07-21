@@ -231,6 +231,19 @@ pub enum AttestationServiceInstruction {
     #[account(10, name = "token_program")]
     CloseTokenizedAttestation {} = 11,
 
+    /// Increase the max size of a tokenized schema collection
+    #[account(0, signer, name = "authority")]
+    #[account(1, writable, name = "schema_mint", desc = "Mint of Schema Token")]
+    #[account(2, name = "schema")]
+    #[account(3, name = "credential")]
+    #[account(
+        4,
+        name = "sas_pda",
+        desc = "Program derived address used as program signer authority"
+    )]
+    #[account(5, name = "token_program")]
+    ChangeTokenizedSchemaSize { max_size: u64 } = 12,
+
     /// Invoked via CPI from SAS Program to log event via instruction data.
     #[account(0, signer, name = "event_authority")]
     EmitEvent {} = 228,
