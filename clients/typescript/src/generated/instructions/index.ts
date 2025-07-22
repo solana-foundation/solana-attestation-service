@@ -10,6 +10,7 @@ export * from './changeAuthorizedSigners';
 export * from './changeSchemaDescription';
 export * from './changeSchemaStatus';
 export * from './changeSchemaVersion';
+export * from './changeTokenizedSchemaSize';
 export * from './closeAttestation';
 export * from './closeTokenizedAttestation';
 export * from './createAttestation';

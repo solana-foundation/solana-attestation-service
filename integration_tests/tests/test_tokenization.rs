@@ -3,8 +3,9 @@ use helpers::program_test_context;
 use solana_attestation_service_client::{
     accounts::Attestation,
     instructions::{
-        CloseTokenizedAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder,
-        CreateTokenizedAttestationBuilder, TokenizeSchemaBuilder,
+        ChangeTokenizedSchemaSizeBuilder, CloseTokenizedAttestationBuilder,
+        CreateCredentialBuilder, CreateSchemaBuilder, CreateTokenizedAttestationBuilder,
+        TokenizeSchemaBuilder,
     },
     programs::SOLANA_ATTESTATION_SERVICE_ID,
 };
@@ -752,4 +753,97 @@ async fn update_tokenized_attestation_success() {
         Account::unpack(&recipient_token_account_data.data[..Account::LEN]).unwrap();
     assert_eq!(token_account.mint, attestation_mint_pda);
     assert_eq!(token_account.amount, 1);
+}
+
+#[tokio::test]
+async fn change_tokenized_schema_size_success() {
+    let TestFixtures {
+        ctx,
+        credential,
+        schema,
+        authority,
+        sas_pda,
+        schema_mint_pda,
+        attestation_pda: _,
+        attestation_mint_pda: _,
+        recipient: _,
+        recipient_token_account: _,
+        nonce: _,
+        serialized_attestation_data: _,
+    } = setup().await;
+
+    let max_size = 100;
+    let tokenize_schema_ix = TokenizeSchemaBuilder::new()
+        .payer(ctx.payer.pubkey())
+        .authority(authority.pubkey())
+        .credential(credential)
+        .schema(schema)
+        .mint(schema_mint_pda)
+        .sas_pda(sas_pda)
+        .max_size(max_size)
+        .token_program(TOKEN_2022_PROGRAM_ID)
+        .instruction();
+
+    let transaction = Transaction::new_signed_with_payer(
+        &[tokenize_schema_ix],
+        Some(&ctx.payer.pubkey()),
+        &[&ctx.payer, &authority],
+        ctx.last_blockhash,
+    );
+    ctx.banks_client
+        .process_transaction(transaction)
+        .await
+        .unwrap();
+
+    let mint_account = ctx
+        .banks_client
+        .get_account(schema_mint_pda)
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Verify the TokenGroup extension before changing the size
+    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_account.data).unwrap();
+    let token_group = mint_state.get_extension::<TokenGroup>().unwrap();
+    assert_eq!(token_group.update_authority.0, sas_pda);
+    assert_eq!(token_group.mint, schema_mint_pda);
+    assert_eq!(u64::from(token_group.size), 0);
+    assert_eq!(u64::from(token_group.max_size), max_size);
+
+    let new_max_size = max_size + 1;
+
+    let change_tokenized_schema_size_ix = ChangeTokenizedSchemaSizeBuilder::new()
+        .authority(authority.pubkey())
+        .schema_mint(schema_mint_pda)
+        .schema(schema)
+        .credential(credential)
+        .sas_pda(sas_pda)
+        .token_program(TOKEN_2022_PROGRAM_ID)
+        .max_size(new_max_size)
+        .instruction();
+
+    let transaction = Transaction::new_signed_with_payer(
+        &[change_tokenized_schema_size_ix],
+        Some(&ctx.payer.pubkey()),
+        &[&ctx.payer, &authority],
+        ctx.last_blockhash,
+    );
+    ctx.banks_client
+        .process_transaction(transaction)
+        .await
+        .unwrap();
+
+    // Verify the TokenGroup extension after changing the size
+    let mint_account = ctx
+        .banks_client
+        .get_account(schema_mint_pda)
+        .await
+        .unwrap()
+        .unwrap();
+    let mint_state = StateWithExtensions::<Mint>::unpack(&mint_account.data).unwrap();
+    let token_group = mint_state.get_extension::<TokenGroup>().unwrap();
+    assert_eq!(token_group.update_authority.0, sas_pda);
+    assert_eq!(token_group.mint, schema_mint_pda);
+    assert_eq!(u64::from(token_group.size), 0);
+    assert_eq!(u64::from(token_group.max_size), new_max_size);
 }
