@@ -7,12 +7,18 @@
     "gill:tokenized": "ts-node src/gill/sas-tokenized-gill-demo.ts",
     "kit:standard": "ts-node src/kit/sas-standard-kit-demo.ts",
     "kit:tokenized": "ts-node src/kit/sas-tokenized-kit-demo.ts",
+    "lit:standard": "ts-node src/lit/sas-standard-lit-demo.ts",
     "dump": "mkdir -p programs && solana program dump -um 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
     "start-local": "solana-test-validator -r --bpf-program 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
     "build": "tsc"
   },
   "packageManager": "pnpm@10.12.3",
   "dependencies": {
+    "@lit-protocol/auth-helpers": "^7.2.1",
+    "@lit-protocol/constants": "^7.2.1",
+    "@lit-protocol/contracts-sdk": "^7.2.1",
+    "@lit-protocol/lit-node-client": "^7.2.1",
+    "@lit-protocol/types": "^7.2.1",
     "@solana-program/compute-budget": "^0.8.0",
     "@solana-program/token-2022": "^0.4.2",
     "@solana/kit": "^2.3.0",
