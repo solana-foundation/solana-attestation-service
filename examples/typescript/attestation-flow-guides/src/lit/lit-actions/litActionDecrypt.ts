@@ -1,6 +1,76 @@
 // @ts-nocheck
 
 const _litActionCode = async () => {
+  // Hardcoded values for this specific attestation service instance
+  const AUTHORIZED_CREDENTIAL_PDA = "HMDTWtveFZYK4mdTN4b1XhRWHQa1r3JsLm8YDKkWV4GT";
+  const AUTHORIZED_RPC_URL = "https://api.devnet.solana.com";
+  const AUTHORIZED_PROGRAM_ID = "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG";
+
+  async function fetchAccountData(rpcUrl, address) {
+    try {
+      const response = await fetch(rpcUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getAccountInfo",
+          params: [address, { encoding: "base64", commitment: "confirmed" }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(`RPC error: ${data.error.message}`);
+      }
+
+      if (!data.result || !data.result.value) {
+        throw new Error("Account not found");
+      }
+
+      const accountInfo = data.result.value;
+      return {
+        data: ethers.utils.base64.decode(accountInfo.data[0]),
+        owner: accountInfo.owner
+      };
+    } catch (error) {
+      console.error("Error fetching account data:", error);
+      throw error;
+    }
+  }
+
+  function parseCredentialAccount(data) {
+    let offset = 0;
+
+    // Skip discriminator (1 byte)
+    offset += 1;
+
+    // Read authority (32 bytes)
+    const authority = ethers.utils.base58.encode(data.slice(offset, offset + 32));
+    offset += 32;
+
+    // Read name length (4 bytes, little-endian)
+    const nameLength = new DataView(data.buffer, offset, 4).getUint32(0, true);
+    offset += 4;
+
+    // Skip name bytes
+    offset += nameLength;
+
+    // Read authorized signers length (4 bytes, little-endian)
+    const signersLength = new DataView(data.buffer, offset, 4).getUint32(0, true);
+    offset += 4;
+
+    // Read authorized signers
+    const authorizedSigners = [];
+    for (let i = 0; i < signersLength; i++) {
+      const signer = ethers.utils.base58.encode(data.slice(offset, offset + 32));
+      authorizedSigners.push(signer);
+      offset += 32;
+    }
+
+    return { authority, authorizedSigners };
+  }
+
   function getSiwsMessage(siwsInput) {
     console.log("Attempting to parse SIWS message: ", siwsInput);
 
@@ -163,7 +233,7 @@ const _litActionCode = async () => {
     console.log("Signature is valid.");
   } catch (error) {
     console.error("Error verifying signature:", error);
-    LitActions.setResponse({
+    return LitActions.setResponse({
       response: JSON.stringify({
         success: false,
         message: "Error verifying signature.",
@@ -172,16 +242,52 @@ const _litActionCode = async () => {
     });
   }
 
+  // Fetch and verify authorized signers from the hardcoded credential
   try {
-    console.log("Auth Sig", {
-      sig: ethers.utils
-        .hexlify(ethers.utils.base58.decode(siwsMessageSignature))
-        .slice(2),
-      derivedVia: "solana.signMessage",
-      signedMessage: siwsMessageString,
-      address: siwsMessageJson.address,
-    });
+    const accountInfo = await fetchAccountData(AUTHORIZED_RPC_URL, AUTHORIZED_CREDENTIAL_PDA);
 
+    // Verify the credential account is owned by the correct program
+    if (accountInfo.owner !== AUTHORIZED_PROGRAM_ID) {
+      console.log(`Credential PDA owner mismatch. Expected: ${AUTHORIZED_PROGRAM_ID}, Got: ${accountInfo.owner}`);
+      return LitActions.setResponse({
+        response: JSON.stringify({
+          success: false,
+          message: "Credential PDA is not owned by the authorized program",
+          expectedOwner: AUTHORIZED_PROGRAM_ID,
+          actualOwner: accountInfo.owner
+        }),
+      });
+    }
+
+    const credential = parseCredentialAccount(accountInfo.data);
+
+    // Check if the signer is authorized
+    const signerAddress = siwsMessageJson.address;
+    if (!credential.authorizedSigners.includes(signerAddress)) {
+      console.log(`Signer ${signerAddress} is not in authorized signers list`);
+      return LitActions.setResponse({
+        response: JSON.stringify({
+          success: false,
+          message: "Signer is not authorized to decrypt",
+          authorizedSigners: credential.authorizedSigners,
+          requestingSigner: signerAddress
+        }),
+      });
+    }
+
+    console.log(`Signer ${signerAddress} is authorized to decrypt`);
+  } catch (error) {
+    console.error("Error checking authorized signers:", error);
+    return LitActions.setResponse({
+      response: JSON.stringify({
+        success: false,
+        message: "Error checking authorized signers",
+        error: error.toString(),
+      }),
+    });
+  }
+
+  try {
     const decryptedData = await Lit.Actions.decryptAndCombine({
       accessControlConditions: solRpcConditions,
       ciphertext,

@@ -1,6 +1,76 @@
 // @ts-nocheck
 
 const _litActionCode = async () => {
+  // Hardcoded values for this specific attestation service instance
+  const AUTHORIZED_CREDENTIAL_PDA = "HMDTWtveFZYK4mdTN4b1XhRWHQa1r3JsLm8YDKkWV4GT";
+  const AUTHORIZED_RPC_URL = "https://api.devnet.solana.com";
+  const AUTHORIZED_PROGRAM_ID = "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG";
+
+  async function fetchAccountData(rpcUrl, address) {
+    try {
+      const response = await fetch(rpcUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getAccountInfo",
+          params: [address, { encoding: "base64", commitment: "confirmed" }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(`RPC error: ${data.error.message}`);
+      }
+
+      if (!data.result || !data.result.value) {
+        throw new Error("Account not found");
+      }
+
+      const accountInfo = data.result.value;
+      return {
+        data: ethers.utils.base64.decode(accountInfo.data[0]),
+        owner: accountInfo.owner
+      };
+    } catch (error) {
+      console.error("Error fetching account data:", error);
+      throw error;
+    }
+  }
+
+  function parseCredentialAccount(data) {
+    let offset = 0;
+
+    // Skip discriminator (1 byte)
+    offset += 1;
+
+    // Read authority (32 bytes)
+    const authority = ethers.utils.base58.encode(data.slice(offset, offset + 32));
+    offset += 32;
+
+    // Read name length (4 bytes, little-endian)
+    const nameLength = new DataView(data.buffer, offset, 4).getUint32(0, true);
+    offset += 4;
+
+    // Skip name bytes
+    offset += nameLength;
+
+    // Read authorized signers length (4 bytes, little-endian)
+    const signersLength = new DataView(data.buffer, offset, 4).getUint32(0, true);
+    offset += 4;
+
+    // Read authorized signers
+    const authorizedSigners = [];
+    for (let i = 0; i < signersLength; i++) {
+      const signer = ethers.utils.base58.encode(data.slice(offset, offset + 32));
+      authorizedSigners.push(signer);
+      offset += 32;
+    }
+
+    return { authority, authorizedSigners };
+  }
+
   function getSiwsMessage(siwsInput) {
     console.log("Attempting to parse SIWS message: ", siwsInput);
 
@@ -172,40 +242,53 @@ const _litActionCode = async () => {
     });
   }
 
+  // Fetch and verify authorized signers from the hardcoded credential
   try {
-    const SIWS_AUTH_METHOD_TYPE = ethers.utils.keccak256(
-      ethers.utils.toUtf8Bytes("Solana Attestation Service Lit Encryption Guide")
-    );
-    const usersAuthMethodId = ethers.utils.keccak256(
-      ethers.utils.toUtf8Bytes(`siws:${siwsMessageJson.address}`)
-    );
+    const accountInfo = await fetchAccountData(AUTHORIZED_RPC_URL, AUTHORIZED_CREDENTIAL_PDA);
 
-    const isPermitted = await Lit.Actions.isPermittedAuthMethod({
-      tokenId: pkpTokenId,
-      authMethodType: SIWS_AUTH_METHOD_TYPE,
-      userId: ethers.utils.arrayify(usersAuthMethodId),
-    });
-
-    if (isPermitted) {
-      console.log("Solana public key is authorized to use this PKP");
-      return Lit.Actions.setResponse({ response: "true" });
+    // Verify the credential account is owned by the correct program
+    if (accountInfo.owner !== AUTHORIZED_PROGRAM_ID) {
+      console.log(`Credential PDA owner mismatch. Expected: ${AUTHORIZED_PROGRAM_ID}, Got: ${accountInfo.owner}`);
+      return LitActions.setResponse({
+        response: JSON.stringify({
+          success: false,
+          message: "Credential PDA is not owned by the authorized program",
+          expectedOwner: AUTHORIZED_PROGRAM_ID,
+          actualOwner: accountInfo.owner
+        }),
+      });
     }
 
-    console.log("Solana public key is not authorized to use this PKP");
-    return Lit.Actions.setResponse({
-      response: "false",
-      reason: "Solana public key is not authorized to use this PKP",
-    });
+    const credential = parseCredentialAccount(accountInfo.data);
+
+    // Check if the signer is authorized
+    if (!credential.authorizedSigners.includes(siwsMessageJson.address)) {
+      console.log(`Signer ${siwsMessageJson.address} is not in authorized signers list`);
+      return LitActions.setResponse({
+        response: JSON.stringify({
+          success: false,
+          message: "Signer is not authorized",
+          authorizedSigners: credential.authorizedSigners,
+          requestingSigner: siwsMessageJson.address
+        }),
+      });
+    }
+
+    console.log(`Signer ${siwsMessageJson.address} is authorized`);
   } catch (error) {
-    console.error("Error checking if authed sol pub key is permitted:", error);
+    console.error("Error checking authorized signers:", error);
     return LitActions.setResponse({
       response: JSON.stringify({
         success: false,
-        message: "Error checking if authed sol pub key is permitted.",
+        message: "Error checking authorized signers",
         error: error.toString(),
       }),
     });
   }
+
+  // All authorization checks passed - signer is authorized via on-chain credential
+  console.log(`Authorization successful for signer: ${siwsMessageJson.address}`);
+  return Lit.Actions.setResponse({ response: "true" });
 };
 
 export const litActionCode = `(${_litActionCode.toString()})()`;

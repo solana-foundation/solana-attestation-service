@@ -1,7 +1,4 @@
-import { LitNodeClient } from "@lit-protocol/lit-node-client";
-import type { LIT_NETWORKS_KEYS } from "@lit-protocol/types";
-import { LIT_NETWORK, LIT_RPC } from "@lit-protocol/constants";
-import { LitContracts } from "@lit-protocol/contracts-sdk";
+import type { LitNodeClient } from "@lit-protocol/lit-node-client";
 import {
     getCreateCredentialInstruction,
     getCreateSchemaInstruction,
@@ -16,7 +13,8 @@ import {
     deriveSchemaPda,
     deriveEventAuthorityAddress,
     getCloseAttestationInstruction,
-    SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS
+    SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+    fetchCredential
 } from "sas-lib";
 import {
     airdropFactory,
@@ -31,150 +29,23 @@ import {
     createSolanaClient,
     createTransaction,
     SolanaClient,
-    createSignableMessage,
 } from "gill";
 import {
     estimateComputeUnitLimitFactory
 } from "gill/programs";
 import { ethers } from "ethers";
 
-import { litActionCode as litActionCodeSessionSigs } from "./lit-actions/litActionSessionSigs";
-import { encryptAttestationData, mintPkpAndAddPermittedAuthMethods } from "./lit-helpers";
-import { AttestationEncryptionMetadata, PkpInfo, SiwsMessageForFormatting, SiwsMessageInput } from "./types";
-import { decryptAttestationData } from "./lit-helpers/decrypt-attestation-data";
-
-const CONFIG = {
-    // TODO Revert back to devnet
-    // CLUSTER_OR_RPC: 'devnet',
-    CLUSTER_OR_RPC: 'localnet',
-    CREDENTIAL_NAME: 'LIT-ENCRYPTED-ATTESTATIONS',
-    SCHEMA_NAME: 'LIT-ENCRYPTED-METADATA',
-    SCHEMA_LAYOUT: Buffer.from([12, 12, 12]),
-    SCHEMA_FIELDS: ["ciphertext", "dataToEncryptHash", "accessControlConditions"],
-    SCHEMA_VERSION: 1,
-    SCHEMA_DESCRIPTION: 'Schema for Lit Protocol encrypted attestation metadata with access control conditions',
-    ATTESTATION_EXPIRY_DAYS: 365
-};
-
-const ORIGINAL_DATA = {
-    name: "test-user",
-    age: 100,
-    country: "usa",
-};
-
-/**
- * Creates a complete Siws message by filling in missing properties with sensible defaults
- * @param siws - Siws message object with required address field
- * @returns Complete Siws message with all fields populated
- */
-function createSiwsMessage(siws: SiwsMessageInput): SiwsMessageForFormatting {
-    const now = new Date();
-    const expirationTime = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes
-
-    // Generate a proper nonce if not provided (minimum 8 characters, alphanumeric)
-    const generatedNonce = siws.nonce || Math.random().toString(36).substring(2, 12); // 10 character alphanumeric
-
-    // Merge siws with defaults, siws values take precedence
-    return {
-        domain: siws.domain || "localhost",
-        address: siws.address,
-        statement: siws.statement || "Sign this message to authenticate with Lit Protocol",
-        uri: siws.uri || "http://localhost",
-        version: siws.version || "1",
-        chainId: siws.chainId || "devnet", // Must be string as per Siws spec: mainnet, testnet, devnet, localnet, etc.
-        nonce: generatedNonce,
-        issuedAt: siws.issuedAt || now.toISOString(),
-        expirationTime: siws.expirationTime || expirationTime.toISOString(),
-        notBefore: siws.notBefore,
-        requestId: siws.requestId,
-        resources: siws.resources || []
-    };
-}
-
-/**
- * Formats Siws message according to the ABNF specification:
- * https://github.com/phantom/sign-in-with-solana/blob/main/siws.md#abnf-message-format
- * 
- * @param siws - Siws message with required domain and address fields
- * @returns Formatted message string according to Siws ABNF specification
- */
-function formatSiwsMessage(siws: SiwsMessageForFormatting): string {
-    if (!siws.domain || !siws.address) {
-        throw new Error("Domain and address are required for Siws message construction");
-    }
-
-    // Start with the mandatory domain and address line
-    let message = `${siws.domain} wants you to sign in with your Solana account:\n${siws.address}`;
-
-    // Add statement if provided (with double newline separator)
-    if (siws.statement) {
-        message += `\n\n${siws.statement}`;
-    }
-
-    // Collect advanced fields in the correct order as per ABNF spec
-    const fields: string[] = [];
-
-    if (siws.uri) {
-        fields.push(`URI: ${siws.uri}`);
-    }
-    if (siws.version) {
-        fields.push(`Version: ${siws.version}`);
-    }
-    if (siws.chainId) {
-        fields.push(`Chain ID: ${siws.chainId}`);
-    }
-    if (siws.nonce) {
-        fields.push(`Nonce: ${siws.nonce}`);
-    }
-    if (siws.issuedAt) {
-        fields.push(`Issued At: ${siws.issuedAt}`);
-    }
-    if (siws.expirationTime) {
-        fields.push(`Expiration Time: ${siws.expirationTime}`);
-    }
-    if (siws.notBefore) {
-        fields.push(`Not Before: ${siws.notBefore}`);
-    }
-    if (siws.requestId) {
-        fields.push(`Request ID: ${siws.requestId}`);
-    }
-    if (siws.resources && siws.resources.length > 0) {
-        fields.push(`Resources:`);
-        for (const resource of siws.resources) {
-            fields.push(`- ${resource}`);
-        }
-    }
-
-    // Add advanced fields if any exist (with double newline separator)
-    if (fields.length > 0) {
-        message += `\n\n${fields.join('\n')}`;
-    }
-
-    return message;
-}
-
-/**
- * Signs a SIWS message using a Solana keypair signer
- * @param siwsMessage - The formatted SIWS message to sign
- * @param signer - The Solana KeyPairSigner from setupWallets
- * @returns Base58-encoded signature
- */
-async function signSiwsMessage(siwsMessage: SiwsMessageForFormatting, signer: KeyPairSigner): Promise<string> {
-    try {
-        const message = createSignableMessage(new TextEncoder().encode(formatSiwsMessage(siwsMessage)));
-        const signedMessage = await signer.signMessages([message]);
-        return ethers.utils.base58.encode(signedMessage[0][signer.address]);
-    } catch (error) {
-        throw new Error(`Failed to sign SIWS message: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-}
+import { createSiwsMessage, decryptAttestationData, encryptAttestationData, setupLit, signSiwsMessage } from "./lit-helpers";
+import { AttestationEncryptionMetadata, PkpInfo } from "./types";
+import { CONFIG, ORIGINAL_DATA } from "./constants";
+import { getAuthorizedSigner1Keypair, getAuthorizedSigner2Keypair, getIssuerKeypair } from "./get-keypair";
 
 async function setupWallets(client: SolanaClient) {
     try {
         const payer = await generateKeyPairSigner(); // or loadKeypairSignerFromFile(path.join(process.env.PAYER));
-        const authorizedSigner1 = await generateKeyPairSigner();
-        const authorizedSigner2 = await generateKeyPairSigner();
-        const issuer = await generateKeyPairSigner();
+        const authorizedSigner1 = await getAuthorizedSigner1Keypair();
+        const authorizedSigner2 = await getAuthorizedSigner2Keypair();
+        const issuer = await getIssuerKeypair();
         const testUser = await generateKeyPairSigner();
 
         const airdrop = airdropFactory({ rpc: client.rpc, rpcSubscriptions: client.rpcSubscriptions });
@@ -188,68 +59,6 @@ async function setupWallets(client: SolanaClient) {
         return { payer, authorizedSigner1, authorizedSigner2, issuer, testUser };
     } catch (error) {
         throw new Error(`Failed to setup wallets: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-}
-
-async function setupLit(
-    {
-        authorizedSolanaAddresses,
-        litNetwork = LIT_NETWORK.DatilDev,
-        debug = false,
-        capacityCreditRequestsPerKilosecond = 10,
-        capacityCreditDaysUntilUTCMidnightExpiration = 1
-    }: {
-        litNetwork?: LIT_NETWORKS_KEYS,
-        authorizedSolanaAddresses: string[],
-        debug?: boolean,
-        capacityCreditRequestsPerKilosecond?: number,
-        capacityCreditDaysUntilUTCMidnightExpiration?: number
-    }) {
-    if (
-        process.env.LIT_PAYER_ETH_PRIVATE_KEY === undefined ||
-        process.env.LIT_PAYER_ETH_PRIVATE_KEY === ""
-    ) {
-        throw new Error('LIT_PAYER_ETH_PRIVATE_KEY is not set. Please generate an Ethereum private key and fund the address with Lit test tokens using the faucet: https://chronicle-yellowstone-faucet.getlit.dev before continuing.');
-    }
-
-    const litPayerEthersWallet = new ethers.Wallet(
-        process.env.LIT_PAYER_ETH_PRIVATE_KEY,
-        new ethers.providers.JsonRpcProvider(LIT_RPC.CHRONICLE_YELLOWSTONE)
-    );
-
-    const litNodeClient = new LitNodeClient({
-        litNetwork,
-        debug,
-    });
-    await litNodeClient.connect();
-
-    const litContractsClient = new LitContracts({
-        signer: litPayerEthersWallet,
-        network: litNetwork,
-        debug,
-    });
-    await litContractsClient.connect();
-
-    const pkpInfo = await mintPkpAndAddPermittedAuthMethods({
-        litContractsClient,
-        ethersSigner: litPayerEthersWallet,
-        authorizedSolanaAddresses,
-        litActionCodeSessionSigs
-    });
-
-    const capacityTokenId = (
-        await litContractsClient.mintCapacityCreditsNFT({
-            requestsPerKilosecond: capacityCreditRequestsPerKilosecond,
-            daysUntilUTCMidnightExpiration: capacityCreditDaysUntilUTCMidnightExpiration,
-        })
-    ).capacityTokenIdStr;
-
-    return {
-        litNodeClient,
-        litContractsClient,
-        litPayerEthersWallet,
-        pkpInfo,
-        capacityTokenId
     }
 }
 
@@ -288,6 +97,10 @@ async function sendAndConfirmInstructions(
         console.log(`    - ${description} - Signature: ${signature}`);
         return signature;
     } catch (error) {
+        console.error(`Transaction failed for ${description}:`, error);
+        if (error instanceof Error && 'cause' in error) {
+            console.error('Cause:', error.cause);
+        }
         throw new Error(`Failed to ${description.toLowerCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }
@@ -376,33 +189,39 @@ async function main() {
     console.log("2. Setting up Lit...");
     const {
         litNodeClient,
-        litContractsClient,
         litPayerEthersWallet,
         pkpInfo,
         capacityTokenId
-    } = await setupLit({
-        litNetwork: LIT_NETWORK.DatilDev,
-        authorizedSolanaAddresses: [authorizedSigner1.address, authorizedSigner2.address]
-    });
+    } = await setupLit();
     _litNodeClient = litNodeClient;
 
-    // Step 3: Create Credential
-    console.log("\n3. Creating Credential...");
+    // Step 3: Create Credential (if it doesn't exist)
+    console.log("\n3. Setting up Credential...");
     const [credentialPda] = await deriveCredentialPda({
         authority: issuer.address,
         name: CONFIG.CREDENTIAL_NAME
     });
 
-    const createCredentialInstruction = getCreateCredentialInstruction({
-        payer,
-        credential: credentialPda,
-        authority: issuer,
-        name: CONFIG.CREDENTIAL_NAME,
-        signers: [authorizedSigner1.address]
-    });
+    try {
+        // Check if credential already exists
+        const existingCredential = await fetchCredential(client.rpc, credentialPda);
+        console.log(`    - Credential already exists: ${credentialPda}`);
+        console.log(`    - Authority: ${existingCredential.data.authority}`);
+        console.log(`    - Authorized signers: ${existingCredential.data.authorizedSigners.length}`);
+    } catch (error) {
+        // Credential doesn't exist, create it
+        console.log(`    - Creating new credential: ${credentialPda}`);
+        const createCredentialInstruction = getCreateCredentialInstruction({
+            payer,
+            credential: credentialPda,
+            authority: issuer,
+            name: CONFIG.CREDENTIAL_NAME,
+            signers: [authorizedSigner1.address]
+        });
 
-    await sendAndConfirmInstructions(client, payer, [createCredentialInstruction], 'Credential created');
-    console.log(`    - Credential PDA: ${credentialPda}`);
+        await sendAndConfirmInstructions(client, payer, [createCredentialInstruction], 'Credential created');
+        console.log(`    - Credential created successfully`);
+    }
 
     // Step 4: Create Schema
     console.log("\n4.  Creating Schema...");
@@ -412,19 +231,29 @@ async function main() {
         version: CONFIG.SCHEMA_VERSION
     });
 
-    const createSchemaInstruction = getCreateSchemaInstruction({
-        authority: issuer,
-        payer,
-        name: CONFIG.SCHEMA_NAME,
-        credential: credentialPda,
-        description: CONFIG.SCHEMA_DESCRIPTION,
-        fieldNames: CONFIG.SCHEMA_FIELDS,
-        schema: schemaPda,
-        layout: CONFIG.SCHEMA_LAYOUT,
-    });
+    try {
+        // Check if schema already exists
+        const existingSchema = await fetchSchema(client.rpc, schemaPda);
+        console.log(`    - Schema already exists: ${schemaPda}`);
+        console.log(`    - Schema name: ${new TextDecoder().decode(existingSchema.data.name)}`);
+        console.log(`    - Version: ${existingSchema.data.version}`);
+    } catch (error) {
+        // Schema doesn't exist, create it
+        console.log(`    - Creating new schema: ${schemaPda}`);
+        const createSchemaInstruction = getCreateSchemaInstruction({
+            authority: issuer,
+            payer,
+            name: CONFIG.SCHEMA_NAME,
+            credential: credentialPda,
+            description: CONFIG.SCHEMA_DESCRIPTION,
+            fieldNames: CONFIG.SCHEMA_FIELDS,
+            schema: schemaPda,
+            layout: CONFIG.SCHEMA_LAYOUT,
+        });
 
-    await sendAndConfirmInstructions(client, payer, [createSchemaInstruction], 'Schema created');
-    console.log(`    - Schema PDA: ${schemaPda}`);
+        await sendAndConfirmInstructions(client, payer, [createSchemaInstruction], 'Schema created');
+        console.log(`    - Schema created successfully`);
+    }
 
     // Step 5: Create and Encrypt Attestation
     console.log("\n5. Creating Attestation...");
@@ -509,6 +338,31 @@ async function main() {
         attestationEncryptionMetadata
     });
     console.log(`    - Random User is ${isRandomVerified.isVerified ? 'verified' : 'not verified'}`);
+
+    // Test with unauthorized signer (should fail)
+    console.log("\n    Testing with unauthorized signer (should fail)...");
+    const unauthorizedSigner = await generateKeyPairSigner();
+    console.log(`    - Unauthorized signer address: ${unauthorizedSigner.address}`);
+
+    const unauthorizedResult = await verifyAttestation({
+        client,
+        schemaPda,
+        userAddress: testUser.address,
+        authorizedSigner: unauthorizedSigner, // This signer is NOT in the credential
+        litDecryptionParams: {
+            litNodeClient,
+            litPayerEthersWallet,
+            pkpInfo,
+            capacityTokenId
+        },
+        attestationEncryptionMetadata
+    });
+
+    if (unauthorizedResult.isVerified) {
+        console.log(`    - ❌ Unauthorized signer is verified`);
+    } else {
+        console.log(`    - ✅ Unauthorized signer is not verified`);
+    }
 
     // Step 7. Close Attestation
     console.log("\n7. Closing Attestation...");
