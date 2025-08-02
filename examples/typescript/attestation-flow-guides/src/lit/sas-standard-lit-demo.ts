@@ -111,7 +111,6 @@ async function verifyAttestation({
     userAddress,
     authorizedSigner,
     litDecryptionParams,
-    attestationEncryptionMetadata
 }: {
     client: SolanaClient;
     schemaPda: Address;
@@ -121,7 +120,6 @@ async function verifyAttestation({
         litNodeClient: LitNodeClient;
         litPayerEthersWallet: ethers.Wallet;
     };
-    attestationEncryptionMetadata: AttestationEncryptionMetadata;
 }): Promise<{ isVerified: boolean, decryptedAttestationData: string | null }> {
     try {
         const schema = await fetchSchema(client.rpc, schemaPda);
@@ -135,7 +133,7 @@ async function verifyAttestation({
             nonce: userAddress
         });
         const attestation = await fetchAttestation(client.rpc, attestationPda);
-        const attestationData = deserializeAttestationData(schema.data, attestation.data.data as Uint8Array);
+        const attestationData = deserializeAttestationData(schema.data, attestation.data.data as Uint8Array) as AttestationEncryptionMetadata;
         console.log(`    - Attestation data:`, attestationData);
 
         let decryptedAttestationData: string | null = null;
@@ -150,7 +148,7 @@ async function verifyAttestation({
 
             decryptedAttestationData = await decryptAttestationData({
                 ...litDecryptionParams,
-                ...attestationEncryptionMetadata,
+                ...attestationData,
                 siwsMessage,
                 siwsMessageSignature,
             }) as string;
@@ -309,7 +307,6 @@ async function main() {
             litNodeClient,
             litPayerEthersWallet,
         },
-        attestationEncryptionMetadata
     });
     console.log(`    - Test User is ${isUserVerified.isVerified ? 'verified' : 'not verified'}`);
     if (isUserVerified.decryptedAttestationData) {
@@ -326,7 +323,6 @@ async function main() {
             litNodeClient,
             litPayerEthersWallet,
         },
-        attestationEncryptionMetadata
     });
     console.log(`    - Random User is ${isRandomVerified.isVerified ? 'verified' : 'not verified'}`);
 
@@ -344,7 +340,6 @@ async function main() {
             litNodeClient,
             litPayerEthersWallet,
         },
-        attestationEncryptionMetadata
     });
 
     if (unauthorizedResult.isVerified) {

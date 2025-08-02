@@ -16,6 +16,8 @@ import {
     getCloseTokenizedAttestationInstruction,
     SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
     deriveEventAuthorityAddress,
+    deserializeAttestationData,
+    fetchAttestation,
 } from "sas-lib";
 import {
     airdropFactory,
@@ -42,7 +44,7 @@ import {
 import { ethers } from "ethers";
 
 import { createSiwsMessage, decryptAttestationData, encryptAttestationData, setupLit, signSiwsMessage } from "./lit-helpers";
-import { AttestationEncryptionMetadata, PkpInfo } from "./types";
+import { AttestationEncryptionMetadata } from "./types";
 import { getAuthorizedSigner1Keypair, getAuthorizedSigner2Keypair, getIssuerKeypair } from "./get-keypair";
 import { ORIGINAL_DATA, SAS_TOKENIZED_CONFIG } from "./constants";
 
@@ -120,7 +122,6 @@ async function verifyTokenAttestation({
     userAddress,
     authorizedSigner,
     litDecryptionParams,
-    attestationEncryptionMetadata
 }: {
     client: SolanaClient;
     schemaPda: Address;
@@ -130,7 +131,6 @@ async function verifyTokenAttestation({
         litNodeClient: LitNodeClient;
         litPayerEthersWallet: ethers.Wallet;
     };
-    attestationEncryptionMetadata: AttestationEncryptionMetadata;
 }): Promise<{ isVerified: boolean, decryptedAttestationData: string | null }> {
     try {
         const schema = await fetchSchema(client.rpc, schemaPda);
@@ -182,6 +182,11 @@ async function verifyTokenAttestation({
         const schemaInMetadata = tokenMetadata.additionalMetadata.get('schema');
         if (schemaInMetadata !== schemaPda) return { isVerified: false, decryptedAttestationData: null };
 
+        // Fetch attestation data from chain to get encryption metadata
+        const attestation = await fetchAttestation(client.rpc, attestationPda);
+        const attestationData = deserializeAttestationData(schema.data, attestation.data.data as Uint8Array) as AttestationEncryptionMetadata;
+        console.log(`    - Retrieved attestation data from chain`);
+
         // Decrypt attestation data
         let decryptedAttestationData: string | null = null;
         try {
@@ -195,7 +200,7 @@ async function verifyTokenAttestation({
 
             decryptedAttestationData = await decryptAttestationData({
                 ...litDecryptionParams,
-                ...attestationEncryptionMetadata,
+                ...attestationData,
                 siwsMessage,
                 siwsMessageSignature,
             }) as string;
@@ -422,7 +427,6 @@ async function main() {
             litNodeClient,
             litPayerEthersWallet,
         },
-        attestationEncryptionMetadata
     });
 
     console.log(`    - Test User is ${verification.isVerified ? 'verified' : 'not verified'}`);
@@ -441,7 +445,6 @@ async function main() {
             litNodeClient,
             litPayerEthersWallet,
         },
-        attestationEncryptionMetadata
     });
     console.log(`    - Random User is ${randomVerification.isVerified ? 'verified' : 'not verified'}`);
 
@@ -459,7 +462,6 @@ async function main() {
             litNodeClient,
             litPayerEthersWallet,
         },
-        attestationEncryptionMetadata
     });
 
     if (unauthorizedResult.isVerified) {
