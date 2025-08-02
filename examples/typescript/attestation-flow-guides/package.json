@@ -8,10 +8,12 @@
     "kit:standard": "ts-node src/kit/sas-standard-kit-demo.ts",
     "kit:tokenized": "ts-node src/kit/sas-tokenized-kit-demo.ts",
     "lit:standard": "ts-node src/lit/sas-standard-lit-demo.ts",
+    "lit:tokenized": "ts-node src/lit/sas-tokenized-lit-demo.ts",
     "dump": "mkdir -p programs && solana program dump -um 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
     "start-local": "solana-test-validator -r --bpf-program 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
     "build": "tsc",
-    "generate:credential-pda": "ts-node src/lit/generate-credential-pda.ts"
+    "generate:credential-pda:standard": "SAS_TYPE=standard ts-node src/lit/generate-credential-pda.ts",
+    "generate:credential-pda:tokenized": "SAS_TYPE=tokenized ts-node src/lit/generate-credential-pda.ts"
   },
   "packageManager": "pnpm@10.12.3",
   "dependencies": {

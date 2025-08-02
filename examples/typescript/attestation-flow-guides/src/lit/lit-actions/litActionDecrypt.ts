@@ -2,9 +2,14 @@
 
 const _litActionCode = async () => {
   // Hardcoded values for this specific attestation service instance
-  const AUTHORIZED_CREDENTIAL_PDA = "HMDTWtveFZYK4mdTN4b1XhRWHQa1r3JsLm8YDKkWV4GT";
   const AUTHORIZED_RPC_URL = "https://api.devnet.solana.com";
   const AUTHORIZED_PROGRAM_ID = "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG";
+
+  // For standard SAS, use:
+  const AUTHORIZED_CREDENTIAL_PDA = "7jFpAvvNMbuJ2FXJyTrtp6sAQ758HR8zB7fm7PhnqWc";
+
+  // For tokenized SAS, use:
+  // const AUTHORIZED_CREDENTIAL_PDA = "FEhCzdTjZwBn74hkEAK1AZvxefHe6GaB4MtEoMNSjiCr";
 
   async function fetchAccountData(rpcUrl, address) {
     try {

@@ -3,18 +3,19 @@ import {
     getCreateCredentialInstruction,
     getCreateSchemaInstruction,
     serializeAttestationData,
-    getCreateAttestationInstruction,
     fetchSchema,
-    getChangeAuthorizedSignersInstruction,
-    fetchAttestation,
-    deserializeAttestationData,
+    fetchCredential,
     deriveAttestationPda,
     deriveCredentialPda,
     deriveSchemaPda,
-    deriveEventAuthorityAddress,
-    getCloseAttestationInstruction,
+    getTokenizeSchemaInstruction,
+    deriveSchemaMintPda,
+    deriveSasAuthorityAddress,
+    deriveAttestationMintPda,
+    getCreateTokenizedAttestationInstruction,
+    getCloseTokenizedAttestationInstruction,
     SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-    fetchCredential
+    deriveEventAuthorityAddress,
 } from "sas-lib";
 import {
     airdropFactory,
@@ -28,21 +29,26 @@ import {
     Blockhash,
     createSolanaClient,
     createTransaction,
-    SolanaClient,
+    SolanaClient
 } from "gill";
 import {
+    ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
+    fetchMint,
+    findAssociatedTokenPda,
+    getMintSize,
+    TOKEN_2022_PROGRAM_ADDRESS,
     estimateComputeUnitLimitFactory
 } from "gill/programs";
 import { ethers } from "ethers";
 
 import { createSiwsMessage, decryptAttestationData, encryptAttestationData, setupLit, signSiwsMessage } from "./lit-helpers";
 import { AttestationEncryptionMetadata, PkpInfo } from "./types";
-import { SAS_STANDARD_CONFIG, ORIGINAL_DATA } from "./constants";
 import { getAuthorizedSigner1Keypair, getAuthorizedSigner2Keypair, getIssuerKeypair } from "./get-keypair";
+import { ORIGINAL_DATA, SAS_TOKENIZED_CONFIG } from "./constants";
 
 async function setupWallets(client: SolanaClient) {
     try {
-        const payer = await generateKeyPairSigner(); // or loadKeypairSignerFromFile(path.join(process.env.PAYER));
+        const payer = await generateKeyPairSigner();
         const authorizedSigner1 = await getAuthorizedSigner1Keypair();
         const authorizedSigner2 = await getAuthorizedSigner2Keypair();
         const issuer = await getIssuerKeypair();
@@ -90,11 +96,14 @@ async function sendAndConfirmInstructions(
             instructions: instructions,
             latestBlockhash,
             computeUnitLimit,
-            computeUnitPrice: 1, // In production, use dynamic pricing
+            computeUnitPrice: 1,
         });
 
-        const signature = await client.sendAndConfirmTransaction(tx);
-        console.log(`    - ${description} - Signature: ${signature}`);
+        const signature = await client.sendAndConfirmTransaction(tx, {
+            skipPreflight: true,
+            commitment: "processed"
+        });
+        console.log(`    - ${description}: ${signature}`);
         return signature;
     } catch (error) {
         console.error(`Transaction failed for ${description}:`, error);
@@ -105,7 +114,7 @@ async function sendAndConfirmInstructions(
     }
 }
 
-async function verifyAttestation({
+async function verifyTokenAttestation({
     client,
     schemaPda,
     userAddress,
@@ -128,18 +137,46 @@ async function verifyAttestation({
     try {
         const schema = await fetchSchema(client.rpc, schemaPda);
         if (schema.data.isPaused) {
-            console.log(`    -  Schema is paused`);
+            console.log(`    - Schema is paused`);
             return { isVerified: false, decryptedAttestationData: null };
         }
+
         const [attestationPda] = await deriveAttestationPda({
             credential: schema.data.credential,
             schema: schemaPda,
             nonce: userAddress
         });
-        const attestation = await fetchAttestation(client.rpc, attestationPda);
-        const attestationData = deserializeAttestationData(schema.data, attestation.data.data as Uint8Array);
-        console.log(`    - Attestation data:`, attestationData);
+        const [attestationMint] = await deriveAttestationMintPda({
+            attestation: attestationPda
+        })
+        const mintAccount = await fetchMint(client.rpc, attestationMint);
+        if (!mintAccount) return { isVerified: false, decryptedAttestationData: null };
+        if (mintAccount.data.extensions.__option === 'None') {
+            return { isVerified: false, decryptedAttestationData: null };
+        }
+        const { value: foundExtensions } = mintAccount.data.extensions;
 
+        // Verify member of group
+        const [schemaMint] = await deriveSchemaMintPda({
+            schema: schemaPda
+        });
+        const tokenGroupMember = foundExtensions.find(ext => ext.__kind === 'TokenGroupMember');
+        if (!tokenGroupMember) return { isVerified: false, decryptedAttestationData: null };
+        if (tokenGroupMember.group !== schemaMint) return { isVerified: false, decryptedAttestationData: null };
+
+        // Verify token metadata
+        const tokenMetadata = foundExtensions.find(ext => ext.__kind === 'TokenMetadata');
+        if (!tokenMetadata) return { isVerified: false, decryptedAttestationData: null };
+
+        // Verify attestation PDA matches
+        const attestationInMetadata = tokenMetadata.additionalMetadata.get('attestation');
+        if (attestationInMetadata !== attestationPda) return { isVerified: false, decryptedAttestationData: null };
+
+        // Verify schema PDA matches  
+        const schemaInMetadata = tokenMetadata.additionalMetadata.get('schema');
+        if (schemaInMetadata !== schemaPda) return { isVerified: false, decryptedAttestationData: null };
+
+        // Decrypt attestation data
         let decryptedAttestationData: string | null = null;
         try {
             const siwsMessage = createSiwsMessage({
@@ -157,13 +194,13 @@ async function verifyAttestation({
                 siwsMessageSignature,
             }) as string;
         } catch (error) {
-            console.error("There was an error while decrypting the attestation data:", error);
+            console.error("Error while decrypting the attestation data:", error);
             return { isVerified: false, decryptedAttestationData: null };
         }
 
-        const currentTimestamp = BigInt(Math.floor(Date.now() / 1000));
-        return { isVerified: currentTimestamp < attestation.data.expiry, decryptedAttestationData };
+        return { isVerified: true, decryptedAttestationData };
     } catch (error) {
+        console.error("There was an error while verifying the tokenized attestation:", error);
         return { isVerified: false, decryptedAttestationData: null };
     }
 }
@@ -171,19 +208,13 @@ async function verifyAttestation({
 let _litNodeClient: LitNodeClient | null = null;
 
 async function main() {
-    console.log("Starting Solana Attestation Service with Lit Protocol encrypted attestation demo\n");
+    console.log("Starting Solana Attestation Service with Lit Protocol encrypted tokenized attestation demo\n");
 
-    const client: SolanaClient = createSolanaClient({ urlOrMoniker: SAS_STANDARD_CONFIG.CLUSTER_OR_RPC });
+    const client: SolanaClient = createSolanaClient({ urlOrMoniker: SAS_TOKENIZED_CONFIG.CLUSTER_OR_RPC });
 
     // Step 1: Setup wallets and fund payer
     console.log("1. Setting up wallets and funding payer...");
-    const {
-        payer,
-        authorizedSigner1,
-        authorizedSigner2,
-        issuer,
-        testUser
-    } = await setupWallets(client);
+    const { payer, authorizedSigner1, authorizedSigner2, issuer, testUser } = await setupWallets(client);
 
     // Step 2: Setup Lit
     console.log("2. Setting up Lit...");
@@ -199,84 +230,161 @@ async function main() {
     console.log("\n3. Setting up Credential...");
     const [credentialPda] = await deriveCredentialPda({
         authority: issuer.address,
-        name: SAS_STANDARD_CONFIG.CREDENTIAL_NAME
+        name: SAS_TOKENIZED_CONFIG.CREDENTIAL_NAME
     });
 
     try {
-        // Check if credential already exists
         const existingCredential = await fetchCredential(client.rpc, credentialPda);
         console.log(`    - Credential already exists: ${credentialPda}`);
         console.log(`    - Authority: ${existingCredential.data.authority}`);
-        console.log(`    - Authorized signers: ${existingCredential.data.authorizedSigners.length}`);
+        console.log(`    - Current authorized signers: ${existingCredential.data.authorizedSigners.length}`);
     } catch (error) {
-        // Credential doesn't exist, create it
         console.log(`    - Creating new credential: ${credentialPda}`);
         const createCredentialInstruction = getCreateCredentialInstruction({
             payer,
             credential: credentialPda,
             authority: issuer,
-            name: SAS_STANDARD_CONFIG.CREDENTIAL_NAME,
-            signers: [authorizedSigner1.address]
+            name: SAS_TOKENIZED_CONFIG.CREDENTIAL_NAME,
+            signers: [authorizedSigner1.address, authorizedSigner2.address]
         });
-
         await sendAndConfirmInstructions(client, payer, [createCredentialInstruction], 'Credential created');
         console.log(`    - Credential created successfully`);
     }
 
-    // Step 4: Create Schema
-    console.log("\n4.  Creating Schema...");
+    // Step 4: Create Schema (if it doesn't exist)
+    console.log("\n4. Setting up Schema...");
     const [schemaPda] = await deriveSchemaPda({
         credential: credentialPda,
-        name: SAS_STANDARD_CONFIG.SCHEMA_NAME,
-        version: SAS_STANDARD_CONFIG.SCHEMA_VERSION
+        name: SAS_TOKENIZED_CONFIG.SCHEMA_NAME,
+        version: SAS_TOKENIZED_CONFIG.SCHEMA_VERSION
     });
 
     try {
-        // Check if schema already exists
         const existingSchema = await fetchSchema(client.rpc, schemaPda);
         console.log(`    - Schema already exists: ${schemaPda}`);
         console.log(`    - Schema name: ${new TextDecoder().decode(existingSchema.data.name)}`);
         console.log(`    - Version: ${existingSchema.data.version}`);
     } catch (error) {
-        // Schema doesn't exist, create it
         console.log(`    - Creating new schema: ${schemaPda}`);
         const createSchemaInstruction = getCreateSchemaInstruction({
             authority: issuer,
             payer,
-            name: SAS_STANDARD_CONFIG.SCHEMA_NAME,
+            name: SAS_TOKENIZED_CONFIG.SCHEMA_NAME,
             credential: credentialPda,
-            description: SAS_STANDARD_CONFIG.SCHEMA_DESCRIPTION,
-            fieldNames: SAS_STANDARD_CONFIG.SCHEMA_FIELDS,
+            description: SAS_TOKENIZED_CONFIG.SCHEMA_DESCRIPTION,
+            fieldNames: SAS_TOKENIZED_CONFIG.SCHEMA_FIELDS,
             schema: schemaPda,
-            layout: SAS_STANDARD_CONFIG.SCHEMA_LAYOUT,
+            layout: SAS_TOKENIZED_CONFIG.SCHEMA_LAYOUT
         });
-
         await sendAndConfirmInstructions(client, payer, [createSchemaInstruction], 'Schema created');
         console.log(`    - Schema created successfully`);
     }
 
-    // Step 5: Create and Encrypt Attestation
-    console.log("\n5. Creating Attestation...");
+    // Step 5: Tokenize Schema (if not already tokenized)
+    console.log("\n5. Tokenizing Schema...");
+    const [schemaMint] = await deriveSchemaMintPda({
+        schema: schemaPda
+    });
+
+    try {
+        const existingMint = await fetchMint(client.rpc, schemaMint);
+        console.log(`    - Schema already tokenized: ${schemaMint}`);
+    } catch (error) {
+        console.log(`    - Tokenizing schema...`);
+        const sasPda = await deriveSasAuthorityAddress();
+        const schemaMintAccountSpace = getMintSize([
+            {
+                __kind: "GroupPointer",
+                authority: sasPda,
+                groupAddress: schemaMint
+            },
+        ]);
+
+        const createTokenizeSchemaInstruction = getTokenizeSchemaInstruction({
+            payer,
+            authority: issuer,
+            credential: credentialPda,
+            schema: schemaPda,
+            mint: schemaMint,
+            sasPda,
+            maxSize: schemaMintAccountSpace,
+            tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
+        });
+
+        await sendAndConfirmInstructions(client, payer, [createTokenizeSchemaInstruction], 'Schema tokenized');
+        console.log(`    - Schema Mint: ${schemaMint}`);
+    }
+
+    // Step 6: Create and Encrypt Tokenized Attestation
+    console.log("\n6. Creating Tokenized Attestation...");
     const [attestationPda] = await deriveAttestationPda({
         credential: credentialPda,
         schema: schemaPda,
         nonce: testUser.address
     });
+    const [attestationMint] = await deriveAttestationMintPda({
+        attestation: attestationPda
+    });
 
     const schema = await fetchSchema(client.rpc, schemaPda);
-    const expiryTimestamp = Math.floor(Date.now() / 1000) + (SAS_STANDARD_CONFIG.ATTESTATION_EXPIRY_DAYS * 24 * 60 * 60);
+    const expiryTimestamp = Math.floor(Date.now() / 1000) + (SAS_TOKENIZED_CONFIG.ATTESTATION_EXPIRY_DAYS * 24 * 60 * 60);
+    const sasPda = await deriveSasAuthorityAddress();
+    const [recipientTokenAccount] = await findAssociatedTokenPda({
+        mint: attestationMint,
+        owner: testUser.address,
+        tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
+    });
 
+    // Encrypt the attestation data
     const attestationEncryptionMetadata = await encryptAttestationData({
         attestationData: new TextEncoder().encode(JSON.stringify(ORIGINAL_DATA)),
         litNodeClient
     });
 
-    const createAttestationInstruction = getCreateAttestationInstruction({
+    const attestationMintAccountSpace = getMintSize([
+        {
+            __kind: "GroupMemberPointer",
+            authority: sasPda,
+            memberAddress: attestationMint,
+        },
+        { __kind: "NonTransferable" },
+        {
+            __kind: "MetadataPointer",
+            authority: sasPda,
+            metadataAddress: attestationMint,
+        },
+        { __kind: "PermanentDelegate", delegate: sasPda },
+        { __kind: "MintCloseAuthority", closeAuthority: sasPda },
+        {
+            __kind: "TokenMetadata",
+            updateAuthority: sasPda,
+            mint: attestationMint,
+            name: SAS_TOKENIZED_CONFIG.TOKEN_NAME,
+            symbol: SAS_TOKENIZED_CONFIG.TOKEN_SYMBOL,
+            uri: SAS_TOKENIZED_CONFIG.TOKEN_METADATA,
+            additionalMetadata: new Map([
+                ["attestation", attestationPda],
+                ["schema", schemaPda]
+            ]),
+        },
+        {
+            __kind: "TokenGroupMember",
+            group: schemaMint,
+            mint: attestationMint,
+            memberNumber: 1,
+        },
+    ]);
+
+    const createTokenizedAttestationInstruction = await getCreateTokenizedAttestationInstruction({
         payer,
         authority: authorizedSigner1,
         credential: credentialPda,
         schema: schemaPda,
         attestation: attestationPda,
+        schemaMint: schemaMint,
+        attestationMint,
+        sasPda,
+        recipient: testUser.address,
         nonce: testUser.address,
         expiry: expiryTimestamp,
         data: serializeAttestationData(
@@ -286,30 +394,27 @@ async function main() {
                 accessControlConditions: JSON.stringify(attestationEncryptionMetadata.accessControlConditions)
             }
         ),
+        name: SAS_TOKENIZED_CONFIG.TOKEN_NAME,
+        uri: SAS_TOKENIZED_CONFIG.TOKEN_METADATA,
+        symbol: SAS_TOKENIZED_CONFIG.TOKEN_SYMBOL,
+        mintAccountSpace: attestationMintAccountSpace,
+        recipientTokenAccount: recipientTokenAccount,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
+        tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
     });
 
-    await sendAndConfirmInstructions(client, payer, [createAttestationInstruction], 'Attestation created');
+    await sendAndConfirmInstructions(client, payer, [createTokenizedAttestationInstruction], 'Tokenized attestation created');
     console.log(`    - Attestation PDA: ${attestationPda}`);
+    console.log(`    - Attestation Mint: ${attestationMint}`);
 
-    // Step 6: Update Authorized Signers
-    console.log("\n6. Updating Authorized Signers...");
-    const changeAuthSignersInstruction = getChangeAuthorizedSignersInstruction({
-        payer,
-        authority: issuer,
-        credential: credentialPda,
-        signers: [authorizedSigner1.address, authorizedSigner2.address]
-    });
+    // Step 7: Verify Tokenized Attestations
+    console.log("\n7. Verifying Tokenized Attestations...");
 
-    await sendAndConfirmInstructions(client, payer, [changeAuthSignersInstruction], 'Authorized signers updated');
-
-    // Step 7: Verify Attestations
-    console.log("\n7. Verifying Attestations...");
-
-    const isUserVerified = await verifyAttestation({
+    const verification = await verifyTokenAttestation({
         client,
         schemaPda,
         userAddress: testUser.address,
-        authorizedSigner: authorizedSigner1, // Use one of the authorized signers
+        authorizedSigner: authorizedSigner1,
         litDecryptionParams: {
             litNodeClient,
             litPayerEthersWallet,
@@ -318,17 +423,19 @@ async function main() {
         },
         attestationEncryptionMetadata
     });
-    console.log(`    - Test User is ${isUserVerified.isVerified ? 'verified' : 'not verified'}`);
-    if (isUserVerified.decryptedAttestationData) {
-        console.log(`    - Decrypted Attestation Data: ${isUserVerified.decryptedAttestationData}`);
+
+    console.log(`    - Test User is ${verification.isVerified ? 'verified' : 'not verified'}`);
+    console.log(`    - Test User's token is ${verification.isVerified ? 'valid' : 'invalid'}`);
+    if (verification.decryptedAttestationData) {
+        console.log(`    - Decrypted Attestation Data: ${verification.decryptedAttestationData}`);
     }
 
     const randomUser = await generateKeyPairSigner();
-    const isRandomVerified = await verifyAttestation({
+    const randomVerification = await verifyTokenAttestation({
         client,
         schemaPda,
         userAddress: randomUser.address,
-        authorizedSigner: authorizedSigner2, // Use the other authorized signer  
+        authorizedSigner: authorizedSigner2,
         litDecryptionParams: {
             litNodeClient,
             litPayerEthersWallet,
@@ -337,18 +444,18 @@ async function main() {
         },
         attestationEncryptionMetadata
     });
-    console.log(`    - Random User is ${isRandomVerified.isVerified ? 'verified' : 'not verified'}`);
+    console.log(`    - Random User is ${randomVerification.isVerified ? 'verified' : 'not verified'}`);
 
     // Test with unauthorized signer (should fail)
     console.log("\n    Testing with unauthorized signer (should fail)...");
     const unauthorizedSigner = await generateKeyPairSigner();
     console.log(`    - Unauthorized signer address: ${unauthorizedSigner.address}`);
 
-    const unauthorizedResult = await verifyAttestation({
+    const unauthorizedResult = await verifyTokenAttestation({
         client,
         schemaPda,
         userAddress: testUser.address,
-        authorizedSigner: unauthorizedSigner, // This signer is NOT in the credential
+        authorizedSigner: unauthorizedSigner,
         litDecryptionParams: {
             litNodeClient,
             litPayerEthersWallet,
@@ -364,25 +471,30 @@ async function main() {
         console.log(`    - ✅ Unauthorized signer is not verified`);
     }
 
-    // Step 7. Close Attestation
-    console.log("\n7. Closing Attestation...");
-
+    // Step 8: Close Tokenized Attestation
+    console.log("\n8. Closing Tokenized Attestation...");
     const eventAuthority = await deriveEventAuthorityAddress();
-    const closeAttestationInstruction = getCloseAttestationInstruction({
+
+    const closeTokenizedAttestationInstruction = getCloseTokenizedAttestationInstruction({
         payer,
-        attestation: attestationPda,
         authority: authorizedSigner1,
         credential: credentialPda,
+        attestation: attestationPda,
         eventAuthority,
-        attestationProgram: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS
+        attestationProgram: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+        attestationMint,
+        sasPda,
+        attestationTokenAccount: recipientTokenAccount,
+        tokenProgram: TOKEN_2022_PROGRAM_ADDRESS
     });
-    await sendAndConfirmInstructions(client, payer, [closeAttestationInstruction], 'Closed attestation');
+
+    await sendAndConfirmInstructions(client, payer, [closeTokenizedAttestationInstruction], 'Tokenized Attestation closed');
 }
 
 main()
-    .then(() => console.log("\nSolana Attestation Service with Lit Protocol encrypted attestation demo completed successfully!"))
+    .then(() => console.log("\nSolana Attestation Service with Lit Protocol encrypted tokenized attestation demo completed successfully!"))
     .catch((error) => {
-        console.error("❌ Demo failed:", error);
+        console.error("L Demo failed:", error);
         process.exit(1);
     })
     .finally(() => {
