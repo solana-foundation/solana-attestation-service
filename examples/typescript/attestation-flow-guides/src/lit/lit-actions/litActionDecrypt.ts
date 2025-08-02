@@ -294,7 +294,21 @@ const _litActionCode = async () => {
 
   try {
     const decryptedData = await Lit.Actions.decryptAndCombine({
-      accessControlConditions: solRpcConditions,
+      accessControlConditions: [
+        {
+          method: "",
+          params: [":currentActionIpfsId"],
+          pdaParams: [],
+          pdaInterface: { offset: 0, fields: {} },
+          pdaKey: "",
+          chain: "solana",
+          returnValueTest: {
+            key: "",
+            comparator: "=",
+            value: LitAuth.actionIpfsIds[0],
+          },
+        },
+      ],
       ciphertext,
       dataToEncryptHash,
       authSig: {

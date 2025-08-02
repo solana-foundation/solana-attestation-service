@@ -1,5 +1,4 @@
 import { LitNodeClient } from "@lit-protocol/lit-node-client";
-import { SolRpcConditions } from "@lit-protocol/types";
 import { ethers } from "ethers";
 
 import { PkpInfo, SiwsMessageForFormatting } from "../types";
@@ -14,7 +13,6 @@ export const decryptAttestationData = async ({
     capacityTokenId,
     ciphertext,
     dataToEncryptHash,
-    accessControlConditions,
     siwsMessage,
     siwsMessageSignature,
 }: {
@@ -24,7 +22,6 @@ export const decryptAttestationData = async ({
     capacityTokenId: string;
     ciphertext: string;
     dataToEncryptHash: string;
-    accessControlConditions: SolRpcConditions;
     siwsMessage: SiwsMessageForFormatting;
     siwsMessageSignature: string;
 }) => {
@@ -42,7 +39,6 @@ export const decryptAttestationData = async ({
         jsParams: {
             siwsMessage: JSON.stringify(siwsMessage),
             siwsMessageSignature,
-            solRpcConditions: accessControlConditions,
             ciphertext,
             dataToEncryptHash,
         },

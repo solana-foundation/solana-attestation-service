@@ -149,7 +149,15 @@ async function verifyTokenAttestation({
         const [attestationMint] = await deriveAttestationMintPda({
             attestation: attestationPda
         })
-        const mintAccount = await fetchMint(client.rpc, attestationMint);
+
+        let mintAccount;
+        try {
+            mintAccount = await fetchMint(client.rpc, attestationMint);
+        } catch (error) {
+            // Mint doesn't exist - user doesn't have a tokenized attestation
+            return { isVerified: false, decryptedAttestationData: null };
+        }
+
         if (!mintAccount) return { isVerified: false, decryptedAttestationData: null };
         if (mintAccount.data.extensions.__option === 'None') {
             return { isVerified: false, decryptedAttestationData: null };
@@ -391,7 +399,6 @@ async function main() {
             schema.data,
             {
                 ...attestationEncryptionMetadata,
-                accessControlConditions: JSON.stringify(attestationEncryptionMetadata.accessControlConditions)
             }
         ),
         name: SAS_TOKENIZED_CONFIG.TOKEN_NAME,
@@ -489,12 +496,75 @@ async function main() {
     });
 
     await sendAndConfirmInstructions(client, payer, [closeTokenizedAttestationInstruction], 'Tokenized Attestation closed');
+
+    // Return summary data for pretty printing
+    return {
+        addresses: {
+            credentialPda,
+            schemaPda,
+            attestationPda,
+            schemaMint,
+            attestationMint,
+            testUserAddress: testUser.address
+        },
+        verification,
+        randomVerification,
+        unauthorizedResult,
+        config: SAS_TOKENIZED_CONFIG
+    };
 }
 
 main()
-    .then(() => console.log("\nSolana Attestation Service with Lit Protocol encrypted tokenized attestation demo completed successfully!"))
+    .then((results) => {
+        console.log("\n" + "=".repeat(80));
+        console.log("SOLANA ATTESTATION SERVICE WITH LIT PROTOCOL ENCRYPTED ATTESTATION DEMO");
+        console.log("=".repeat(80));
+
+        console.log("\n📋 DEMO CONFIGURATION:");
+        console.log(`   Network: ${results.config.CLUSTER_OR_RPC}`);
+        console.log(`   Organization: ${results.config.CREDENTIAL_NAME}`);
+        console.log(`   Schema: ${results.config.SCHEMA_NAME} (v${results.config.SCHEMA_VERSION})`);
+        console.log(`   Token: ${results.config.TOKEN_NAME} (${results.config.TOKEN_SYMBOL})`);
+
+        console.log("\n🔑 CREATED ACCOUNTS:");
+        console.log(`   Credential PDA:    ${results.addresses.credentialPda}`);
+        console.log(`   Schema PDA:        ${results.addresses.schemaPda}`);
+        console.log(`   Schema Mint:       ${results.addresses.schemaMint}`);
+        console.log(`   Attestation PDA:   ${results.addresses.attestationPda}`);
+        console.log(`   Attestation Mint:  ${results.addresses.attestationMint}`);
+        console.log(`   Test User:         ${results.addresses.testUserAddress}`);
+
+        console.log("\n🧪 VERIFICATION TEST RESULTS:");
+
+        // Test User Verification
+        const testUserStatus = results.verification.isVerified ? "✅ PASSED" : "❌ FAILED";
+        console.log(`   Test User Verification:     ${testUserStatus}`);
+        if (results.verification.isVerified && results.verification.decryptedAttestationData) {
+            console.log(`   Decrypted Attestation Data: ${results.verification.decryptedAttestationData}`);
+        }
+
+        // Random User Verification (should fail)
+        const randomUserStatus = !results.randomVerification.isVerified ? "✅ PASSED" : "❌ FAILED";
+        console.log(`   Random User Verification:   ${randomUserStatus} (correctly rejected)`);
+
+        // Unauthorized Signer Test (should fail)
+        const unauthorizedStatus = !results.unauthorizedResult.isVerified ? "✅ PASSED" : "❌ FAILED";
+        console.log(`   Unauthorized Signer Test:   ${unauthorizedStatus} (correctly rejected)`);
+
+        const allTestsPassed = results.verification.isVerified &&
+            !results.randomVerification.isVerified &&
+            !results.unauthorizedResult.isVerified;
+
+        if (allTestsPassed) {
+            console.log("   ✅ ALL TESTS PASSED! Demo completed successfully.");
+        } else {
+            console.log("   ❌  Some tests failed. Please review the results above.");
+        }
+
+        console.log("\n" + "=".repeat(80));
+    })
     .catch((error) => {
-        console.error("L Demo failed:", error);
+        console.error("\n❌ Demo failed:", error);
         process.exit(1);
     })
     .finally(() => {

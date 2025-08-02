@@ -3,8 +3,8 @@ const BASE_CONFIG = {
     CLUSTER_OR_RPC: 'localnet',
 
     // Basic SAS Information
-    SCHEMA_LAYOUT: Buffer.from([12, 12, 12]),
-    SCHEMA_FIELDS: ["ciphertext", "dataToEncryptHash", "accessControlConditions"],
+    SCHEMA_LAYOUT: Buffer.from([12, 12]),
+    SCHEMA_FIELDS: ["ciphertext", "dataToEncryptHash"],
     SCHEMA_VERSION: 1,
 }
 

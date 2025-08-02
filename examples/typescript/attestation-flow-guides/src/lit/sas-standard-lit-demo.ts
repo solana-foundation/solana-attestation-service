@@ -283,7 +283,6 @@ async function main() {
             schema.data,
             {
                 ...attestationEncryptionMetadata,
-                accessControlConditions: JSON.stringify(attestationEncryptionMetadata.accessControlConditions)
             }
         ),
     });
@@ -377,12 +376,70 @@ async function main() {
         attestationProgram: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS
     });
     await sendAndConfirmInstructions(client, payer, [closeAttestationInstruction], 'Closed attestation');
+
+    // Return summary data for pretty printing
+    return {
+        addresses: {
+            credentialPda,
+            schemaPda,
+            attestationPda,
+            testUserAddress: testUser.address
+        },
+        verification: isUserVerified,
+        randomVerification: isRandomVerified,
+        unauthorizedResult,
+        config: SAS_STANDARD_CONFIG
+    };
 }
 
 main()
-    .then(() => console.log("\nSolana Attestation Service with Lit Protocol encrypted attestation demo completed successfully!"))
+    .then((results) => {
+        console.log("\n" + "=".repeat(80));
+        console.log("SOLANA ATTESTATION SERVICE WITH LIT PROTOCOL ENCRYPTED ATTESTATION DEMO");
+        console.log("=".repeat(80));
+
+        console.log("\n📋 DEMO CONFIGURATION:");
+        console.log(`   Network: ${results.config.CLUSTER_OR_RPC}`);
+        console.log(`   Organization: ${results.config.CREDENTIAL_NAME}`);
+        console.log(`   Schema: ${results.config.SCHEMA_NAME} (v${results.config.SCHEMA_VERSION})`);
+
+        console.log("\n🔑 CREATED ACCOUNTS:");
+        console.log(`   Credential PDA:    ${results.addresses.credentialPda}`);
+        console.log(`   Schema PDA:        ${results.addresses.schemaPda}`);
+        console.log(`   Attestation PDA:   ${results.addresses.attestationPda}`);
+        console.log(`   Test User:         ${results.addresses.testUserAddress}`);
+
+        console.log("\n🧪 VERIFICATION TEST RESULTS:");
+
+        // Test User Verification
+        const testUserStatus = results.verification.isVerified ? "✅ PASSED" : "❌ FAILED";
+        console.log(`   Test User Verification:     ${testUserStatus}`);
+        if (results.verification.isVerified && results.verification.decryptedAttestationData) {
+            console.log(`   Decrypted Attestation Data: ${results.verification.decryptedAttestationData}`);
+        }
+
+        // Random User Verification (should fail)
+        const randomUserStatus = !results.randomVerification.isVerified ? "✅ PASSED" : "❌ FAILED";
+        console.log(`   Random User Verification:   ${randomUserStatus} (correctly rejected)`);
+
+        // Unauthorized Signer Test (should fail)
+        const unauthorizedStatus = !results.unauthorizedResult.isVerified ? "✅ PASSED" : "❌ FAILED";
+        console.log(`   Unauthorized Signer Test:   ${unauthorizedStatus} (correctly rejected)`);
+
+        const allTestsPassed = results.verification.isVerified &&
+            !results.randomVerification.isVerified &&
+            !results.unauthorizedResult.isVerified;
+
+        if (allTestsPassed) {
+            console.log("   ✅ ALL TESTS PASSED! Demo completed successfully.");
+        } else {
+            console.log("   ❌ Some tests failed. Please review the results above.");
+        }
+
+        console.log("\n" + "=".repeat(80));
+    })
     .catch((error) => {
-        console.error("❌ Demo failed:", error);
+        console.error("\n❌ Demo failed:", error);
         process.exit(1);
     })
     .finally(() => {

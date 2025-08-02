@@ -95,7 +95,6 @@ export interface SiwsMessageInput extends Partial<SiwsMessage> {
 export interface AttestationEncryptionMetadata {
     ciphertext: string;
     dataToEncryptHash: string;
-    accessControlConditions: SolRpcConditions;
 }
 
 export interface PkpInfo {
