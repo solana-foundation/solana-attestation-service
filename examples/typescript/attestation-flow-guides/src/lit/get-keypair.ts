@@ -4,27 +4,19 @@ import { loadKeypairSignerFromFile, saveKeypairSignerToFile } from "gill/node";
 import path from "path";
 
 async function generateKeypair(outputPath: string) {
-    console.log(`Generating Solana ${outputPath} keypair with Gill...`);
-
     const extractableSigner = await generateExtractableKeyPairSigner();
     await saveKeypairSignerToFile(extractableSigner, outputPath);
-
-    console.log(`${outputPath} address: ${extractableSigner.address}`);
 }
 
 async function getKeyPair(keyPairName: string) {
-    if (process.env.KEY_PAIR_DIR_PATH === undefined || process.env.KEY_PAIR_DIR_PATH === "") {
-        throw new Error("KEY_PAIR_DIR_PATH is not set. Please set the KEY_PAIR_DIR_PATH environment variable to the path of where you'd like the issuer, authorized signer 1 and 2 to be stored.");
-    }
-
-    const keyPairDir = process.env.KEY_PAIR_DIR_PATH!;
-    const keyPairPath = path.join(keyPairDir, `${keyPairName}.json`);
+    const keyPairDir = 'key-pairs';
+    const keyPairPath = path.join(keyPairDir, `${keyPairName}.keypair.json`);
     if (!existsSync(keyPairPath)) {
         // Ensure the directory exists before creating the file
         if (!existsSync(keyPairDir)) {
             mkdirSync(keyPairDir, { recursive: true });
         }
-        console.log(`${keyPairName} key file does not exist at path: ${keyPairPath}. Generating it...`);
+        console.log(`${keyPairName} keypair does not exist at path: ${keyPairPath}. Generating it...`);
         await generateKeypair(keyPairPath);
     }
 
@@ -32,13 +24,19 @@ async function getKeyPair(keyPairName: string) {
 }
 
 export async function getIssuerKeypair() {
-    return getKeyPair("issuer");
+    const keypair = await getKeyPair("issuer");
+    console.log(`Got Issuer keypair with address: ${keypair.address}`);
+    return keypair;
 }
 
 export async function getAuthorizedSigner1Keypair() {
-    return getKeyPair("authorized-signer-1");
+    const keypair = await getKeyPair("authorized-signer-1");
+    console.log(`Got Authorized Signer 1 keypair with address: ${keypair.address}`);
+    return keypair;
 }
 
 export async function getAuthorizedSigner2Keypair() {
-    return getKeyPair("authorized-signer-2");
+    const keypair = await getKeyPair("authorized-signer-2");
+    console.log(`Got Authorized Signer 2 keypair with address: ${keypair.address}`);
+    return keypair;
 }

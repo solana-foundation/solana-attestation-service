@@ -36,7 +36,7 @@ import {
 import { ethers } from "ethers";
 
 import { createSiwsMessage, decryptAttestationData, encryptAttestationData, setupLit, signSiwsMessage } from "./lit-helpers";
-import { AttestationEncryptionMetadata, PkpInfo } from "./types";
+import { AttestationEncryptionMetadata } from "./types";
 import { SAS_STANDARD_CONFIG, ORIGINAL_DATA } from "./constants";
 import { getAuthorizedSigner1Keypair, getAuthorizedSigner2Keypair, getIssuerKeypair } from "./get-keypair";
 
@@ -120,8 +120,6 @@ async function verifyAttestation({
     litDecryptionParams: {
         litNodeClient: LitNodeClient;
         litPayerEthersWallet: ethers.Wallet;
-        pkpInfo: PkpInfo;
-        capacityTokenId: string;
     };
     attestationEncryptionMetadata: AttestationEncryptionMetadata;
 }): Promise<{ isVerified: boolean, decryptedAttestationData: string | null }> {
@@ -190,8 +188,6 @@ async function main() {
     const {
         litNodeClient,
         litPayerEthersWallet,
-        pkpInfo,
-        capacityTokenId
     } = await setupLit();
     _litNodeClient = litNodeClient;
 
@@ -312,8 +308,6 @@ async function main() {
         litDecryptionParams: {
             litNodeClient,
             litPayerEthersWallet,
-            pkpInfo,
-            capacityTokenId
         },
         attestationEncryptionMetadata
     });
@@ -331,8 +325,6 @@ async function main() {
         litDecryptionParams: {
             litNodeClient,
             litPayerEthersWallet,
-            pkpInfo,
-            capacityTokenId
         },
         attestationEncryptionMetadata
     });
@@ -351,8 +343,6 @@ async function main() {
         litDecryptionParams: {
             litNodeClient,
             litPayerEthersWallet,
-            pkpInfo,
-            capacityTokenId
         },
         attestationEncryptionMetadata
     });
@@ -388,7 +378,8 @@ async function main() {
         verification: isUserVerified,
         randomVerification: isRandomVerified,
         unauthorizedResult,
-        config: SAS_STANDARD_CONFIG
+        config: SAS_STANDARD_CONFIG,
+        attestationEncryptionMetadata
     };
 }
 
@@ -414,8 +405,13 @@ main()
         // Test User Verification
         const testUserStatus = results.verification.isVerified ? "✅ PASSED" : "❌ FAILED";
         console.log(`   Test User Verification:     ${testUserStatus}`);
-        if (results.verification.isVerified && results.verification.decryptedAttestationData) {
-            console.log(`   Decrypted Attestation Data: ${results.verification.decryptedAttestationData}`);
+        if (results.verification.isVerified) {
+            console.log(`   Encrypted Metadata:`);
+            console.log(`     - Ciphertext: ${results.attestationEncryptionMetadata.ciphertext.substring(0, 50)}...`);
+            console.log(`     - Data Hash: ${results.attestationEncryptionMetadata.dataToEncryptHash}`);
+            if (results.verification.decryptedAttestationData) {
+                console.log(`   Decrypted Attestation Data: ${results.verification.decryptedAttestationData}`);
+            }
         }
 
         // Random User Verification (should fail)

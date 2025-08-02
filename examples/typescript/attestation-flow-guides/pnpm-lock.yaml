@@ -14,9 +14,6 @@ importers:
       '@lit-protocol/constants':
         specifier: ^7.2.1
         version: 7.2.1(typescript@5.8.3)
-      '@lit-protocol/contracts-sdk':
-        specifier: ^7.2.1
-        version: 7.2.1(typescript@5.8.3)
       '@lit-protocol/lit-node-client':
         specifier: ^7.2.1
         version: 7.2.1(typescript@5.8.3)

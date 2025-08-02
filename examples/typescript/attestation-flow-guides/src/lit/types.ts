@@ -102,3 +102,12 @@ export interface PkpInfo {
     publicKey: string;
     tokenId: string;
 }
+
+export interface LitDecryptionResponse {
+    success: boolean;
+    message: string;
+    error?: string;
+    authorizedSigners?: string[];
+    requestingSigner?: string;
+    decryptedData?: string;
+}

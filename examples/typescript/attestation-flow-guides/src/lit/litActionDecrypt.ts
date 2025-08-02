@@ -2,14 +2,10 @@
 
 const _litActionCode = async () => {
   // Hardcoded values for this specific attestation service instance
-  const AUTHORIZED_RPC_URL = "https://api.devnet.solana.com";
+  // const AUTHORIZED_RPC_URL = "https://api.devnet.solana.com";
+  const AUTHORIZED_RPC_URL = "https://47279cfb9aa7.ngrok-free.app";
   const AUTHORIZED_PROGRAM_ID = "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG";
-
-  // For standard SAS, use:
-  const AUTHORIZED_CREDENTIAL_PDA = "7jFpAvvNMbuJ2FXJyTrtp6sAQ758HR8zB7fm7PhnqWc";
-
-  // For tokenized SAS, use:
-  // const AUTHORIZED_CREDENTIAL_PDA = "FEhCzdTjZwBn74hkEAK1AZvxefHe6GaB4MtEoMNSjiCr";
+  const AUTHORIZED_CREDENTIAL_PDA = "4MZk467hXkFjzWeog1SizZutKqKVTkbwvVKswap2QKeW";
 
   async function fetchAccountData(rpcUrl, address) {
     try {
@@ -238,7 +234,7 @@ const _litActionCode = async () => {
     console.log("Signature is valid.");
   } catch (error) {
     console.error("Error verifying signature:", error);
-    LitActions.setResponse({
+    return LitActions.setResponse({
       response: JSON.stringify({
         success: false,
         message: "Error verifying signature.",
@@ -267,19 +263,20 @@ const _litActionCode = async () => {
     const credential = parseCredentialAccount(accountInfo.data);
 
     // Check if the signer is authorized
-    if (!credential.authorizedSigners.includes(siwsMessageJson.address)) {
-      console.log(`Signer ${siwsMessageJson.address} is not in authorized signers list`);
+    const signerAddress = siwsMessageJson.address;
+    if (!credential.authorizedSigners.includes(signerAddress)) {
+      console.log(`Signer ${signerAddress} is not in authorized signers list`);
       return LitActions.setResponse({
         response: JSON.stringify({
           success: false,
-          message: "Signer is not authorized",
+          message: "Signer is not authorized to decrypt",
           authorizedSigners: credential.authorizedSigners,
-          requestingSigner: siwsMessageJson.address
+          requestingSigner: signerAddress
         }),
       });
     }
 
-    console.log(`Signer ${siwsMessageJson.address} is authorized`);
+    console.log(`Signer ${signerAddress} is authorized to decrypt`);
   } catch (error) {
     console.error("Error checking authorized signers:", error);
     return LitActions.setResponse({
@@ -291,9 +288,46 @@ const _litActionCode = async () => {
     });
   }
 
-  // All authorization checks passed - signer is authorized via on-chain credential
-  console.log(`Authorization successful for signer: ${siwsMessageJson.address}`);
-  return Lit.Actions.setResponse({ response: "true" });
-};
+  try {
+    const decryptedData = await Lit.Actions.decryptAndCombine({
+      accessControlConditions: [
+        {
+          method: "",
+          params: [":currentActionIpfsId"],
+          pdaParams: [],
+          pdaInterface: { offset: 0, fields: {} },
+          pdaKey: "",
+          chain: "solana",
+          returnValueTest: {
+            key: "",
+            comparator: "=",
+            value: LitAuth.actionIpfsIds[0],
+          },
+        },
+      ],
+      ciphertext,
+      dataToEncryptHash,
+      authSig: {
+        sig: ethers.utils
+          .hexlify(ethers.utils.base58.decode(siwsMessageSignature))
+          .slice(2),
+        derivedVia: "solana.signMessage",
+        signedMessage: siwsMessageString,
+        address: siwsMessageJson.address,
+      },
+      chain: "solana",
+    });
+    return LitActions.setResponse({ response: JSON.stringify({ success: true, decryptedData }) });
+  } catch (error) {
+    console.error("Error decrypting data:", error);
+    return LitActions.setResponse({
+      response: JSON.stringify({
+        success: false,
+        message: "Error decrypting data.",
+        error: error.toString(),
+      }),
+    });
+  }
+}
 
 export const litActionCode = `(${_litActionCode.toString()})()`;

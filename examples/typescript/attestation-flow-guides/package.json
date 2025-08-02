@@ -19,7 +19,6 @@
   "dependencies": {
     "@lit-protocol/auth-helpers": "^7.2.1",
     "@lit-protocol/constants": "^7.2.1",
-    "@lit-protocol/contracts-sdk": "^7.2.1",
     "@lit-protocol/lit-node-client": "^7.2.1",
     "@lit-protocol/types": "^7.2.1",
     "@solana-program/compute-budget": "^0.8.0",

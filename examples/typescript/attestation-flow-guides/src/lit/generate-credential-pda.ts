@@ -16,6 +16,7 @@ async function main() {
     }
 
     // Step 1: Get issuer keypair
+    console.log("1. Getting Issuer keypair...");
     const issuer = await getIssuerKeypair();
 
     // Step 2: Create Credential
