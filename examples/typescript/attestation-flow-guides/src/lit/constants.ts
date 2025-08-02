@@ -1,6 +1,6 @@
 const BASE_CONFIG = {
     // Network configuration 
-    CLUSTER_OR_RPC: 'localnet',
+    CLUSTER_OR_RPC: 'devnet',
 
     // Basic SAS Information
     SCHEMA_LAYOUT: Buffer.from([12, 12]),
