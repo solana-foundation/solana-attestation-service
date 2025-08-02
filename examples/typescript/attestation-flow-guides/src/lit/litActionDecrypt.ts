@@ -2,8 +2,7 @@
 
 const _litActionCode = async () => {
   // Hardcoded values for this specific attestation service instance
-  // const AUTHORIZED_RPC_URL = "https://api.devnet.solana.com";
-  const AUTHORIZED_RPC_URL = "https://47279cfb9aa7.ngrok-free.app";
+  const AUTHORIZED_RPC_URL = "https://api.devnet.solana.com";
   const AUTHORIZED_PROGRAM_ID = "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG";
   const AUTHORIZED_CREDENTIAL_PDA = "4MZk467hXkFjzWeog1SizZutKqKVTkbwvVKswap2QKeW";
 
