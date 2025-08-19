@@ -348,8 +348,8 @@ async function main() {
         console.log(`    - ✅ Unauthorized signer is not verified`);
     }
 
-    // Step 7. Close Attestation
-    console.log("\n7. Closing Attestation...");
+    // Step 8. Close Attestation
+    console.log("\n8. Closing Attestation...");
 
     const eventAuthority = await deriveEventAuthorityAddress();
     const closeAttestationInstruction = getCloseAttestationInstruction({
