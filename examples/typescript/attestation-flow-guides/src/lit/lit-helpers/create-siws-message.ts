@@ -9,8 +9,13 @@ export function createSiwsMessage(siws: SiwsMessageInput): SiwsMessageForFormatt
     const now = new Date();
     const expirationTime = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes
 
-    // Generate a proper nonce if not provided (minimum 8 characters, alphanumeric)
-const generatedNonce = siws.nonce || crypto.getRandomValues(new Uint8Array(16)).reduce((acc, byte) => acc + byte.toString(36), '').substring(0, 12);
+    // Generate a cryptographically secure nonce if not provided
+    // Uses crypto.randomUUID() and ensures alphanumeric output
+    let generatedNonce = siws.nonce;
+    if (!generatedNonce) {
+        // Generate UUID and remove hyphens to get alphanumeric string
+        generatedNonce = crypto.randomUUID().replace(/-/g, '');
+    }
 
     // Merge siws with defaults, siws values take precedence
     return {

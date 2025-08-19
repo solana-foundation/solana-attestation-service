@@ -2,7 +2,7 @@ import { SiwsMessageForFormatting } from "../types";
 
 /**
  * Formats Siws message according to the ABNF specification:
- * https://github.com/phantom/sign-in-with-solana/blob/main/siws.md#abnf-message-format
+ * https://github.com/phantom/sign-in-with-solana/tree/main
  * 
  * @param siws - Siws message with required domain and address fields
  * @returns Formatted message string according to Siws ABNF specification
