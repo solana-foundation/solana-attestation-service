@@ -40,35 +40,73 @@ const _litActionCode = async () => {
   }
 
   function parseCredentialAccount(data) {
-    let offset = 0;
-
-    // Skip discriminator (1 byte)
-    offset += 1;
-
-    // Read authority (32 bytes)
-    const authority = ethers.utils.base58.encode(data.slice(offset, offset + 32));
-    offset += 32;
-
-    // Read name length (4 bytes, little-endian)
-    const nameLength = new DataView(data.buffer, offset, 4).getUint32(0, true);
-    offset += 4;
-
-    // Skip name bytes
-    offset += nameLength;
-
-    // Read authorized signers length (4 bytes, little-endian)
-    const signersLength = new DataView(data.buffer, offset, 4).getUint32(0, true);
-    offset += 4;
-
-    // Read authorized signers
-    const authorizedSigners = [];
-    for (let i = 0; i < signersLength; i++) {
-      const signer = ethers.utils.base58.encode(data.slice(offset, offset + 32));
-      authorizedSigners.push(signer);
-      offset += 32;
+    if (!(data instanceof Uint8Array)) {
+      throw new Error("Invalid credential account data: expected Uint8Array");
     }
 
-    return { authority, authorizedSigners };
+    // Minimum: discriminator(1) + authority(32) + nameLen(4) + signersLen(4) = 41 bytes
+    if (data.length < 41) {
+      throw new Error(`Invalid credential account data: insufficient length ${data.length} (min 41)`);
+    }
+
+    const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+    let offset = 0;
+
+    // Discriminator (1 byte) - SAS Credential accounts have discriminator = 0
+    const discriminator = data[offset];
+    if (discriminator !== 0) {
+      throw new Error(`Invalid credential discriminator: expected 0, got ${discriminator}`);
+    }
+    offset += 1;
+
+    // Skip authority (32 bytes) - not needed for this use case
+    if (offset + 32 > data.length) {
+      throw new Error('Invalid credential account: authority truncated');
+    }
+    offset += 32;
+
+    // Name length (u32 le)
+    if (offset + 4 > data.length) {
+      throw new Error('Invalid credential account: name length truncated');
+    }
+    const nameLength = view.getUint32(offset, true);
+    offset += 4;
+
+    // Skip name bytes - not needed for this use case
+    if (offset + nameLength > data.length) {
+      throw new Error('Invalid credential account: name truncated');
+    }
+    offset += nameLength;
+
+    // Authorized signers length (u32 le)
+    if (offset + 4 > data.length) {
+      throw new Error('Invalid credential account: signers length truncated');
+    }
+    const signersLength = view.getUint32(offset, true);
+    offset += 4;
+
+    // Validate we have exactly signersLength * 32 bytes for signers
+    const remaining = data.length - offset;
+    const needed = signersLength * 32;
+    if (needed > remaining) {
+      throw new Error(`Invalid credential account: insufficient bytes for ${signersLength} signer(s)`);
+    }
+
+    // Read authorized signers using subarray for zero-copy
+    const authorizedSigners = new Array(signersLength);
+    for (let i = 0; i < signersLength; i++) {
+      const start = offset + i * 32;
+      const signer = ethers.utils.base58.encode(data.subarray(start, start + 32));
+      authorizedSigners[i] = signer;
+    }
+    offset += needed;
+
+    // Ensure no trailing bytes
+    if (offset !== data.length) {
+      throw new Error(`Invalid credential account: unexpected trailing bytes (${data.length - offset} bytes)`);
+    }
+
+    return { authorizedSigners };
   }
 
   function getSiwsMessage(siwsInput) {
