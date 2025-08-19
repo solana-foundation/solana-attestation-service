@@ -2,7 +2,7 @@ import { LitNodeClient } from "@lit-protocol/lit-node-client";
 import ipfsOnlyHash from "typestub-ipfs-only-hash";
 
 import { AttestationEncryptionMetadata } from "../types";
-import { litActionCode as litActionCodeDecrypt } from "../litActionDecrypt";
+import { litActionCode as litActionCodeDecrypt } from "./lit-action-decrypt";
 
 export const encryptAttestationData = async ({
     litNodeClient,

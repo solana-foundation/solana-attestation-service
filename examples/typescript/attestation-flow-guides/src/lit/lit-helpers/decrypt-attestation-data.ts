@@ -4,7 +4,7 @@ import { LIT_ABILITY } from "@lit-protocol/constants";
 import { ethers } from "ethers";
 
 import { LitDecryptionResponse, SiwsMessageForFormatting } from "../types";
-import { litActionCode as litActionCodeDecrypt } from "../litActionDecrypt";
+import { litActionCode as litActionCodeDecrypt } from "./lit-action-decrypt";
 
 export const decryptAttestationData = async ({
     litNodeClient,

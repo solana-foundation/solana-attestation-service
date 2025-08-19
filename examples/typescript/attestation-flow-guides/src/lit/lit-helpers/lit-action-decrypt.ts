@@ -4,7 +4,7 @@ const _litActionCode = async () => {
   // Hardcoded values for this specific attestation service instance
   const AUTHORIZED_RPC_URL = "https://api.devnet.solana.com";
   const AUTHORIZED_PROGRAM_ID = "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG";
-  const AUTHORIZED_CREDENTIAL_PDA = "4MZk467hXkFjzWeog1SizZutKqKVTkbwvVKswap2QKeW";
+  const AUTHORIZED_CREDENTIAL_PDA = "Cuk2RuHYCMv1QcpB7bGqdXPafJs5BG2JNfbJqbyVkyRk";
 
   async function fetchAccountData(rpcUrl, address) {
     try {
