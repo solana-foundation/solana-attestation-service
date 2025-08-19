@@ -97,12 +97,6 @@ export interface AttestationEncryptionMetadata {
     dataToEncryptHash: string;
 }
 
-export interface PkpInfo {
-    ethAddress: string;
-    publicKey: string;
-    tokenId: string;
-}
-
 export interface LitDecryptionResponse {
     success: boolean;
     message: string;
