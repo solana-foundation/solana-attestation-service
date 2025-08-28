@@ -1,7 +1,7 @@
 import { LitNodeClient } from "@lit-protocol/lit-node-client";
 import { generateAuthSig, createSiweMessage, LitAccessControlConditionResource, LitActionResource } from "@lit-protocol/auth-helpers";
 import { LIT_ABILITY } from "@lit-protocol/constants";
-import { ethers } from "ethers";
+import type { ethers } from "ethers";
 
 import { LitDecryptionResponse, SiwsMessageForFormatting } from "../types";
 import { litActionCode as litActionCodeDecrypt } from "./lit-action-decrypt";

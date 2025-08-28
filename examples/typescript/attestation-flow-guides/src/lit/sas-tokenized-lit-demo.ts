@@ -41,7 +41,7 @@ import {
     TOKEN_2022_PROGRAM_ADDRESS,
     estimateComputeUnitLimitFactory
 } from "gill/programs";
-import { ethers } from "ethers";
+import type { ethers } from "ethers";
 
 import { createSiwsMessage, decryptAttestationData, encryptAttestationData, setupLit, signSiwsMessage } from "./lit-helpers";
 import { AttestationEncryptionMetadata } from "./types";
