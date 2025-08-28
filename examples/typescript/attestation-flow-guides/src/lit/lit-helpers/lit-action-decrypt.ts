@@ -214,7 +214,7 @@ const _litActionCode = async () => {
       const isValid = await crypto.subtle.verify(
         "Ed25519",
         publicKey,
-        ethers.utils.base58.decode(siwsMessageSignature),
+        ethers.utils.arrayify(`0x${siwsMessageSignature}`),
         new TextEncoder().encode(siwsMessage)
       );
 
@@ -345,9 +345,7 @@ const _litActionCode = async () => {
       ciphertext,
       dataToEncryptHash,
       authSig: {
-        sig: ethers.utils
-          .hexlify(ethers.utils.base58.decode(siwsMessageSignature))
-          .slice(2),
+        sig: siwsMessageSignature,
         derivedVia: "solana.signMessage",
         signedMessage: siwsMessageString,
         address: siwsMessageJson.address,
