@@ -24,14 +24,14 @@ pub fn process_close_attestation(
     accounts: &[AccountInfo],
     token_account: Option<Pubkey>,
 ) -> ProgramResult {
-    let [payer_info, authorized_signer, credential_info, attestation_info, event_authority_info, system_program, attestation_program] =
+    let [payer_info, authority, credential_info, attestation_info, event_authority_info, system_program, attestation_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     // Validate: authority should have signed
-    verify_signer(authorized_signer, false)?;
+    verify_signer(authority, false)?;
 
     // Validate system program
     verify_system_program(system_program)?;
@@ -46,7 +46,7 @@ pub fn process_close_attestation(
     // Check that one of credential's authorized signers have signed.
     let credential_data = credential_info.try_borrow_data()?;
     let credential = Credential::try_from_bytes(&credential_data)?;
-    credential.validate_authorized_signer(authorized_signer.key())?;
+    credential.validate_authorized_signer(authority.key())?;
 
     let attestation_data = attestation_info.try_borrow_data()?;
     let attestation = Attestation::try_from_bytes(&attestation_data)?;

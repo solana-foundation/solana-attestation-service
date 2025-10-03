@@ -12,8 +12,9 @@ use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
     clock::Clock, program_option::COption, program_pack::Pack, pubkey::Pubkey, signature::Keypair,
-    signer::Signer, system_program, transaction::Transaction,
+    signer::Signer, transaction::Transaction,
 };
+use solana_sdk_ids::system_program;
 use spl_associated_token_account::{
     get_associated_token_address_with_program_id, ID as ATA_PROGRAM_ID,
 };

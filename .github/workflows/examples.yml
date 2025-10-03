@@ -1,0 +1,122 @@
+name: Examples
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOLANA_CLI_VERSION: "2.3.11"
+  RUST_TOOLCHAIN: "1.90.0"
+
+jobs:
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            examples/rust/target/
+          key: ${{ runner.os }}-cargo-examples-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-examples-
+
+      - name: Install Solana CLI
+        uses: heyAyushh/setup-solana@v5.5
+        with:
+          solana-cli-version: ${{ env.SOLANA_CLI_VERSION }}
+
+      - name: Generate keypair
+        run: solana-keygen new --no-bip39-passphrase
+
+      - name: Build Solana program
+        run: cargo build-sbf
+
+      # - name: Install pnpm
+      #   uses: pnpm/action-setup@v2
+      #   with:
+      #     version: 9.10.0
+
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: "20.x"
+      #     cache: "pnpm"
+
+      # - name: Install root dependencies
+      #   run: pnpm install
+
+      # - name: Build TypeScript client
+      #   working-directory: clients/typescript
+      #   run: |
+      #     pnpm install
+      #     pnpm build
+
+      # - name: Install example dependencies
+      #   working-directory: examples/typescript/attestation-flow-guides
+      #   run: pnpm install
+
+      # - name: Build example
+      #   working-directory: examples/typescript/attestation-flow-guides
+      #   run: pnpm build
+
+      - name: Start test validator
+        run: |
+          solana-test-validator \
+            --bpf-program 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG target/deploy/solana_attestation_service.so \
+            --reset \
+            --quiet \
+            &
+          echo "VALIDATOR_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for validator to be ready
+        run: sleep 20
+
+      - name: Fund default wallet
+        run: solana airdrop 1 -ul
+
+      - name: Run standard-demo
+        working-directory: examples/rust/attestation-flow-guide/standard-demo
+        run: |
+          cargo run
+        timeout-minutes: 5
+
+      - name: Run tokenization-demo
+        working-directory: examples/rust/attestation-flow-guide/tokenization-demo
+        run: |
+          cargo run
+        timeout-minutes: 5
+
+      # - name: Run TypeScript examples
+      #   working-directory: examples/typescript/attestation-flow-guides
+      #   run: |
+      #     # Update config to use localhost instead of devnet
+      #     find src -name "*.ts" -exec sed -i "s/'devnet'/'http:\/\/127.0.0.1:8899'/g" {} \;
+      #
+      #     # Run all the example scripts
+      #     pnpm gill:standard || true
+      #     # pnpm gill:tokenized || true
+      #     # pnpm kit:standard || true
+      #     # pnpm kit:tokenized || true
+      #   timeout-minutes: 10

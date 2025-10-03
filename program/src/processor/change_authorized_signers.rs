@@ -54,7 +54,7 @@ pub fn process_change_authorized_signers(
         new_space -= (prev_len - new_len) * 32;
     }
     if new_space != credential_info.data_len() {
-        credential_info.realloc(new_space, false)?;
+        credential_info.resize(new_space)?;
         let diff = new_space.saturating_sub(prev_space);
         if diff > 0 {
             // top up lamports to account for additional rent.

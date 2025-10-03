@@ -23,7 +23,7 @@ pub struct Attestation {
     pub schema: Pubkey,
     /// Data that was verified and matches the Schema
     pub data: Vec<u8>,
-    /// The pubkey of the signer. Must be one of the `authorized_signer`s at time of attestation
+    /// The pubkey of the signer. Must be one of the `authority`s at time of attestation
     pub signer: Pubkey,
     /// Designates when the credential is expired. 0 means never expired
     pub expiry: i64,
@@ -31,8 +31,58 @@ pub struct Attestation {
     pub token_account: Pubkey,
 }
 
+fn sha_256_hashv(_vals: &[&[u8]]) -> [u8; 32] {
+    #[cfg(target_os = "solana")]
+    {
+        let mut hash_result = [0; 32];
+        unsafe {
+            pinocchio::syscalls::sol_sha256(
+                _vals as *const _ as *const u8,
+                _vals.len() as u64,
+                &mut hash_result as *mut _ as *mut u8,
+            );
+        }
+        hash_result
+    }
+    #[cfg(not(target_os = "solana"))]
+    unreachable!()
+}
+
+impl Attestation {
+    pub fn hash(&self) -> [u8; 32] {
+        let mut metadata1 = [0u8; 128]; // 4 * 32 bytes for Pubkey
+        metadata1[..32].copy_from_slice(self.nonce.as_ref());
+        metadata1[32..64].copy_from_slice(self.signer.as_ref());
+        metadata1[64..96].copy_from_slice(self.token_account.as_ref());
+
+        let mut metadata2 = [0u8; 72]; // 2 * 32 bytes for Pubkey + 8 bytes for i64
+        metadata2[..32].copy_from_slice(self.schema.as_ref());
+        metadata2[32..64].copy_from_slice(self.credential.as_ref());
+        metadata2[64..72].copy_from_slice(&self.expiry.to_le_bytes());
+
+        // SAFETY: Sha256 cannot fail.
+        let metadata_hash = sha_256_hashv(&[&metadata1]);
+        let metadata2_hash = sha_256_hashv(&[&metadata2]);
+        let data_hash = sha_256_hashv(&[&self.data]);
+        let mut hash = sha_256_hashv(&[
+            metadata_hash.as_slice(),
+            metadata2_hash.as_slice(),
+            data_hash.as_slice(),
+        ]);
+        // Truncate hash to 248 bit < 254 bit bn254 field size.
+        // This is required for poseidon hashes in the light system program.
+        hash[0] = 0;
+        hash
+    }
+}
+
 impl Discriminator for Attestation {
     const DISCRIMINATOR: u8 = AttestationAccountDiscriminators::AttestationDiscriminator as u8;
+}
+
+impl Attestation {
+    // Use AttestationDiscriminator (2) as little-endian u64
+    pub const COMPRESSION_DISCRIMINATOR: [u8; 8] = [2, 0, 0, 0, 0, 0, 0, 0];
 }
 
 impl AccountSerialize for Attestation {
@@ -52,7 +102,7 @@ impl AccountSerialize for Attestation {
 }
 
 #[inline]
-fn get_size_of_vec(offset: usize, element_size: usize, data: &Vec<u8>) -> usize {
+fn get_size_of_vec(offset: usize, element_size: usize, data: &[u8]) -> usize {
     let len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
     4 + len * element_size
 }
@@ -156,6 +206,14 @@ impl Attestation {
     }
 
     pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
+        // Minimum size: 1 (discriminator) + 32 (nonce) + 32 (credential) + 32 (schema)
+        //              + 4 (data_len) + 0 (min data) + 32 (signer) + 8 (expiry) + 32 (token_account)
+        const MIN_ATTESTATION_SIZE: usize = 173;
+
+        if data.len() < MIN_ATTESTATION_SIZE {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
         // Check discriminator
         if data[0] != Self::DISCRIMINATOR {
             msg!("Invalid Attestation Data");
@@ -231,8 +289,7 @@ mod tests {
         data.extend(
             strings
                 .iter()
-                .map(|s| to_serialized_vec(s.as_bytes()))
-                .flatten()
+                .flat_map(|s| to_serialized_vec(s.as_bytes()))
                 .collect::<Vec<_>>(),
         );
         data.extend(199u128.to_le_bytes());

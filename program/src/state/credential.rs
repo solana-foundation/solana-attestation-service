@@ -65,6 +65,14 @@ impl Credential {
     }
 
     pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
+        // Minimum size: 1 (discriminator) + 32 (authority) + 4 (name_len) + 0 (min name)
+        //              + 4 (signers_len) + 0 (min signers)
+        const MIN_CREDENTIAL_SIZE: usize = 41;
+
+        if data.len() < MIN_CREDENTIAL_SIZE {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
         // Check discriminator
         if data[0] != Self::DISCRIMINATOR {
             msg!("Invalid Credential Data");

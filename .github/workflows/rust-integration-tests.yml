@@ -1,0 +1,73 @@
+name: Rust Integration Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOLANA_CLI_VERSION: "2.3.11"
+  RUST_TOOLCHAIN: "1.90.0"
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-integration-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-integration-
+
+      - name: Install Solana CLI
+        uses: heyAyushh/setup-solana@v5.5
+        with:
+          solana-cli-version: ${{ env.SOLANA_CLI_VERSION }}
+
+      - name: Generate keypair
+        run: solana-keygen new --no-bip39-passphrase
+
+      - name: Display versions
+        run: |
+          rustc --version
+          cargo --version
+          solana --version
+
+      - name: Build Solana program
+        run: cargo build-sbf
+
+      - name: Run all integration tests
+        run: |
+          export SBF_OUT_DIR=$(pwd)/target/deploy
+          cargo test --package tests-solana-attestation-service \
+            --test test_change_authorized_signers \
+            --test test_change_schema_description \
+            --test test_change_schema_status \
+            --test test_change_schema_version \
+            --test test_close_attestation \
+            --test test_create_attestation \
+            --test test_create_credential \
+            --test test_create_schema \
+            --test test_tokenization

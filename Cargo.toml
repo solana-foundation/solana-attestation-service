@@ -8,6 +8,12 @@ members = [
   "integration_tests",
 ]
 
+exclude = [
+  "examples/rust/attestation-flow-guide/standard-demo",
+  "examples/rust/attestation-flow-guide/tokenization-demo",
+  "examples/rust/attestation-flow-guide/compression-demo",
+]
+
 resolver = "2"
 
 package.version = "0.1.0"
@@ -16,20 +22,22 @@ package.edition = "2021"
 [workspace.dependencies]
 borsh = "1.5.5"
 const-crypto = "0.3.0"
-pinocchio = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio" }
-pinocchio-log = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-log" }
-pinocchio-pubkey = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-pubkey" }
-pinocchio-system = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-system" }
-pinocchio-token = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-token" }
-pinocchio-associated-token-account = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-associated-token-account" }
+pinocchio = "0.9"
+pinocchio-log = "0.5"
+pinocchio-pubkey = "0.3"
+pinocchio-system =  "0.3"
+# fork with bumped pinocchio dep of git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions-sas",
+pinocchio-token = { git = "https://github.com/Lightprotocol/token22-pinocchio", rev = "6f600c4ee57a4892c1c1112c208faa6b1a14b911"}
+pinocchio-associated-token-account = "0.2"
 proc-macro2 = "1.0.86"
 quote = "1.0.36"
 shank = "0.4.2"
 solana-attestation-service-macros = { path = "cereal_macro" }
 solana-attestation-service-client = { path = "clients/rust" }
-solana-program = "2.1.13"
-solana-program-test = "2.1.13"
-solana-sdk = "2.1.13"
+solana-program = "2.3.0"
+solana-program-test = "2.3.0"
+solana-sdk = "2.3.0"
+solana-sdk-ids = "2.2.1"
 spl-token-2022 = "8.0.1"
 spl-associated-token-account = "6.0.0"
 spl-token-group-interface = "0.6.0"
@@ -37,3 +45,11 @@ spl-token-metadata-interface = "0.7.0"
 syn = "2.0.72"
 tokio = "1.43.0"
 bs58 = "0.4"
+light-sdk-pinocchio = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
+light-sdk-types = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
+light-macros = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52" }
+light-compressed-account = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["solana"] }
+# Test dependencies for Light Protocol
+light-program-test = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
+light-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
+light-sdk = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }

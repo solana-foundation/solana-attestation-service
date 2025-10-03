@@ -41,7 +41,7 @@ import {
  
 const CONFIG = {
     // Network configuration 
-    CLUSTER_OR_RPC: 'devnet',
+    CLUSTER_OR_RPC: 'http://127.0.0.1:8899',
  
     // Basic SAS Information
     CREDENTIAL_NAME: 'TEST-ORGANIZATION',
@@ -106,6 +106,7 @@ async function sendAndConfirmInstructions(
  
         const estimateCompute = estimateComputeUnitLimitFactory({ rpc: client.rpc });
         const computeUnitLimit = await estimateCompute(simulationTx);
+        console.log(`    - Estimated compute units for ${description}: ${computeUnitLimit}`);
         const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
         const tx = createTransaction({
             version: "legacy",

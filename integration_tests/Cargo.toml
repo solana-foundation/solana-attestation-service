@@ -3,14 +3,28 @@ name = "tests-solana-attestation-service"
 version = { workspace = true }
 edition = { workspace = true }
 
-[dependencies]
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+test-sbf = []
+
+[dev-dependencies]
+# Light Protocol dependencies for compressed attestation tests
+light-program-test = { workspace = true }
+light-client = { workspace = true }
+light-sdk = { workspace = true }
+light-sdk-pinocchio = { workspace = true }
+light-compressed-account = { workspace = true }
 borsh = { workspace = true }
 solana-attestation-service-macros = { workspace = true }
 solana-attestation-service-client = { workspace = true }
-solana-program-test = { workspace = true }
 solana-sdk = { workspace = true }
+solana-sdk-ids = { workspace = true }
 spl-token-2022 = { workspace = true }
 tokio = { workspace = true }
 spl-associated-token-account = { workspace = true }
 spl-token-group-interface = { workspace = true }
 spl-token-metadata-interface = { workspace = true }
+solana-program-test = { workspace = true }
+bincode = "1.3"

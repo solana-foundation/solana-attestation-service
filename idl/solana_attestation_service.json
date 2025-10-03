@@ -656,6 +656,398 @@
       }
     },
     {
+      "name": "CreateCompressedAttestation",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Authorized signer of the Schema's Credential"
+          ]
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Credential the Schema is associated with"
+          ]
+        },
+        {
+          "name": "schema",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Schema the Attestation is associated with"
+          ]
+        },
+        {
+          "name": "lightSystemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Light Protocol System Program"
+          ]
+        },
+        {
+          "name": "cpiSigner",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Light CPI signer PDA"
+          ]
+        },
+        {
+          "name": "registeredProgramPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Registered program PDA"
+          ]
+        },
+        {
+          "name": "accountCompressionAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Account compression authority PDA"
+          ]
+        },
+        {
+          "name": "accountCompressionProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Account compression program"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Solana system program"
+          ]
+        },
+        {
+          "name": "outputQueue",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "V2 Output queue"
+          ]
+        },
+        {
+          "name": "addressMerkleTree",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "V2 Address Merkle tree"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "proof",
+          "type": {
+            "array": [
+              "u8",
+              128
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "publicKey"
+        },
+        {
+          "name": "expiry",
+          "type": "i64"
+        },
+        {
+          "name": "addressRootIndex",
+          "type": "u16"
+        },
+        {
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 12
+      }
+    },
+    {
+      "name": "CloseCompressedAttestation",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Authorized signer of the Schema's Credential"
+          ]
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Credential the Schema is associated with"
+          ]
+        },
+        {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Event authority PDA"
+          ]
+        },
+        {
+          "name": "lightSystemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Light Protocol System Program"
+          ]
+        },
+        {
+          "name": "cpiSigner",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Light CPI signer PDA"
+          ]
+        },
+        {
+          "name": "registeredProgramPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Registered program PDA"
+          ]
+        },
+        {
+          "name": "accountCompressionAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Account compression authority PDA"
+          ]
+        },
+        {
+          "name": "accountCompressionProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Account compression program"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Solana system program"
+          ]
+        },
+        {
+          "name": "stateMerkleTree",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "V2 State Merkle tree"
+          ]
+        },
+        {
+          "name": "outputQueue",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "V2 Output queue"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "proof",
+          "type": {
+            "option": {
+              "array": [
+                "u8",
+                128
+              ]
+            }
+          }
+        },
+        {
+          "name": "rootIndex",
+          "type": "u16"
+        },
+        {
+          "name": "leafIndex",
+          "type": "u32"
+        },
+        {
+          "name": "address",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "attestationData",
+          "type": {
+            "defined": "CloseAttestation"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 13
+      }
+    },
+    {
+      "name": "CompressAttestations",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Authorized signer of the Schema's Credential"
+          ]
+        },
+        {
+          "name": "credential",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Credential all attestations belong to"
+          ]
+        },
+        {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Event authority PDA"
+          ]
+        },
+        {
+          "name": "lightSystemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Light Protocol System Program"
+          ]
+        },
+        {
+          "name": "cpiSigner",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Light CPI signer PDA"
+          ]
+        },
+        {
+          "name": "registeredProgramPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Registered program PDA"
+          ]
+        },
+        {
+          "name": "accountCompressionAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Account compression authority PDA"
+          ]
+        },
+        {
+          "name": "accountCompressionProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Account compression program"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Solana system program"
+          ]
+        },
+        {
+          "name": "outputQueue",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "V2 Output queue"
+          ]
+        },
+        {
+          "name": "addressMerkleTree",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "V2 Address Merkle tree"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "proof",
+          "type": {
+            "array": [
+              "u8",
+              128
+            ]
+          }
+        },
+        {
+          "name": "closeAccounts",
+          "type": "bool"
+        },
+        {
+          "name": "addressRootIndex",
+          "type": "u16"
+        },
+        {
+          "name": "numAttestations",
+          "type": "u8"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 14
+      }
+    },
+    {
       "name": "EmitEvent",
       "accounts": [
         {
@@ -783,6 +1175,34 @@
           },
           {
             "name": "attestationData",
+            "type": "bytes"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CloseAttestation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nonce",
+            "type": "publicKey"
+          },
+          {
+            "name": "schema",
+            "type": "publicKey"
+          },
+          {
+            "name": "signer",
+            "type": "publicKey"
+          },
+          {
+            "name": "expiry",
+            "type": "i64"
+          },
+          {
+            "name": "data",
             "type": "bytes"
           }
         ]

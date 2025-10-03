@@ -22,10 +22,11 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@solana/kit": "^2.1.0",
+    "@lightprotocol/stateless.js": "0.22.0",
+    "@solana/kit": "^2.3.0",
+    "@solana/web3.js": "^1.95.8",
     "bn.js": "^5.2.1",
     "borsh": "^2.0.0",
     "borsher": "^4.0.0"
   }
 }
-

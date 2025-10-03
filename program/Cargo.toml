@@ -21,3 +21,14 @@ pinocchio-associated-token-account = { workspace = true }
 shank = { workspace = true }
 solana-program = { workspace = true }
 bs58 = { workspace = true }
+light-sdk-pinocchio = { workspace = true }
+light-sdk-types = { workspace = true }
+light-macros = { workspace = true }
+light-compressed-account = { workspace = true }
+
+[lints.rust.unexpected_cfgs]
+level = "allow"
+check-cfg = [
+    'cfg(target_os, values("solana"))',
+    'cfg(feature, values("frozen-abi", "no-entrypoint", "serde", "fetch", "anchor", "anchor-idl-build"))',
+]

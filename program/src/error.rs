@@ -27,6 +27,8 @@ pub enum AttestationServiceError {
     InvalidTokenAccount,
     // 11 Schema is paused
     SchemaPaused,
+    // 12 Invalid Address Tree (not the allowed tree for compressed attestations)
+    InvalidAddressTree,
 }
 
 impl From<AttestationServiceError> for ProgramError {

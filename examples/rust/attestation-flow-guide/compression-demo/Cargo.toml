@@ -1,0 +1,35 @@
+[package]
+name = "sas-compression-demo"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+# Solana core dependencies
+solana-sdk = "2.3.1"
+solana-client = "2.3.2"
+solana-program = "2.3.0"
+solana-system-interface = "1.0.0"
+
+# Solana Attestation Service client (local development version)
+solana-attestation-service-client = { path = "../../../../clients/rust" }
+solana-attestation-service-macros = { path = "../../../../cereal_macro" }
+
+# Light Protocol dependencies
+light-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
+light-sdk = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
+light-prover-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52" }
+light-sdk-pinocchio = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Serialization
+borsh = "0.10"
+
+# Error handling
+anyhow = "1.0"
+
+# Utilities
+hex = "0.4"

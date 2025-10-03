@@ -91,7 +91,7 @@ struct CreateCredentialArgs<'a> {
     signers: Vec<Pubkey>,
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CreateCredentialArgs, ProgramError> {
+fn process_instruction_data<'a>(data: &'a [u8]) -> Result<CreateCredentialArgs<'a>, ProgramError> {
     let mut offset: usize = 0;
 
     require_len!(data, 4);

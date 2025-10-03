@@ -1,4 +1,5 @@
-#![no_std]
+// Can be restored as soon as light-sdk-pinocchio supports no-std
+// #![no_std]
 
 pub mod constants;
 pub mod error;

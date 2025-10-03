@@ -32,7 +32,7 @@ import {
 } from "gill/programs";
  
 const CONFIG = {
-    CLUSTER_OR_RPC: 'devnet',
+    CLUSTER_OR_RPC: 'http://127.0.0.1:8899',
     CREDENTIAL_NAME: 'TEST-ORGANIZATION',
     SCHEMA_NAME: 'THE-BASICS',
     SCHEMA_LAYOUT: Buffer.from([12, 0, 12]),

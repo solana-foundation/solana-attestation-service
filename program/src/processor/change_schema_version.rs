@@ -135,7 +135,9 @@ struct ChangeSchemaVersionArgs<'a> {
     field_names_bytes: &'a [u8],
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaVersionArgs, ProgramError> {
+fn process_instruction_data<'a>(
+    data: &'a [u8],
+) -> Result<ChangeSchemaVersionArgs<'a>, ProgramError> {
     let mut offset: usize = 0;
 
     require_len!(data, 4);

@@ -25,14 +25,14 @@ pub fn process_create_attestation(
     token_account: Option<Pubkey>,
 ) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
-    let [payer_info, authorized_signer, credential_info, schema_info, attestation_info, system_program] =
+    let [payer_info, authority, credential_info, schema_info, attestation_info, system_program] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     // Validate: authority should have signed
-    verify_signer(authorized_signer, false)?;
+    verify_signer(authority, false)?;
 
     // Validate system program
     verify_system_program(system_program)?;
@@ -44,7 +44,7 @@ pub fn process_create_attestation(
     let credential = Credential::try_from_bytes(&credential_data)?;
 
     // Validate Authority is an authorized signer
-    credential.validate_authorized_signer(authorized_signer.key())?;
+    credential.validate_authorized_signer(authority.key())?;
 
     let schema_data = schema_info.try_borrow_data()?;
     let schema = Schema::try_from_bytes(&schema_data)?;
@@ -121,7 +121,7 @@ pub fn process_create_attestation(
         credential: *credential_info.key(),
         schema: *schema_info.key(),
         data: args.data.to_vec(),
-        signer: *authorized_signer.key(),
+        signer: *authority.key(),
         expiry: args.expiry,
         token_account: token_account.unwrap_or_default(),
     };
@@ -141,7 +141,7 @@ struct CreateAttestationArgs<'a> {
     expiry: i64,
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CreateAttestationArgs, ProgramError> {
+fn process_instruction_data<'a>(data: &'a [u8]) -> Result<CreateAttestationArgs<'a>, ProgramError> {
     let mut offset: usize = 0;
 
     require_len!(data, 32);

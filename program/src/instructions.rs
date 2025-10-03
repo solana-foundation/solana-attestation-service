@@ -2,6 +2,7 @@ extern crate alloc;
 
 use alloc::string::String;
 use alloc::vec::Vec;
+use crate::processor::close_compressed_attestation::CloseAttestation;
 use pinocchio::pubkey::Pubkey;
 use shank::ShankInstruction;
 
@@ -230,6 +231,151 @@ pub enum AttestationServiceInstruction {
     )]
     #[account(10, name = "token_program")]
     CloseTokenizedAttestation {} = 11,
+
+    /// Create a compressed attestation.
+    #[account(0, writable, signer, name = "payer")]
+    #[account(
+        1,
+        signer,
+        name = "authority",
+        desc = "Authorized signer of the Schema's Credential"
+    )]
+    #[account(
+        2,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(3, name = "schema", desc = "Schema the Attestation is associated with")]
+    // Light Protocol System Accounts
+    #[account(
+        4,
+        name = "light_system_program",
+        desc = "Light Protocol System Program"
+    )]
+    #[account(5, name = "cpi_signer", desc = "Light CPI signer PDA")]
+    #[account(6, name = "registered_program_pda", desc = "Registered program PDA")]
+    #[account(
+        7,
+        name = "account_compression_authority",
+        desc = "Account compression authority PDA"
+    )]
+    #[account(
+        8,
+        name = "account_compression_program",
+        desc = "Account compression program"
+    )]
+    #[account(9, name = "system_program", desc = "Solana system program")]
+    // Light Protocol Tree Accounts
+    #[account(10, writable, name = "output_queue", desc = "V2 Output queue")]
+    #[account(
+        11,
+        writable,
+        name = "address_merkle_tree",
+        desc = "V2 Address Merkle tree"
+    )]
+    CreateCompressedAttestation {
+        proof: [u8; 128],
+        nonce: Pubkey,
+        expiry: i64,
+        address_root_index: u16,
+        data: Vec<u8>,
+    } = 12,
+
+    /// Close a compressed attestation account.
+    #[account(0, writable, signer, name = "payer")]
+    #[account(
+        1,
+        signer,
+        name = "authority",
+        desc = "Authorized signer of the Schema's Credential"
+    )]
+    #[account(
+        2,
+        name = "credential",
+        desc = "Credential the Schema is associated with"
+    )]
+    #[account(3, name = "event_authority", desc = "Event authority PDA")]
+    // Light Protocol System Accounts
+    #[account(
+        4,
+        name = "light_system_program",
+        desc = "Light Protocol System Program"
+    )]
+    #[account(5, name = "cpi_signer", desc = "Light CPI signer PDA")]
+    #[account(6, name = "registered_program_pda", desc = "Registered program PDA")]
+    #[account(
+        7,
+        name = "account_compression_authority",
+        desc = "Account compression authority PDA"
+    )]
+    #[account(
+        8,
+        name = "account_compression_program",
+        desc = "Account compression program"
+    )]
+    #[account(9, name = "system_program", desc = "Solana system program")]
+    // Light Protocol Tree Accounts (state tree only, no address tree)
+    #[account(
+        10,
+        writable,
+        name = "state_merkle_tree",
+        desc = "V2 State Merkle tree"
+    )]
+    #[account(11, writable, name = "output_queue", desc = "V2 Output queue")]
+    CloseCompressedAttestation {
+        proof: Option<[u8; 128]>,
+        root_index: u16,
+        leaf_index: u32,
+        address: [u8; 32],
+        attestation_data: CloseAttestation,
+    } = 13,
+
+    /// Compress N existing attestation PDAs into compressed accounts.
+    /// All attestations must share the same credential and schema.
+    /// Optionally close PDAs after compression.
+    #[account(0, writable, signer, name = "payer")]
+    #[account(
+        1,
+        signer,
+        name = "authority",
+        desc = "Authorized signer of the Schema's Credential"
+    )]
+    #[account(2, name = "credential", desc = "Credential all attestations belong to")]
+    #[account(3, name = "event_authority", desc = "Event authority PDA")]
+    // Light Protocol System Accounts
+    #[account(
+        4,
+        name = "light_system_program",
+        desc = "Light Protocol System Program"
+    )]
+    #[account(5, name = "cpi_signer", desc = "Light CPI signer PDA")]
+    #[account(6, name = "registered_program_pda", desc = "Registered program PDA")]
+    #[account(
+        7,
+        name = "account_compression_authority",
+        desc = "Account compression authority PDA"
+    )]
+    #[account(
+        8,
+        name = "account_compression_program",
+        desc = "Account compression program"
+    )]
+    #[account(9, name = "system_program", desc = "Solana system program")]
+    // Light Protocol Tree Accounts
+    #[account(10, writable, name = "output_queue", desc = "V2 Output queue")]
+    #[account(
+        11,
+        writable,
+        name = "address_merkle_tree",
+        desc = "V2 Address Merkle tree"
+    )]
+    // Remaining accounts: attestation PDAs (writable if closing)
+    CompressAttestations {
+        proof: [u8; 128],
+        close_accounts: bool,
+        address_root_index: u16,
+        num_attestations: u8,
+    } = 14,
 
     /// Invoked via CPI from SAS Program to log event via instruction data.
     #[account(0, signer, name = "event_authority")]
