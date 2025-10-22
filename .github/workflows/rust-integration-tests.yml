@@ -49,25 +49,28 @@ jobs:
       - name: Generate keypair
         run: solana-keygen new --no-bip39-passphrase
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Install ZK Compression CLI
+        run: npm i -g @lightprotocol/zk-compression-cli@alpha
+
       - name: Display versions
         run: |
           rustc --version
           cargo --version
           solana --version
+          light --version
 
       - name: Build Solana program
         run: cargo build-sbf
 
+      - name: Run unit tests
+        run: cargo test --package solana-attestation-service --lib
+
       - name: Run all integration tests
         run: |
           export SBF_OUT_DIR=$(pwd)/target/deploy
-          cargo test --package tests-solana-attestation-service \
-            --test test_change_authorized_signers \
-            --test test_change_schema_description \
-            --test test_change_schema_status \
-            --test test_change_schema_version \
-            --test test_close_attestation \
-            --test test_create_attestation \
-            --test test_create_credential \
-            --test test_create_schema \
-            --test test_tokenization
+          cargo test --package tests-solana-attestation-service
