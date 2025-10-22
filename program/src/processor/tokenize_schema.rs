@@ -13,7 +13,7 @@ use pinocchio_token::{
     instructions::{InitializeMint2, TokenProgramVariant},
     TOKEN_2022_PROGRAM_ID,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
+use solana_pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::{sas_pda, SAS_SEED, SCHEMA_MINT_SEED},

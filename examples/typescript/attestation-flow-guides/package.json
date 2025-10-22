@@ -15,7 +15,7 @@
   },
   "packageManager": "pnpm@10.12.3",
   "dependencies": {
-    "@lightprotocol/stateless.js": "0.22.0",
+    "@lightprotocol/stateless.js": "0.22.1-alpha.1",
     "@solana-program/compute-budget": "^0.8.0",
     "@solana-program/token-2022": "^0.4.2",
     "@solana/kit": "^2.3.0",

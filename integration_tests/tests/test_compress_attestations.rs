@@ -223,9 +223,8 @@ async fn test_compress_1_attestation_no_close() {
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
-    use light_sdk_pinocchio::BorshSerialize;
-    let proof_vec = rpc_result.proof.0.unwrap().try_to_vec().unwrap();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+
+    let proof_bytes: [u8; 128] = rpc_result.proof.0.unwrap().to_array();
 
     // Get address root index from the validity proof result
     let address_root_index = rpc_result.addresses[0].root_index;
@@ -357,9 +356,8 @@ async fn test_compress_2_attestations_no_close() {
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
-    use light_sdk_pinocchio::BorshSerialize;
-    let proof_vec = rpc_result.proof.0.unwrap().try_to_vec().unwrap();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+
+    let proof_bytes: [u8; 128] = rpc_result.proof.0.unwrap().to_array();
     let address_root_index = rpc_result.addresses[0].root_index;
 
     // Compress both attestations (no close)
@@ -468,9 +466,8 @@ async fn test_compress_1_attestation_with_close() {
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
-    use light_sdk_pinocchio::BorshSerialize;
-    let proof_vec = rpc_result.proof.0.unwrap().try_to_vec().unwrap();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+
+    let proof_bytes: [u8; 128] = rpc_result.proof.0.unwrap().to_array();
 
     // Get address root index from the validity proof result
     let address_root_index = rpc_result.addresses[0].root_index;
@@ -568,9 +565,8 @@ async fn test_compress_2_attestations_with_close() {
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
-    use light_sdk_pinocchio::BorshSerialize;
-    let proof_vec = rpc_result.proof.0.unwrap().try_to_vec().unwrap();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+
+    let proof_bytes: [u8; 128] = rpc_result.proof.0.unwrap().to_array();
     let address_root_index = rpc_result.addresses[0].root_index;
 
     // Compress both attestations with close
@@ -673,9 +669,8 @@ async fn test_compress_attestation_unauthorized_signer() {
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
-    use light_sdk_pinocchio::BorshSerialize;
-    let proof_vec = rpc_result.proof.0.unwrap().try_to_vec().unwrap();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+
+    let proof_bytes: [u8; 128] = rpc_result.proof.0.unwrap().to_array();
 
     // Get address root index from the validity proof result
     let address_root_index = rpc_result.addresses[0].root_index;
@@ -779,9 +774,8 @@ async fn test_compress_attestation_wrong_credential() {
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
-    use light_sdk_pinocchio::BorshSerialize;
-    let proof_vec = rpc_result.proof.0.unwrap().try_to_vec().unwrap();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+
+    let proof_bytes: [u8; 128] = rpc_result.proof.0.unwrap().to_array();
 
     // Get address root index from the validity proof result
     let address_root_index = rpc_result.addresses[0].root_index;
@@ -855,9 +849,8 @@ async fn test_compress_attestation_invalid_address_tree() {
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
-    use light_sdk_pinocchio::BorshSerialize;
-    let proof_vec = rpc_result.proof.0.unwrap().try_to_vec().unwrap();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+
+    let proof_bytes: [u8; 128] = rpc_result.proof.0.unwrap().to_array();
 
     // Get address root index from the validity proof result
     let address_root_index = rpc_result.addresses[0].root_index;

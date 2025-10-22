@@ -5,14 +5,13 @@ use crate::{
     error::AttestationServiceError,
     state::{discriminator::AccountSerialize, Attestation, Credential, Schema},
 };
-use light_compressed_account::instruction_data::compressed_proof::CompressedProof;
 use light_sdk_pinocchio::{
     address::v2::derive_address,
     cpi::{
         v2::{CompressedAccountInfo, CpiAccounts, LightSystemProgramCpi, OutAccountInfo},
         InvokeLightSystemProgram, LightCpiInstruction,
     },
-    NewAddressParamsAssignedPacked,
+    instruction::{CompressedProof, NewAddressParamsAssignedPacked},
 };
 use pinocchio::{
     account_info::AccountInfo,
@@ -21,7 +20,7 @@ use pinocchio::{
     sysvars::{clock::Clock, Sysvar},
     ProgramResult,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
+use solana_pubkey::Pubkey as SolanaPubkey;
 
 use super::{verify_owner_mutability, verify_signer};
 

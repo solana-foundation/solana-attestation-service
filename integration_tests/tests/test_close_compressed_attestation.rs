@@ -194,11 +194,8 @@ async fn create_compressed_attestation_helper(
 
     // Get tree pubkeys
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
-
-    // Serialize proof to fixed array [u8; 128]
-    use light_sdk_pinocchio::BorshSerialize;
-    let proof_vec = rpc_result.proof.0.unwrap().try_to_vec().unwrap();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+    // Convert proof to fixed array [u8; 128]
+    let proof_bytes: [u8; 128] = rpc_result.proof.0.unwrap().to_array();
 
     // Get address root index from the validity proof result
     let address_root_index = rpc_result.addresses[0].root_index;
@@ -284,12 +281,7 @@ async fn test_close_compressed_attestation_success() {
         .value;
 
     // Extract proof if it exists
-    let proof = rpc_result.proof.0.map(|p| {
-        use light_sdk_pinocchio::BorshSerialize;
-        let proof_vec = p.try_to_vec().unwrap();
-        let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
-        proof_bytes
-    });
+    let proof = rpc_result.proof.to_array();
 
     // Get root_index from the proof result
     let root_index = rpc_result.accounts[0]
@@ -393,12 +385,7 @@ async fn test_close_compressed_attestation_unauthorized_signer() {
         .value;
 
     // Extract proof if it exists
-    let proof = rpc_result.proof.0.map(|p| {
-        use light_sdk_pinocchio::BorshSerialize;
-        let proof_vec = p.try_to_vec().unwrap();
-        let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
-        proof_bytes
-    });
+    let proof = rpc_result.proof.to_array();
 
     let root_index = rpc_result.accounts[0]
         .root_index
@@ -519,12 +506,7 @@ async fn test_close_compressed_attestation_wrong_credential() {
         .value;
 
     // Extract proof if it exists
-    let proof = rpc_result.proof.0.map(|p| {
-        use light_sdk_pinocchio::BorshSerialize;
-        let proof_vec = p.try_to_vec().unwrap();
-        let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
-        proof_bytes
-    });
+    let proof = rpc_result.proof.to_array();
 
     let root_index = rpc_result.accounts[0]
         .root_index
@@ -629,12 +611,7 @@ async fn test_close_compressed_attestation_paused_schema_success() {
         .value;
 
     // Extract proof if it exists
-    let proof = rpc_result.proof.0.map(|p| {
-        use light_sdk_pinocchio::BorshSerialize;
-        let proof_vec = p.try_to_vec().unwrap();
-        let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
-        proof_bytes
-    });
+    let proof = rpc_result.proof.to_array();
 
     let root_index = rpc_result.accounts[0]
         .root_index
@@ -749,12 +726,7 @@ async fn test_close_compressed_attestation_invalid_attestation_data() {
         .value;
 
     // Extract proof if it exists
-    let proof = rpc_result.proof.0.map(|p| {
-        use light_sdk_pinocchio::BorshSerialize;
-        let proof_vec = p.try_to_vec().unwrap();
-        let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
-        proof_bytes
-    });
+    let proof = rpc_result.proof.to_array();
 
     let root_index = rpc_result.accounts[0]
         .root_index
@@ -896,10 +868,8 @@ async fn test_close_compressed_attestation_max_data_size() {
 
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
-    // Serialize proof
-    use light_sdk_pinocchio::BorshSerialize;
-    let proof_vec = rpc_result.proof.0.unwrap().try_to_vec().unwrap();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+    // Convert proof to array
+    let proof_bytes: [u8; 128] = rpc_result.proof.0.unwrap().to_array();
     let address_root_index = rpc_result.addresses[0].root_index;
 
     // Measure transaction size before sending
@@ -976,11 +946,7 @@ async fn test_close_compressed_attestation_max_data_size() {
         .value;
 
     // Extract proof if it exists
-    let proof = rpc_result.proof.0.map(|p| {
-        let proof_vec = p.try_to_vec().unwrap();
-        let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
-        proof_bytes
-    });
+    let proof = rpc_result.proof.to_array();
 
     let root_index = rpc_result.accounts[0]
         .root_index

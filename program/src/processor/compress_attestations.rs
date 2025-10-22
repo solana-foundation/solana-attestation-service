@@ -6,19 +6,20 @@ use crate::{
     error::AttestationServiceError,
     state::{discriminator::AccountSerialize, Attestation, Credential},
 };
-use light_compressed_account::instruction_data::compressed_proof::CompressedProof;
+extern crate alloc;
+
+use alloc::vec::Vec;
 use light_sdk_pinocchio::{
     address::v2::derive_address,
     cpi::{
         v2::{CompressedAccountInfo, CpiAccounts, LightSystemProgramCpi, OutAccountInfo},
         InvokeLightSystemProgram, LightCpiInstruction,
     },
-    NewAddressParamsAssignedPacked,
+    instruction::{CompressedProof, NewAddressParamsAssignedPacked},
 };
 use pinocchio::{
     account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
 };
-use solana_program::msg;
 
 use super::{verify_owner_mutability, verify_signer};
 
@@ -44,12 +45,6 @@ pub fn process_compress_attestations(
     // Verify num_attestations matches actual attestation accounts provided
     let expected_total_accounts = 12 + args.num_attestations as usize;
     if accounts.len() != expected_total_accounts {
-        msg!(format!(
-            "len {}, expected {}",
-            accounts.len(),
-            expected_total_accounts
-        )
-        .as_str());
         return Err(ProgramError::NotEnoughAccountKeys);
     }
 

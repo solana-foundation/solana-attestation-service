@@ -1,9 +1,12 @@
+extern crate alloc;
+
 use crate::{
     constants::{event_authority_pda, EVENT_AUTHORITY_SEED, LIGHT_CPI_SIGNER},
     error::AttestationServiceError,
     events::{CloseAttestationEvent, EventDiscriminators},
     state::{Attestation, Credential},
 };
+use alloc::vec::Vec;
 use light_compressed_account::{
     compressed_account::PackedMerkleContext,
     instruction_data::{
@@ -45,6 +48,11 @@ pub fn process_close_compressed_attestation(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
+    // Check event authority PDA
+    if event_authority_info.key().ne(&event_authority_pda::ID) {
+        return Err(AttestationServiceError::InvalidEventAuthority.into());
+    }
+
     // Security validations
     verify_signer(authority, false)?;
     verify_owner_mutability(credential_info, program_id, false)?;
@@ -77,11 +85,6 @@ pub fn process_close_compressed_attestation(
         input: Some(in_account_info),
         output: None, // Closing - no output
     };
-
-    // Check event authority PDA
-    if event_authority_info.key().ne(&event_authority_pda::ID) {
-        return Err(AttestationServiceError::InvalidEventAuthority.into());
-    }
 
     let light_cpi_accounts = CpiAccounts::new(payer_info, light_cpi_accounts, LIGHT_CPI_SIGNER);
 

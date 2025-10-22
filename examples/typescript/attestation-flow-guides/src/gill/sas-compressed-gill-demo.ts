@@ -36,7 +36,7 @@ import {
   createRpc,
   Rpc as LightRpc,
   bn,
-  batchQueue1,
+  batchQueue,
 } from "@lightprotocol/stateless.js";
 import { PublicKey } from "@solana/web3.js";
 
@@ -271,8 +271,8 @@ async function main() {
     ],
   );
 
-  // Use batchQueue1 as the output queue
-  const outputQueue = batchQueue1 as Address;
+  // Use batchQueue as the output queue
+  const outputQueue = batchQueue as Address;
 
   const schema = await fetchSchema(client.rpc, schemaPda);
   const expiryTimestamp =

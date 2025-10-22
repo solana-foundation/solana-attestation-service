@@ -50,7 +50,7 @@ fn sha_256_hashv(_vals: &[&[u8]]) -> [u8; 32] {
 
 impl Attestation {
     pub fn hash(&self) -> [u8; 32] {
-        let mut metadata1 = [0u8; 128]; // 4 * 32 bytes for Pubkey
+        let mut metadata1 = [0u8; 96]; // 4 * 32 bytes for Pubkey
         metadata1[..32].copy_from_slice(self.nonce.as_ref());
         metadata1[32..64].copy_from_slice(self.signer.as_ref());
         metadata1[64..96].copy_from_slice(self.token_account.as_ref());
@@ -60,7 +60,6 @@ impl Attestation {
         metadata2[32..64].copy_from_slice(self.credential.as_ref());
         metadata2[64..72].copy_from_slice(&self.expiry.to_le_bytes());
 
-        // SAFETY: Sha256 cannot fail.
         let metadata_hash = sha_256_hashv(&[&metadata1]);
         let metadata2_hash = sha_256_hashv(&[&metadata2]);
         let data_hash = sha_256_hashv(&[&self.data]);
@@ -81,8 +80,8 @@ impl Discriminator for Attestation {
 }
 
 impl Attestation {
-    // Use AttestationDiscriminator (2) as little-endian u64
-    pub const COMPRESSION_DISCRIMINATOR: [u8; 8] = [2, 0, 0, 0, 0, 0, 0, 0];
+    pub const COMPRESSION_DISCRIMINATOR: [u8; 8] =
+        (AttestationAccountDiscriminators::AttestationDiscriminator as u64).to_le_bytes();
 }
 
 impl AccountSerialize for Attestation {

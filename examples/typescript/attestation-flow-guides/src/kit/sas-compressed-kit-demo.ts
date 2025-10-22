@@ -55,7 +55,7 @@ import {
   createRpc,
   Rpc as LightRpc,
   bn,
-  batchQueue1,
+  batchQueue,
 } from "@lightprotocol/stateless.js";
 import { PublicKey } from "@solana/web3.js";
 
@@ -378,7 +378,7 @@ async function main() {
       authority: authorizedSigner1,
       credential: credentialPda,
       schema: schemaPda,
-      outputQueue: batchQueue1 as Address,
+      outputQueue: batchQueue as Address,
       proof: proofBytes,
       nonce: testUser.address,
       data: serializeAttestationData(schema.data, CONFIG.ATTESTATION_DATA),

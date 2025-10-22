@@ -14,8 +14,8 @@ test-sbf = []
 light-program-test = { workspace = true }
 light-client = { workspace = true }
 light-sdk = { workspace = true }
-light-sdk-pinocchio = { workspace = true }
-light-compressed-account = { workspace = true }
+light-sdk-pinocchio = { workspace = true, features = ["std"] }
+light-compressed-account = { workspace = true, features = ["std"] }
 borsh = { workspace = true }
 solana-attestation-service-macros = { workspace = true }
 solana-attestation-service-client = { workspace = true }
