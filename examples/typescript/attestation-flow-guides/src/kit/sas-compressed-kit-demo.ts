@@ -55,7 +55,7 @@ import {
   createRpc,
   Rpc as LightRpc,
   bn,
-  batchQueue,
+  batchQueue1,
 } from "@lightprotocol/stateless.js";
 import { PublicKey } from "@solana/web3.js";
 
@@ -96,10 +96,6 @@ function publicKeyToAddress(pubkey: PublicKey): Address {
 function addressToBytes(address: Address): ReadonlyUint8Array {
   const encoder = getAddressEncoder();
   return encoder.encode(address);
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function setupWallets(client: Client) {
@@ -168,6 +164,7 @@ async function sendAndConfirmInstructions(
   instructions: Instruction[],
   description: string,
   skipEstimate: boolean = false,
+  waitForIndexer: boolean = false,
 ): Promise<Signature> {
   try {
     let computeUnitLimit = 1_400_000;
@@ -195,6 +192,12 @@ async function sendAndConfirmInstructions(
       (tx) => signAndSendTransaction(client, tx),
     );
     console.log(`    - ${description} - Signature: ${signature}`);
+
+    // Wait for indexer to sync if requested
+    if (waitForIndexer) {
+      const slot = await client.rpc.getSlot().send();
+      await client.lightRpc.confirmTransactionIndexed(slot);
+    }
 
     return signature;
   } catch (error) {
@@ -378,7 +381,7 @@ async function main() {
       authority: authorizedSigner1,
       credential: credentialPda,
       schema: schemaPda,
-      outputQueue: batchQueue as Address,
+      outputQueue: batchQueue1 as Address,
       proof: proofBytes,
       nonce: testUser.address,
       data: serializeAttestationData(schema.data, CONFIG.ATTESTATION_DATA),
@@ -391,14 +394,13 @@ async function main() {
     payer,
     [createCompressedAttestationInstruction],
     "Compressed attestation created",
+    false,
+    true,
   );
   console.log(`    - Attestation PDA: ${attestationPda}`);
   console.log(
     `    - Compressed Address: 0x${Buffer.from(compressedAddressPubkey.toBytes()).toString("hex")}`,
   );
-
-  // Wait for indexer to sync
-  await sleep(2000);
 
   // Step 5: Update Authorized Signers
   console.log("\n5. Updating Authorized Signers...");
@@ -443,9 +445,6 @@ async function main() {
 
   // Step 7: Close Compressed Attestation
   console.log("\n7. Closing Compressed Attestation...");
-
-  // Wait for indexer to sync
-  await sleep(2000);
 
   // Fetch compressed account
   const attestationResult = await fetchCompressedAttestation(
@@ -509,10 +508,8 @@ async function main() {
     [closeCompressedAttestationInstruction],
     "Closed compressed attestation",
     true,
+    true,
   );
-
-  // Wait for indexer to sync
-  await sleep(2000);
 
   // Verify account is nullified
   const deletedAttestation = await fetchCompressedAttestation(
