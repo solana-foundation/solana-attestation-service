@@ -56,14 +56,19 @@ import {
   Rpc as LightRpc,
   bn,
   batchQueue1,
+  VERSION,
+  featureFlags,
 } from "@lightprotocol/stateless.js";
+
+// Enable V2 for Light Protocol
+featureFlags.version = VERSION.V2;
 import { PublicKey } from "@solana/web3.js";
 
 const CONFIG = {
-  HTTP_CONNECTION_URL: "http://127.0.0.1:8899",
-  WSS_CONNECTION_URL: "ws://127.0.0.1:8900",
-  LIGHT_RPC: "http://127.0.0.1:8784",
-  PROVER_URL: "http://127.0.0.1:3001",
+  HTTP_CONNECTION_URL: "http://127.0.0.1:8899", // For devnet replace with helius rpc
+  WSS_CONNECTION_URL: "ws://127.0.0.1:8900", // For devnet replace with helius rpc
+  LIGHT_RPC: "http://127.0.0.1:8784", // For devnet replace with helius rpc
+  PROVER_URL: "http://127.0.0.1:3001", // For devnet replace with helius rpc
   CREDENTIAL_NAME: "TEST-ORGANIZATION",
   SCHEMA_NAME: "THE-BASICS",
   SCHEMA_LAYOUT: Buffer.from([12, 0, 12]),
@@ -114,6 +119,16 @@ async function setupWallets(client: Client) {
       commitment: "processed",
       lamports: lamports(BigInt(1_000_000_000)),
       recipientAddress: payer.address,
+    });
+    const airdropTx2: Signature = await airdrop({
+      commitment: "processed",
+      lamports: lamports(BigInt(1_000_000_000)),
+      recipientAddress: issuer.address,
+    });
+    const airdropTx3: Signature = await airdrop({
+      commitment: "processed",
+      lamports: lamports(BigInt(1_000_000_000)),
+      recipientAddress: testUser.address,
     });
 
     console.log(`    - Airdrop completed: ${airdropTx}`);
@@ -196,7 +211,7 @@ async function sendAndConfirmInstructions(
     // Wait for indexer to sync if requested
     if (waitForIndexer) {
       const slot = await client.rpc.getSlot().send();
-      await client.lightRpc.confirmTransactionIndexed(slot);
+      await client.lightRpc.confirmTransactionIndexed(Number(slot));
     }
 
     return signature;

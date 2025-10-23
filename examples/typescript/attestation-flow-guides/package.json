@@ -9,6 +9,12 @@
     "kit:standard": "ts-node src/kit/sas-standard-kit-demo.ts",
     "kit:tokenized": "ts-node src/kit/sas-tokenized-kit-demo.ts",
     "kit:compressed": "ts-node src/kit/sas-compressed-kit-demo.ts",
+    "gill:standard:local": "LOCAL=true ts-node src/gill/sas-standard-gill-demo.ts",
+    "gill:tokenized:local": "LOCAL=true ts-node src/gill/sas-tokenized-gill-demo.ts",
+    "gill:compressed:local": "LOCAL=true ts-node src/gill/sas-compressed-gill-demo.ts",
+    "kit:standard:local": "LOCAL=true ts-node src/kit/sas-standard-kit-demo.ts",
+    "kit:tokenized:local": "LOCAL=true ts-node src/kit/sas-tokenized-kit-demo.ts",
+    "kit:compressed:local": "LOCAL=true ts-node src/kit/sas-compressed-kit-demo.ts",
     "dump": "mkdir -p programs && solana program dump -um 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
     "start-local": "solana-test-validator -r --bpf-program 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG programs/sas.so",
     "build": "tsc"

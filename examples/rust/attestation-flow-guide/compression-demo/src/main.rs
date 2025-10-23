@@ -96,7 +96,8 @@ impl CompressionDemo {
         let wallets = Wallets::new();
 
         // Initialize Light client
-        let rpc = LightClient::new(LightClientConfig::local()).await?;
+        let mut rpc = LightClient::new(LightClientConfig::local()).await?;
+        rpc.get_latest_active_state_trees().await?;
 
         Ok(Self {
             config,
@@ -168,7 +169,7 @@ impl CompressionDemo {
     async fn create_schema(&mut self, credential_pda: &Pubkey) -> Result<Pubkey> {
         println!("\n3. Creating Schema...");
 
-        let (schema_pda, _bump) = derive_schema_pda(credential_pda, &self.config.schema_name, self.config.schema_version as u32);
+        let (schema_pda, _bump) = derive_schema_pda(credential_pda, &self.config.schema_name, self.config.schema_version as u8);
         let payer = self.rpc.get_payer().pubkey();
         let issuer = self.wallets.issuer.insecure_clone();
 
@@ -240,22 +241,17 @@ impl CompressionDemo {
             .value;
 
         // Serialize proof (128 bytes)
-        use light_sdk_pinocchio::BorshSerialize;
-        let proof_vec = proof_result
+        let proof_bytes = proof_result
             .proof
             .0
             .unwrap()
-            .try_to_vec()
-            .expect("Failed to serialize proof");
-        let proof_bytes: [u8; 128] = proof_vec
-            .try_into()
-            .expect("Proof should be 128 bytes");
+            .to_array();
+
 
         // Get address root index
         let address_root_index = proof_result.addresses[0].root_index;
 
-        // Use hardcoded output queue
-        let output_queue = solana_sdk::pubkey!("oq1na8gojfdUhsfCpyjNt6h4JaDWtHf1yQj4koBWfto");
+        let output_queue = self.rpc.get_random_state_tree_info()?.queue;
 
         let payer = self.rpc.get_payer().pubkey();
 
@@ -416,12 +412,7 @@ impl CompressionDemo {
 
         // Extract proof if exists
         let proof = proof_result.proof.0.map(|p| {
-            use light_sdk_pinocchio::BorshSerialize;
-            let proof_vec = p.try_to_vec().expect("Failed to serialize proof");
-            let proof_bytes: [u8; 128] = proof_vec
-                .try_into()
-                .expect("Proof should be 128 bytes");
-            proof_bytes
+            p.to_array()
         });
 
         // Get root index

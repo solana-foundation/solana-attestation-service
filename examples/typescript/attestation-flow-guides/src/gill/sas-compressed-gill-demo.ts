@@ -11,7 +11,6 @@ import {
   deriveSchemaPda,
   deriveEventAuthorityAddress,
   getCloseCompressedAttestationInstruction,
-  SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
   ALLOWED_ADDRESS_TREE,
   deriveCompressedAttestationPda,
   fetchCompressedAttestation,
@@ -24,7 +23,6 @@ import {
   TransactionSigner,
   Instruction,
   Address,
-  Blockhash,
   createSolanaClient,
   createTransaction,
   SolanaClient,
@@ -37,7 +35,12 @@ import {
   Rpc as LightRpc,
   bn,
   batchQueue,
+  VERSION,
+  featureFlags,
 } from "@lightprotocol/stateless.js";
+
+// Enable V2 for Light Protocol
+featureFlags.version = VERSION.V2;
 import { PublicKey } from "@solana/web3.js";
 
 const CONFIG = {
@@ -88,6 +91,16 @@ async function setupWallets(client: SolanaClient, lightRpc: LightRpc) {
       commitment: "processed",
       lamports: lamports(BigInt(1_000_000_000)),
       recipientAddress: payer.address,
+    });
+    const airdropTx2: Signature = await airdrop({
+      commitment: "processed",
+      lamports: lamports(BigInt(1_000_000_000)),
+      recipientAddress: issuer.address,
+    });
+    const airdropTx3: Signature = await airdrop({
+      commitment: "processed",
+      lamports: lamports(BigInt(1_000_000_000)),
+      recipientAddress: testUser.address,
     });
 
     console.log(`    - Airdrop completed: ${airdropTx}`);

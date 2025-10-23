@@ -17,10 +17,9 @@ solana-attestation-service-client = { path = "../../../../clients/rust" }
 solana-attestation-service-macros = { path = "../../../../cereal_macro" }
 
 # Light Protocol dependencies
-light-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
-light-sdk = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
-light-prover-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52" }
-light-sdk-pinocchio = { git = "https://github.com/Lightprotocol/light-protocol", rev = "bc95a701ee6bd7d8ebfd039c8a84cd6e520c7f52", features = ["v2"] }
+light-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "df1b6b78b6f4bd8c030197b391d9fe0f62ab63a1", features = ["v2"] }
+light-sdk = { git = "https://github.com/Lightprotocol/light-protocol", rev = "df1b6b78b6f4bd8c030197b391d9fe0f62ab63a1", features = ["v2", "keccak"] }
+light-prover-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "df1b6b78b6f4bd8c030197b391d9fe0f62ab63a1" }
 
 # Async runtime
 tokio = { version = "1.0", features = ["full"] }

@@ -15,6 +15,7 @@ concurrency:
 
 env:
   RUST_TOOLCHAIN: "1.90.0"
+  SOLANA_CLI_VERSION: "2.3.11"
 
 jobs:
   lint:
@@ -22,24 +23,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+      - name: Setup environment
+        uses: ./.github/actions/setup
         with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
-          components: clippy
-
-      - name: Cache Rust dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-lint-
+          rust-toolchain: ${{ env.RUST_TOOLCHAIN }}
+          solana-cli-version: ${{ env.SOLANA_CLI_VERSION }}
+          node-version: "20"
+          install-light-cli: "false"
+          install-pnpm: "false"
 
       - name: Run lint
         run: make lint
