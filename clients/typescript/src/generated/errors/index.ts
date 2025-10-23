@@ -6,8 +6,4 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './accounts';
-export * from './errors';
-export * from './instructions';
-export * from './programs';
-export * from './types';
+export * from './solanaAttestationService';

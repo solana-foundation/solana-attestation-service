@@ -6,6 +6,7 @@ use light_program_test::{
 use light_sdk::address::v2::derive_address;
 use solana_attestation_service_client::{
     accounts::Attestation,
+    errors::SolanaAttestationServiceError,
     instructions::{
         ChangeSchemaStatusBuilder, CloseCompressedAttestationBuilder,
         CreateCompressedAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder,
@@ -397,8 +398,13 @@ async fn test_close_compressed_attestation_unauthorized_signer() {
         )
         .await;
 
-    // Assert fails with error code 5 (SignerNotAuthorized)
-    assert_rpc_error(result, 0, 5).unwrap();
+    // Assert fails with SignerNotAuthorized
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::SignerNotAuthorized as u32,
+    )
+    .unwrap();
 }
 
 #[tokio::test]

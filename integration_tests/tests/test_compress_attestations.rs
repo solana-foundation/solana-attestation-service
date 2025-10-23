@@ -6,6 +6,7 @@ use light_program_test::{
 use light_sdk::address::v2::derive_address;
 use solana_attestation_service_client::{
     accounts::Attestation,
+    errors::SolanaAttestationServiceError,
     instructions::{
         CompressAttestationsBuilder, CreateAttestationBuilder, CreateCredentialBuilder,
         CreateSchemaBuilder,
@@ -665,8 +666,13 @@ async fn test_compress_attestation_unauthorized_signer() {
         )
         .await;
 
-    // Assert fails with error code 5 (SignerNotAuthorized)
-    assert_rpc_error(result, 0, 5).unwrap();
+    // Assert fails with SignerNotAuthorized error
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::SignerNotAuthorized as u32,
+    )
+    .unwrap();
 }
 
 #[tokio::test]
@@ -767,7 +773,12 @@ async fn test_compress_attestation_wrong_credential() {
         .await;
 
     // Assert fails with error code 0 (InvalidCredential)
-    assert_rpc_error(result, 0, 0).unwrap();
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::InvalidCredential as u32,
+    )
+    .unwrap();
 }
 
 #[tokio::test]
@@ -843,5 +854,10 @@ async fn test_compress_attestation_invalid_address_tree() {
         .await;
 
     // Assert fails with error code 12 (InvalidAddressTree)
-    assert_rpc_error(result, 0, 12).unwrap();
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::InvalidAddressTree as u32,
+    )
+    .unwrap();
 }

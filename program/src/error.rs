@@ -1,33 +1,34 @@
 use pinocchio::program_error::ProgramError;
+use thiserror::Error;
 
 /// Errors that may be returned by the Attestation Service program.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Error)]
 pub enum AttestationServiceError {
-    // 0 Incorrect Credential account
+    #[error("Incorrect Credential account")]
     InvalidCredential,
-    // 1 Incorrect Schema account
+    #[error("Incorrect Schema account")]
     InvalidSchema,
-    // 2 Incorrect Attestation account
+    #[error("Incorrect Attestation account")]
     InvalidAttestation,
-    // 3 Authority was not found in Credential authorized_signatures
+    #[error("Authority was not found in Credential authorized_signatures")]
     InvalidAuthority,
-    // 4 Incorrect Schema data type
+    #[error("Incorrect Schema data type")]
     InvalidSchemaDataType,
-    // 5 The signer is not one of the Credential's authorized signers
+    #[error("The signer is not one of the Credential's authorized signers")]
     SignerNotAuthorized,
-    // 6 Attestation data des not conform to the Schema
+    #[error("Attestation data does not conform to the Schema")]
     InvalidAttestationData,
-    // 7 Incorrect Event Authority
+    #[error("Incorrect Event Authority")]
     InvalidEventAuthority,
-    // 8 Incorrect Mint
+    #[error("Incorrect Mint")]
     InvalidMint,
-    // 9 Incorrect Program Signer
+    #[error("Incorrect Program Signer")]
     InvalidProgramSigner,
-    // 10 Incorrect Token Account
+    #[error("Incorrect Token Account")]
     InvalidTokenAccount,
-    // 11 Schema is paused
+    #[error("Schema is paused")]
     SchemaPaused,
-    // 12 Invalid Address Tree (not the allowed tree for compressed attestations)
+    #[error("Invalid Address Tree (not the allowed tree for compressed attestations)")]
     InvalidAddressTree,
 }
 

@@ -22,6 +22,8 @@ package.edition = "2021"
 [workspace.dependencies]
 borsh = "1.5.5"
 const-crypto = "0.3.0"
+num-derive = "0.4"
+num-traits = "0.2"
 pinocchio = "0.9"
 pinocchio-log = "0.5"
 pinocchio-pubkey = "0.3"
@@ -44,6 +46,7 @@ spl-associated-token-account = "6.0.0"
 spl-token-group-interface = "0.6.0"
 spl-token-metadata-interface = "0.7.0"
 syn = "2.0.72"
+thiserror = { version = "2.0", default-features = false }
 tokio = "1.43.0"
 bs58 = "0.4"
 light-sdk-pinocchio = { path = "../light-protocol3/sdk-libs/sdk-pinocchio", default-features = false, features = ["v2"] }

@@ -1209,6 +1209,73 @@
       }
     }
   ],
+  "errors": [
+    {
+      "code": 0,
+      "name": "InvalidCredential",
+      "msg": "Incorrect Credential account"
+    },
+    {
+      "code": 1,
+      "name": "InvalidSchema",
+      "msg": "Incorrect Schema account"
+    },
+    {
+      "code": 2,
+      "name": "InvalidAttestation",
+      "msg": "Incorrect Attestation account"
+    },
+    {
+      "code": 3,
+      "name": "InvalidAuthority",
+      "msg": "Authority was not found in Credential authorized_signatures"
+    },
+    {
+      "code": 4,
+      "name": "InvalidSchemaDataType",
+      "msg": "Incorrect Schema data type"
+    },
+    {
+      "code": 5,
+      "name": "SignerNotAuthorized",
+      "msg": "The signer is not one of the Credential's authorized signers"
+    },
+    {
+      "code": 6,
+      "name": "InvalidAttestationData",
+      "msg": "Attestation data does not conform to the Schema"
+    },
+    {
+      "code": 7,
+      "name": "InvalidEventAuthority",
+      "msg": "Incorrect Event Authority"
+    },
+    {
+      "code": 8,
+      "name": "InvalidMint",
+      "msg": "Incorrect Mint"
+    },
+    {
+      "code": 9,
+      "name": "InvalidProgramSigner",
+      "msg": "Incorrect Program Signer"
+    },
+    {
+      "code": 10,
+      "name": "InvalidTokenAccount",
+      "msg": "Incorrect Token Account"
+    },
+    {
+      "code": 11,
+      "name": "SchemaPaused",
+      "msg": "Schema is paused"
+    },
+    {
+      "code": 12,
+      "name": "InvalidAddressTree",
+      "msg": "Invalid Address Tree (not the allowed tree for compressed attestations)"
+    }
+  ],
   "metadata": {
     "origin": "shank",
     "address": "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG"

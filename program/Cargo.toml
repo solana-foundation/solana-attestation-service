@@ -20,6 +20,7 @@ pinocchio-token = { workspace = true }
 pinocchio-associated-token-account = { workspace = true }
 shank = { workspace = true }
 solana-pubkey = { workspace = true }
+thiserror = { workspace = true }
 bs58 = { workspace = true }
 light-sdk-pinocchio = { workspace = true, features = ["alloc"] }
 light-sdk-types = { workspace = true, features = ["alloc"] }

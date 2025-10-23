@@ -6,6 +6,7 @@ use light_program_test::{
 use light_sdk::address::v2::derive_address;
 use solana_attestation_service_client::{
     accounts::Attestation,
+    errors::SolanaAttestationServiceError,
     instructions::{
         ChangeSchemaStatusBuilder, CreateCompressedAttestationBuilder, CreateCredentialBuilder,
         CreateSchemaBuilder,
@@ -281,7 +282,7 @@ async fn test_create_compressed_attestation_invalid_data() {
         .address_root_index(address_root_index)
         .instruction();
 
-    // Should fail with InvalidAttestationData 6
+    // Should fail with InvalidAttestationData
     let result = rpc
         .create_and_send_transaction(
             &[create_compressed_attestation_ix],
@@ -289,7 +290,12 @@ async fn test_create_compressed_attestation_invalid_data() {
             &[&payer, &authority],
         )
         .await;
-    assert_rpc_error(result, 0, 6).unwrap();
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::InvalidAttestationData as u32,
+    )
+    .unwrap();
 }
 
 #[tokio::test]
@@ -380,7 +386,7 @@ async fn test_create_compressed_attestation_paused_schema() {
         .address_root_index(address_root_index)
         .instruction();
 
-    // Should fail with SchemaPaused 11
+    // Should fail with SchemaPaused
     let result = rpc
         .create_and_send_transaction(
             &[create_compressed_attestation_ix],
@@ -389,7 +395,12 @@ async fn test_create_compressed_attestation_paused_schema() {
         )
         .await;
 
-    assert_rpc_error(result, 0, 11).unwrap();
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::SchemaPaused as u32,
+    )
+    .unwrap();
 }
 
 #[tokio::test]
@@ -471,7 +482,7 @@ async fn test_create_compressed_attestation_unauthorized_signer() {
         .address_root_index(address_root_index)
         .instruction();
 
-    // Should fail with SignerNotAuthorized 5
+    // Should fail with SignerNotAuthorized
     let result = rpc
         .create_and_send_transaction(
             &[create_compressed_attestation_ix],
@@ -480,7 +491,12 @@ async fn test_create_compressed_attestation_unauthorized_signer() {
         )
         .await;
 
-    assert_rpc_error(result, 0, 5).unwrap();
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::SignerNotAuthorized as u32,
+    )
+    .unwrap();
 }
 
 #[tokio::test]
@@ -559,7 +575,7 @@ async fn test_create_compressed_attestation_expired() {
         .address_root_index(address_root_index)
         .instruction();
 
-    // Should fail with InvalidAttestationData 6 (expired timestamp)
+    // Should fail with InvalidAttestationData (expired timestamp)
     let result = rpc
         .create_and_send_transaction(
             &[create_compressed_attestation_ix],
@@ -568,7 +584,12 @@ async fn test_create_compressed_attestation_expired() {
         )
         .await;
 
-    assert_rpc_error(result, 0, 6).unwrap();
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::InvalidAttestationData as u32,
+    )
+    .unwrap();
 }
 
 #[tokio::test]
@@ -705,7 +726,7 @@ async fn test_create_compressed_attestation_wrong_credential() {
         .address_root_index(address_root_index)
         .instruction();
 
-    // Should fail with InvalidCredential 0 (schema2 doesn't belong to credential1)
+    // Should fail with InvalidCredential (schema2 doesn't belong to credential1)
     let result = rpc
         .create_and_send_transaction(
             &[create_compressed_attestation_ix],
@@ -714,7 +735,12 @@ async fn test_create_compressed_attestation_wrong_credential() {
         )
         .await;
 
-    assert_rpc_error(result, 0, 0).unwrap();
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::InvalidCredential as u32,
+    )
+    .unwrap();
 }
 
 #[tokio::test]
@@ -802,7 +828,7 @@ async fn test_create_compressed_attestation_wrong_address_tree() {
         .address_root_index(address_root_index)
         .instruction();
 
-    // Should fail with InvalidAddressTree (error code 12)
+    // Should fail with InvalidAddressTree
     let result = rpc
         .create_and_send_transaction(
             &[create_compressed_attestation_ix],
@@ -811,6 +837,10 @@ async fn test_create_compressed_attestation_wrong_address_tree() {
         )
         .await;
 
-    // InvalidAddressTree is error code 12
-    assert_rpc_error(result, 0, 12).unwrap();
+    assert_rpc_error(
+        result,
+        0,
+        SolanaAttestationServiceError::InvalidAddressTree as u32,
+    )
+    .unwrap();
 }

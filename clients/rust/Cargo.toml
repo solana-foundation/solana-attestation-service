@@ -10,6 +10,12 @@ repository = "https://github.com/solana-foundation/solana-attestation-service"
 borsh = { workspace = true }
 solana-program = { workspace = true }
 const-crypto = { workspace = true }
+num-derive = { workspace = true }
+num-traits = { workspace = true }
+thiserror = { workspace = true, default-features = true }
+
+[lints.rust]
+deprecated = "allow"
 
 [lints.rust.unexpected_cfgs]
 level = "allow"
