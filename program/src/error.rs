@@ -30,6 +30,8 @@ pub enum AttestationServiceError {
     SchemaPaused,
     #[error("Invalid Address Tree (not the allowed tree for compressed attestations)")]
     InvalidAddressTree,
+    #[error("Compressed Attestation data size exceeds maximum allowed (550 bytes)")]
+    AttestationDataTooLarge,
 }
 
 impl From<AttestationServiceError> for ProgramError {

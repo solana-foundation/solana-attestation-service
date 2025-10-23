@@ -124,7 +124,7 @@ pub fn process_create_compressed_attestation(
 
     // Validate attestation data size to ensure it fits in transaction limits
     if attestation.data.len() > MAX_COMPRESSED_ATTESTATION_SIZE {
-        return Err(AttestationServiceError::InvalidAttestationData.into());
+        return Err(AttestationServiceError::AttestationDataTooLarge.into());
     }
 
     let compressed_account = create_compressed_account_from_attestation(&attestation, address, 0);

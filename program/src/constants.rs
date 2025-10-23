@@ -19,7 +19,8 @@ pub const ALLOWED_ADDRESS_TREE: Pubkey =
 
 /// Maximum compressed attestation data size to ensure create + close transactions
 /// fit within Solana's 1232 byte mainnet MTU
-pub const MAX_COMPRESSED_ATTESTATION_SIZE: usize = 350;
+/// Without lookup table 350 bytes work. With lookup table up to 550 bytes.
+pub const MAX_COMPRESSED_ATTESTATION_SIZE: usize = 550;
 
 // Anchor Compatitable Discriminator: Sha256(anchor:event)[..8]
 pub const EVENT_IX_TAG: u64 = 0x1d9acb512ea545e4;

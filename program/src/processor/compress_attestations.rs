@@ -115,7 +115,7 @@ pub fn process_compress_attestations(
 
         // Validate attestation data size to ensure it fits in transaction limits
         if attestation.data.len() > MAX_COMPRESSED_ATTESTATION_SIZE {
-            return Err(AttestationServiceError::InvalidAttestationData.into());
+            return Err(AttestationServiceError::AttestationDataTooLarge.into());
         }
 
         // Derive the compressed address from the attestation PDA
