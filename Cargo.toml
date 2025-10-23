@@ -52,7 +52,8 @@ bs58 = "0.4"
 light-sdk-pinocchio = { path = "../light-protocol3/sdk-libs/sdk-pinocchio", default-features = false, features = ["v2"] }
 light-sdk-types = { path = "../light-protocol3/sdk-libs/sdk-types", default-features = false, features = ["v2"] }
 light-macros = { path = "../light-protocol3/program-libs/macros", default-features = false }
-light-compressed-account = { path = "../light-protocol3/program-libs/compressed-account", default-features = false, features = ["solana"] }
+light-compressed-account = { path = "../light-protocol3/program-libs/compressed-account", default-features = false }
+light-hasher = { path = "../light-protocol3/program-libs/hasher", default-features = false}
 # Test dependencies for Compressed Account
 light-program-test = { path = "../light-protocol3/sdk-libs/program-test", features = ["v2"] }
 light-client = { path = "../light-protocol3/sdk-libs/client", features = ["v2"] }

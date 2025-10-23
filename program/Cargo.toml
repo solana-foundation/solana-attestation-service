@@ -26,6 +26,7 @@ light-sdk-pinocchio = { workspace = true, features = ["alloc"] }
 light-sdk-types = { workspace = true, features = ["alloc"] }
 light-macros = { workspace = true }
 light-compressed-account = { workspace = true, features = ["alloc"] }
+light-hasher = { workspace = true }
 
 [lints.rust.unexpected_cfgs]
 level = "allow"

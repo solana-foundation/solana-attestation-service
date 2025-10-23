@@ -5468,6 +5468,7 @@ dependencies = [
  "bs58 0.4.0",
  "const-crypto",
  "light-compressed-account",
+ "light-hasher",
  "light-macros",
  "light-sdk-pinocchio",
  "light-sdk-types",

@@ -1,6 +1,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
+use light_hasher::{sha256::Sha256BE, Hasher, Sha256};
 use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
 use shank::ShankAccount;
 
@@ -31,23 +32,6 @@ pub struct Attestation {
     pub token_account: Pubkey,
 }
 
-fn sha_256_hashv(_vals: &[&[u8]]) -> [u8; 32] {
-    #[cfg(target_os = "solana")]
-    {
-        let mut hash_result = [0; 32];
-        unsafe {
-            pinocchio::syscalls::sol_sha256(
-                _vals as *const _ as *const u8,
-                _vals.len() as u64,
-                &mut hash_result as *mut _ as *mut u8,
-            );
-        }
-        hash_result
-    }
-    #[cfg(not(target_os = "solana"))]
-    unreachable!()
-}
-
 impl Attestation {
     pub fn hash(&self) -> [u8; 32] {
         let mut metadata1 = [0u8; 96]; // 4 * 32 bytes for Pubkey
@@ -60,18 +44,16 @@ impl Attestation {
         metadata2[32..64].copy_from_slice(self.credential.as_ref());
         metadata2[64..72].copy_from_slice(&self.expiry.to_le_bytes());
 
-        let metadata_hash = sha_256_hashv(&[&metadata1]);
-        let metadata2_hash = sha_256_hashv(&[&metadata2]);
-        let data_hash = sha_256_hashv(&[&self.data]);
-        let mut hash = sha_256_hashv(&[
+        // # SAFETY Sha256BE unwrap cannot fail.
+        let metadata_hash = Sha256::hash(&metadata1).unwrap();
+        let metadata2_hash = Sha256::hash(&metadata2).unwrap();
+        let data_hash = Sha256::hash(&self.data).unwrap();
+        Sha256BE::hashv(&[
             metadata_hash.as_slice(),
             metadata2_hash.as_slice(),
             data_hash.as_slice(),
-        ]);
-        // Truncate hash to 248 bit < 254 bit bn254 field size.
-        // This is required for poseidon hashes in the light system program.
-        hash[0] = 0;
-        hash
+        ])
+        .unwrap()
     }
 }
 
