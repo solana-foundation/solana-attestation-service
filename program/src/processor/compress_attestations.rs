@@ -1,9 +1,10 @@
 use crate::{
     constants::{
-        event_authority_pda, ALLOWED_ADDRESS_TREE, LIGHT_CPI_SIGNER,
+        event_authority_pda, ALLOWED_ADDRESS_TREE, EVENT_AUTHORITY_SEED, LIGHT_CPI_SIGNER,
         MAX_COMPRESSED_ATTESTATION_SIZE,
     },
     error::AttestationServiceError,
+    events::{CompressAttestation, CompressAttestationEvent, EventDiscriminators},
     state::{discriminator::AccountSerialize, Attestation, Credential},
 };
 extern crate alloc;
@@ -18,7 +19,12 @@ use light_sdk_pinocchio::{
     instruction::{CompressedProof, NewAddressParamsAssignedPacked},
 };
 use pinocchio::{
-    account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
+    account_info::AccountInfo,
+    instruction::{AccountMeta, Instruction, Seed, Signer},
+    program::invoke_signed,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    ProgramResult,
 };
 
 use super::{verify_owner_mutability, verify_signer};
@@ -67,6 +73,11 @@ pub fn process_compress_attestations(
     let credential_data = credential_info.try_borrow_data()?;
     let credential = Credential::try_from_bytes(&credential_data)?;
     credential.validate_authorized_signer(authority.key())?;
+
+    // Check event authority PDA
+    if event_authority_info.key().ne(&event_authority_pda::ID) {
+        return Err(AttestationServiceError::InvalidEventAuthority.into());
+    }
 
     // Set up Light Protocol CPI accounts
     // light_and_tree_accounts contains 6 light system accounts + 2 tree accounts
@@ -148,51 +159,51 @@ pub fn process_compress_attestations(
         .with_new_addresses(&new_address_params)
         .invoke(light_cpi_accounts)?;
 
-    // If close_accounts is true, close PDAs and emit events
-    if args.close_accounts {
-        // Check event authority PDA
-        if event_authority_info.key().ne(&event_authority_pda::ID) {
-            return Err(AttestationServiceError::InvalidEventAuthority.into());
-        }
+    // Collect event data while closing accounts
+    let mut event_attestations = Vec::with_capacity(args.num_attestations as usize);
 
-        for attestation_info in attestation_accounts {
-            // Read attestation for event data
-            // let attestation_data = attestation_info.try_borrow_data()?;
-            // //let attestation = Attestation::try_from_bytes(&attestation_data)?;
-            // drop(attestation_data); // Drop immutable borrow before closing
+    for attestation_info in attestation_accounts {
+        // Read attestation for event data BEFORE closing
+        let attestation_data = attestation_info.try_borrow_data()?;
+        let attestation = Attestation::try_from_bytes(&attestation_data)?;
 
+        event_attestations.push(CompressAttestation {
+            schema: attestation.schema,
+            attestation_data: attestation.data.clone(),
+        });
+        drop(attestation_data);
+
+        if args.close_accounts {
             // Close account and transfer rent to payer
             let payer_lamports = payer_info.lamports();
             let attestation_lamports = attestation_info.lamports();
-
             *payer_info.try_borrow_mut_lamports()? = payer_lamports
                 .checked_add(attestation_lamports)
                 .ok_or(ProgramError::ArithmeticOverflow)?;
             *attestation_info.try_borrow_mut_lamports()? = 0;
             attestation_info.close()?;
-
-            // TODO: ask whether it makes sense to emit an event here.
-            // // Emit CloseAttestationEvent for this attestation
-            // let event = CloseAttestationEvent {
-            //     discriminator: EventDiscriminators::CloseEvent as u8,
-            //     schema: attestation.schema,
-            //     attestation_data: attestation.data,
-            // };
-
-            // invoke_signed(
-            //     &Instruction {
-            //         program_id,
-            //         accounts: &[AccountMeta::new(event_authority_info.key(), false, true)],
-            //         data: event.to_bytes().as_slice(),
-            //     },
-            //     &[event_authority_info],
-            //     &[Signer::from(&[
-            //         Seed::from(EVENT_AUTHORITY_SEED),
-            //         Seed::from(&[event_authority_pda::BUMP]),
-            //     ])],
-            // )?;
         }
     }
+
+    // Emit single CompressAttestationEvent for the batch
+    let event = CompressAttestationEvent {
+        discriminator: EventDiscriminators::CompressEvent as u8,
+        pdas_closed: true,
+        attestations: event_attestations,
+    };
+
+    invoke_signed(
+        &Instruction {
+            program_id,
+            accounts: &[AccountMeta::new(event_authority_info.key(), false, true)],
+            data: event.to_bytes().as_slice(),
+        },
+        &[event_authority_info],
+        &[Signer::from(&[
+            Seed::from(EVENT_AUTHORITY_SEED),
+            Seed::from(&[event_authority_pda::BUMP]),
+        ])],
+    )?;
 
     Ok(())
 }

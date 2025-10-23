@@ -1181,6 +1181,46 @@
       }
     },
     {
+      "name": "CompressAttestation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "schema",
+            "type": "publicKey"
+          },
+          {
+            "name": "attestationData",
+            "type": "bytes"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CompressAttestationEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "discriminator",
+            "type": "u8"
+          },
+          {
+            "name": "pdasClosed",
+            "type": "bool"
+          },
+          {
+            "name": "attestations",
+            "type": {
+              "vec": {
+                "defined": "CompressAttestation"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "CloseAttestation",
       "type": {
         "kind": "struct",

@@ -1,4 +1,4 @@
-use borsh::BorshSerialize;
+use borsh::{BorshDeserialize, BorshSerialize};
 use light_program_test::{
     program_test::LightProgramTest, utils::assert::assert_rpc_error, AddressWithTree, Indexer,
     ProgramTestConfig, Rpc,
@@ -16,6 +16,7 @@ use solana_attestation_service_client::{
         derive_schema_pda,
     },
     programs::SOLANA_ATTESTATION_SERVICE_ID,
+    types::{CompressAttestation, CompressAttestationEvent},
     ALLOWED_ADDRESS_TREE,
 };
 use solana_sdk::{
@@ -860,4 +861,27 @@ async fn test_compress_attestation_invalid_address_tree() {
         SolanaAttestationServiceError::InvalidAddressTree as u32,
     )
     .unwrap();
+}
+
+#[test]
+fn test_compress_attestation_event_serialization_roundtrip() {
+    let original = CompressAttestationEvent {
+        discriminator: 1,
+        pdas_closed: true,
+        attestations: vec![
+            CompressAttestation {
+                schema: Pubkey::new_unique(),
+                attestation_data: vec![10u8, 20, 30],
+            },
+            CompressAttestation {
+                schema: Pubkey::new_unique(),
+                attestation_data: vec![40u8, 50],
+            },
+        ],
+    };
+
+    let serialized = borsh::to_vec(&original).unwrap();
+    let deserialized = CompressAttestationEvent::try_from_slice(&serialized).unwrap();
+
+    assert_eq!(original, deserialized);
 }

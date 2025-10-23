@@ -11,8 +11,10 @@ pub const SAS_SEED: &[u8] = b"sas";
 pub const SCHEMA_MINT_SEED: &[u8] = b"schemaMint";
 pub const ATTESTATION_MINT_SEED: &[u8] = b"attestationMint";
 
-const EVENT_AUTHORITY_AND_BUMP: ([u8; 32], u8) =
-    ed25519::derive_program_address(&[EVENT_AUTHORITY_SEED], &SOLANA_ATTESTATION_SERVICE_ID.to_bytes());
+const EVENT_AUTHORITY_AND_BUMP: ([u8; 32], u8) = ed25519::derive_program_address(
+    &[EVENT_AUTHORITY_SEED],
+    &SOLANA_ATTESTATION_SERVICE_ID.to_bytes(),
+);
 
 const SAS_AND_BUMP: ([u8; 32], u8) =
     ed25519::derive_program_address(&[SAS_SEED], &SOLANA_ATTESTATION_SERVICE_ID.to_bytes());

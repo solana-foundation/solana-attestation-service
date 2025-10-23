@@ -1,8 +1,8 @@
 extern crate alloc;
 
+use crate::processor::close_compressed_attestation::CloseAttestation;
 use alloc::string::String;
 use alloc::vec::Vec;
-use crate::processor::close_compressed_attestation::CloseAttestation;
 use pinocchio::pubkey::Pubkey;
 use shank::ShankInstruction;
 
