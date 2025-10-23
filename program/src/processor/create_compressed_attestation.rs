@@ -175,20 +175,9 @@ fn process_instruction_data<'a>(
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let (proof_a_bytes, remaining) = data.split_at(32);
-    let (proof_b_bytes, remaining) = remaining.split_at(64);
-    let (proof_c_bytes, remaining) = remaining.split_at(32);
-    let proof = CompressedProof {
-        a: proof_a_bytes
-            .try_into()
-            .map_err(|_| ProgramError::InvalidInstructionData)?,
-        b: proof_b_bytes
-            .try_into()
-            .map_err(|_| ProgramError::InvalidInstructionData)?,
-        c: proof_c_bytes
-            .try_into()
-            .map_err(|_| ProgramError::InvalidInstructionData)?,
-    };
+    let (proof_bytes, remaining) = data.split_at(128);
+    let proof =
+        CompressedProof::try_from(proof_bytes).map_err(|e| ProgramError::Custom(u32::from(e)))?;
 
     // Parse nonce (32 bytes)
     let (nonce_bytes, remaining) = remaining.split_at(32);

@@ -142,25 +142,10 @@ fn process_instruction_data(data: &[u8]) -> Result<CloseCompressedAttestationArg
     }
 
     let (proof, remaining) = if is_some {
-        // Parse CompressedProof (32 + 64 + 32 = 128 bytes)
-        let (proof_a_bytes, remaining) = remaining.split_at(32);
-        let (proof_b_bytes, remaining) = remaining.split_at(64);
-        let (proof_c_bytes, remaining) = remaining.split_at(32);
-
-        let compressed_proof =
-            light_compressed_account::instruction_data::compressed_proof::CompressedProof {
-                a: proof_a_bytes
-                    .try_into()
-                    .map_err(|_| ProgramError::InvalidInstructionData)?,
-                b: proof_b_bytes
-                    .try_into()
-                    .map_err(|_| ProgramError::InvalidInstructionData)?,
-                c: proof_c_bytes
-                    .try_into()
-                    .map_err(|_| ProgramError::InvalidInstructionData)?,
-            };
-
-        (ValidityProof(Some(compressed_proof)), remaining)
+        let (proof_bytes, remaining) = remaining.split_at(128);
+        let validity_proof =
+            ValidityProof::try_from(proof_bytes).map_err(|e| ProgramError::Custom(u32::from(e)))?;
+        (validity_proof, remaining)
     } else {
         (ValidityProof(None), remaining)
     };
