@@ -261,9 +261,7 @@ async fn test_create_compressed_attestation_invalid_data() {
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
-
-    let proof_vec = rpc_result.proof.0.unwrap().to_array();
-    let proof_bytes: [u8; 128] = proof_vec.try_into().expect("Proof should be 128 bytes");
+    let proof_bytes = rpc_result.proof.0.unwrap().to_array();
 
     // Get address root index from the validity proof result
     let address_root_index = rpc_result.addresses[0].root_index;

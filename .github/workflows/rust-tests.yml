@@ -64,13 +64,5 @@ jobs:
           solana --version
           light --version
 
-      - name: Build Solana program
-        run: cargo build-sbf
-
-      - name: Run unit tests
-        run: cargo test --package solana-attestation-service --lib
-
-      - name: Run all integration tests
-        run: |
-          export SBF_OUT_DIR=$(pwd)/target/deploy
-          cargo test --package tests-solana-attestation-service
+      - name: Build Solana program run all tests
+        run: make test

@@ -42,4 +42,4 @@ jobs:
             ${{ runner.os }}-cargo-lint-
 
       - name: Run lint
-        run: ./scripts/lint.sh
+        run: make lint

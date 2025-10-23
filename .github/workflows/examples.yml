@@ -59,7 +59,7 @@ jobs:
         run: npm i -g @lightprotocol/zk-compression-cli@alpha
 
       - name: Build Solana program
-        run: cargo build-sbf
+        run: make build-sbf
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2
@@ -73,7 +73,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install root dependencies
-        run: pnpm install
+        run: make install
 
       - name: Build TypeScript client
         working-directory: clients/typescript
