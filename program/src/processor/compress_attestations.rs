@@ -1,11 +1,11 @@
 use crate::{
     constants::{
-        event_authority_pda, ALLOWED_ADDRESS_TREE, EVENT_AUTHORITY_SEED, LIGHT_CPI_SIGNER,
+        event_authority_pda, EVENT_AUTHORITY_SEED, LIGHT_CPI_SIGNER,
         MAX_COMPRESSED_ATTESTATION_SIZE,
     },
     error::AttestationServiceError,
     events::{CompressAttestation, CompressAttestationEvent, EventDiscriminators},
-    state::{discriminator::AccountSerialize, Attestation, Credential},
+    state::{Attestation, Credential},
 };
 extern crate alloc;
 
@@ -13,7 +13,7 @@ use alloc::vec::Vec;
 use light_sdk_pinocchio::{
     address::v2::derive_address,
     cpi::{
-        v2::{CompressedAccountInfo, CpiAccounts, LightSystemProgramCpi, OutAccountInfo},
+        v2::{CpiAccounts, LightSystemProgramCpi},
         InvokeLightSystemProgram, LightCpiInstruction,
     },
     instruction::{CompressedProof, NewAddressParamsAssignedPacked},
@@ -27,7 +27,10 @@ use pinocchio::{
     ProgramResult,
 };
 
-use super::{verify_owner_mutability, verify_signer};
+use super::{
+    create_compressed_account_from_attestation, verify_address_tree, verify_owner_mutability,
+    verify_signer,
+};
 
 #[inline(always)]
 pub fn process_compress_attestations(
@@ -86,14 +89,7 @@ pub fn process_compress_attestations(
         CpiAccounts::new(payer_info, light_and_tree_accounts, LIGHT_CPI_SIGNER);
 
     // Verify address tree matches allowed tree
-    let address_tree = light_cpi_accounts
-        .tree_pubkeys()
-        .map_err(|e| ProgramError::Custom(u32::from(e)))?[1];
-    // Check that all compressed attestations are in the same address tree
-    // to ensure compressed pda uniqueness.
-    if address_tree != ALLOWED_ADDRESS_TREE {
-        return Err(AttestationServiceError::InvalidAddressTree.into());
-    }
+    let address_tree = verify_address_tree(&light_cpi_accounts)?;
 
     // Vectors to collect compressed accounts and new addresses
     let mut compressed_accounts = Vec::with_capacity(args.num_attestations as usize);
@@ -134,20 +130,9 @@ pub fn process_compress_attestations(
             assigned_account_index: compressed_accounts.len() as u8,
             assigned_to_account: true,
         };
-        let data_hash = attestation.hash();
-        let data = attestation.to_bytes();
 
-        let compressed_account = CompressedAccountInfo {
-            address: Some(address),
-            input: None,
-            output: Some(OutAccountInfo {
-                output_merkle_tree_index: 0,
-                discriminator: Attestation::COMPRESSION_DISCRIMINATOR,
-                lamports: 0,
-                data,
-                data_hash,
-            }),
-        };
+        let compressed_account =
+            create_compressed_account_from_attestation(&attestation, address, 0);
 
         compressed_accounts.push(compressed_account);
         new_address_params.push(new_address_param);

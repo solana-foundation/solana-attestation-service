@@ -1,14 +1,12 @@
 use crate::{
-    constants::{
-        ALLOWED_ADDRESS_TREE, ATTESTATION_SEED, LIGHT_CPI_SIGNER, MAX_COMPRESSED_ATTESTATION_SIZE,
-    },
+    constants::{ATTESTATION_SEED, LIGHT_CPI_SIGNER, MAX_COMPRESSED_ATTESTATION_SIZE},
     error::AttestationServiceError,
-    state::{discriminator::AccountSerialize, Attestation, Credential, Schema},
+    state::{Attestation, Credential, Schema},
 };
 use light_sdk_pinocchio::{
     address::v2::derive_address,
     cpi::{
-        v2::{CompressedAccountInfo, CpiAccounts, LightSystemProgramCpi, OutAccountInfo},
+        v2::{CpiAccounts, LightSystemProgramCpi},
         InvokeLightSystemProgram, LightCpiInstruction,
     },
     instruction::{CompressedProof, NewAddressParamsAssignedPacked},
@@ -22,7 +20,10 @@ use pinocchio::{
 };
 use solana_pubkey::Pubkey as SolanaPubkey;
 
-use super::{verify_owner_mutability, verify_signer};
+use super::{
+    create_compressed_account_from_attestation, verify_address_tree, verify_owner_mutability,
+    verify_signer,
+};
 
 #[inline(always)]
 pub fn process_create_compressed_attestation(
@@ -92,14 +93,7 @@ pub fn process_create_compressed_attestation(
     );
 
     // Verify address tree matches allowed tree
-    let address_tree = light_cpi_accounts
-        .tree_pubkeys()
-        .map_err(|e| ProgramError::Custom(u32::from(e)))?[1];
-    // Check that all compressed attestations are in the same address tree
-    // to ensure compressed pda uniqueness.
-    if address_tree != ALLOWED_ADDRESS_TREE {
-        return Err(AttestationServiceError::InvalidAddressTree.into());
-    }
+    let address_tree = verify_address_tree(&light_cpi_accounts)?;
 
     // Derive compressed address using the PDA as seed
     let (address, address_seed) =
@@ -132,20 +126,8 @@ pub fn process_create_compressed_attestation(
     if attestation.data.len() > MAX_COMPRESSED_ATTESTATION_SIZE {
         return Err(AttestationServiceError::InvalidAttestationData.into());
     }
-    let data_hash = attestation.hash();
-    let data = attestation.to_bytes();
 
-    let compressed_account = CompressedAccountInfo {
-        address: Some(address),
-        input: None,
-        output: Some(OutAccountInfo {
-            output_merkle_tree_index: 0,
-            discriminator: Attestation::COMPRESSION_DISCRIMINATOR,
-            lamports: 0,
-            data,
-            data_hash,
-        }),
-    };
+    let compressed_account = create_compressed_account_from_attestation(&attestation, address, 0);
 
     // Execute Light System Program CPI to create compressed account
     LightSystemProgramCpi::new_cpi(LIGHT_CPI_SIGNER, args.proof.into())
