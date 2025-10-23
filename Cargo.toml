@@ -49,12 +49,12 @@ syn = "2.0.72"
 thiserror = { version = "2.0", default-features = false }
 tokio = "1.43.0"
 bs58 = "0.4"
-light-sdk-pinocchio = { path = "../light-protocol3/sdk-libs/sdk-pinocchio", default-features = false, features = ["v2"] }
-light-sdk-types = { path = "../light-protocol3/sdk-libs/sdk-types", default-features = false, features = ["v2"] }
-light-macros = { path = "../light-protocol3/program-libs/macros", default-features = false }
-light-compressed-account = { path = "../light-protocol3/program-libs/compressed-account", default-features = false }
-light-hasher = { path = "../light-protocol3/program-libs/hasher", default-features = false}
+light-sdk-pinocchio = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false, features = ["v2"] }
+light-sdk-types = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false, features = ["v2"] }
+light-macros = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false }
+light-compressed-account = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false }
+light-hasher = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false}
 # Test dependencies for Compressed Account
-light-program-test = { path = "../light-protocol3/sdk-libs/program-test", features = ["v2"] }
-light-client = { path = "../light-protocol3/sdk-libs/client", features = ["v2"] }
-light-sdk = { path = "../light-protocol3/sdk-libs/sdk", features = ["v2"] }
+light-program-test = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", features = ["v2"] }
+light-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", features = ["v2"] }
+light-sdk = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", features = ["v2"] }

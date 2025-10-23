@@ -50,7 +50,7 @@ build-sbf:
 
 # Build Rust workspace and TypeScript clients
 build: build-sbf
-	pnpm -r build
+	pnpm --filter sas-lib build
 
 # Run all tests (unit + integration)
 test: build-sbf

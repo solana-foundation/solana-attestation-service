@@ -64,5 +64,5 @@ jobs:
           solana --version
           light --version
 
-      - name: Build Solana program run all tests
+      - name: Build Solana program and run all tests
         run: make test

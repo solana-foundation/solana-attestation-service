@@ -17,6 +17,9 @@ importers:
       '@codama/renderers-js':
         specifier: ^1.2.14
         version: 1.2.14(chokidar@3.6.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
+      '@lightprotocol/stateless.js':
+        specifier: 0.22.1-alpha.1
+        version: 0.22.1-alpha.1(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))
       '@solana/kit':
         specifier: ^2.1.1
         version: 2.1.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(ws@8.18.2(bufferutil@4.0.9)(utf-8-validate@5.0.10))
@@ -46,8 +49,8 @@ importers:
   clients/typescript:
     dependencies:
       '@lightprotocol/stateless.js':
-        specifier: ^0.22.0
-        version: 0.22.0(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))
+        specifier: 0.22.1-alpha.1
+        version: 0.22.1-alpha.1(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))
       '@solana/kit':
         specifier: ^2.3.0
         version: 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10))
@@ -89,8 +92,8 @@ importers:
   examples/typescript/attestation-flow-guides:
     dependencies:
       '@lightprotocol/stateless.js':
-        specifier: 0.22.0
-        version: 0.22.0(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))
+        specifier: 0.22.1-alpha.1
+        version: 0.22.1-alpha.1(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))
       '@solana-program/compute-budget':
         specifier: ^0.8.0
         version: 0.8.0(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)(ws@8.18.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)))
@@ -183,8 +186,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
-  '@lightprotocol/stateless.js@0.22.0':
-    resolution: {integrity: sha512-2I7g/pIq/Bbm6Qax1djT4TEwBHmGWJpvhF2pdRyyO6k3f4a1ZR3hDdesbpZ99FPH7LysiCcMR1cJvVjw39ZNfA==}
+  '@lightprotocol/stateless.js@0.22.1-alpha.1':
+    resolution: {integrity: sha512-r0AyafXHKVrTByp4tXJrg10b6NM/yubPgr1wcfhkbZ7R7DjLZRhiX/CnVAyKhtJyYByuVwiyqEFd/6wupxxVpA==}
     peerDependencies:
       '@solana/web3.js': '>=1.73.5'
 
@@ -1533,7 +1536,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@lightprotocol/stateless.js@0.22.0(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))':
+  '@lightprotocol/stateless.js@0.22.1-alpha.1(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))':
     dependencies:
       '@coral-xyz/borsh': 0.29.0(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10))
       '@noble/hashes': 1.5.0

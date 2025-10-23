@@ -1,2 +1,2 @@
-overrides:
-  '@lightprotocol/stateless.js': link:../../../../light-protocol2/js/stateless.js
+packages:
+  - '.'

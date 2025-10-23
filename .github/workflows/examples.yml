@@ -72,22 +72,12 @@ jobs:
           node-version: "20.x"
           cache: "pnpm"
 
-      - name: Install root dependencies
-        run: make install
-
-      - name: Build TypeScript client
-        working-directory: clients/typescript
-        run: |
-          pnpm install
-          pnpm build
+      - name: Install and build root dependencies
+        run: make install && make build
 
       - name: Test TypeScript client
         working-directory: clients/typescript
         run: pnpm test
-
-      - name: Install example dependencies
-        working-directory: examples/typescript/attestation-flow-guides
-        run: pnpm install
 
       - name: Build example
         working-directory: examples/typescript/attestation-flow-guides

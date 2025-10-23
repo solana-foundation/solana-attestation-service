@@ -1,3 +1,2 @@
-overrides:
-  '@lightprotocol/stateless.js': link:../../../light-protocol2/js/stateless.js
-  stateless.js: link:../../../../Library/pnpm/global/5/node_modules/@lightprotocol/stateless.js
+packages:
+  - '.'
