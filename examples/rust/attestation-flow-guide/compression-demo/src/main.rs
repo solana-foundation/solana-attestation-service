@@ -13,6 +13,7 @@ use solana_attestation_service_client::{
         ChangeAuthorizedSignersBuilder, CloseCompressedAttestationBuilder,
         CreateCompressedAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder,
     },
+    pdas::{derive_attestation_pda, derive_credential_pda, derive_event_authority_pda, derive_schema_pda},
     programs::SOLANA_ATTESTATION_SERVICE_ID,
     ALLOWED_ADDRESS_TREE,
 };
@@ -104,45 +105,6 @@ impl CompressionDemo {
         })
     }
 
-    fn derive_credential_pda(&self) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
-            &[
-                b"credential",
-                &self.wallets.issuer.pubkey().to_bytes(),
-                self.config.credential_name.as_bytes(),
-            ],
-            &SOLANA_ATTESTATION_SERVICE_ID,
-        )
-    }
-
-    fn derive_schema_pda(&self, credential_pda: &Pubkey) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
-            &[
-                b"schema",
-                &credential_pda.to_bytes(),
-                self.config.schema_name.as_bytes(),
-                &[self.config.schema_version],
-            ],
-            &SOLANA_ATTESTATION_SERVICE_ID,
-        )
-    }
-
-    fn derive_attestation_pda(
-        &self,
-        credential_pda: &Pubkey,
-        schema_pda: &Pubkey,
-        nonce: &Pubkey,
-    ) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
-            &[
-                b"attestation",
-                &credential_pda.to_bytes(),
-                &schema_pda.to_bytes(),
-                &nonce.to_bytes(),
-            ],
-            &SOLANA_ATTESTATION_SERVICE_ID,
-        )
-    }
 
     async fn send_and_confirm_instruction(
         &mut self,
@@ -179,7 +141,7 @@ impl CompressionDemo {
     async fn create_credential(&mut self) -> Result<Pubkey> {
         println!("\n2. Creating Credential...");
 
-        let (credential_pda, _bump) = self.derive_credential_pda();
+        let (credential_pda, _bump) = derive_credential_pda(&self.wallets.issuer.pubkey(), &self.config.credential_name);
         let payer = self.rpc.get_payer().pubkey();
         let issuer = self.wallets.issuer.insecure_clone();
 
@@ -206,7 +168,7 @@ impl CompressionDemo {
     async fn create_schema(&mut self, credential_pda: &Pubkey) -> Result<Pubkey> {
         println!("\n3. Creating Schema...");
 
-        let (schema_pda, _bump) = self.derive_schema_pda(credential_pda);
+        let (schema_pda, _bump) = derive_schema_pda(credential_pda, &self.config.schema_name, self.config.schema_version as u32);
         let payer = self.rpc.get_payer().pubkey();
         let issuer = self.wallets.issuer.insecure_clone();
 
@@ -251,7 +213,7 @@ impl CompressionDemo {
 
         // Derive attestation PDA (for compressed address derivation)
         let (attestation_pda, _bump) =
-            self.derive_attestation_pda(credential_pda, schema_pda, &nonce);
+            derive_attestation_pda(credential_pda, schema_pda, &nonce);
 
         // Get address tree
         let address_tree_pubkey = ALLOWED_ADDRESS_TREE;
@@ -367,7 +329,7 @@ impl CompressionDemo {
     ) -> Result<bool> {
         // Derive attestation PDA
         let (attestation_pda, _) =
-            self.derive_attestation_pda(credential_pda, schema_pda, user_address);
+            derive_attestation_pda(credential_pda, schema_pda, user_address);
 
         // Get address tree
         let address_tree_pubkey = ALLOWED_ADDRESS_TREE;
@@ -469,8 +431,7 @@ impl CompressionDemo {
             .unwrap_or_default();
 
         // Derive event authority
-        let (event_auth_pda, _) =
-            Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+        let event_auth_pda = derive_event_authority_pda();
 
         let payer = self.rpc.get_payer().pubkey();
 

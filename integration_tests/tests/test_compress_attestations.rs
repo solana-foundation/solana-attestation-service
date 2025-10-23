@@ -10,10 +10,13 @@ use solana_attestation_service_client::{
         CompressAttestationsBuilder, CreateAttestationBuilder, CreateCredentialBuilder,
         CreateSchemaBuilder,
     },
+    pdas::{
+        derive_attestation_pda, derive_credential_pda, derive_event_authority_pda,
+        derive_schema_pda,
+    },
     programs::SOLANA_ATTESTATION_SERVICE_ID,
     ALLOWED_ADDRESS_TREE,
 };
-use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_sdk::{
     clock::Clock,
     instruction::AccountMeta,
@@ -22,21 +25,8 @@ use solana_sdk::{
 };
 use solana_sdk_ids::system_program;
 
-#[derive(BorshSerialize, SchemaStructSerialize)]
-struct TestData {
-    name: String,
-    location: u8,
-}
-
-struct TestFixtures {
-    rpc: LightProgramTest,
-    payer: Keypair,
-    credential: Pubkey,
-    schema: Pubkey,
-    authority: Keypair,
-    address_tree_pubkey: Pubkey,
-    attestations: Vec<Pubkey>, // Attestation PDAs created during setup
-}
+mod helpers;
+use helpers::{TestData, TestFixtures};
 
 async fn setup(num_attestations: usize) -> TestFixtures {
     // Initialize Light Protocol test environment with SAS program
@@ -54,14 +44,7 @@ async fn setup(num_attestations: usize) -> TestFixtures {
     let credential_name = "test";
 
     // Create credential PDA
-    let (credential_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority.pubkey().to_bytes(),
-            credential_name.as_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (credential_pda, _bump) = derive_credential_pda(&authority.pubkey(), credential_name);
 
     // Create credential
     let create_credential_ix = CreateCredentialBuilder::new()
@@ -87,15 +70,7 @@ async fn setup(num_attestations: usize) -> TestFixtures {
     let schema_data = TestData::get_serialized_representation();
     let field_names = vec!["name".into(), "location".into()];
 
-    let (schema_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"schema",
-            &credential_pda.to_bytes(),
-            schema_name.as_bytes(),
-            &[1],
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (schema_pda, _bump) = derive_schema_pda(&credential_pda, schema_name, 1);
 
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(payer.pubkey())
@@ -134,16 +109,7 @@ async fn setup(num_attestations: usize) -> TestFixtures {
         let nonce = Pubkey::new_unique();
 
         // Derive attestation PDA
-        let attestation_pda = Pubkey::find_program_address(
-            &[
-                b"attestation",
-                &credential_pda.to_bytes(),
-                &schema_pda.to_bytes(),
-                &nonce.to_bytes(),
-            ],
-            &SOLANA_ATTESTATION_SERVICE_ID,
-        )
-        .0;
+        let (attestation_pda, _) = derive_attestation_pda(&credential_pda, &schema_pda, &nonce);
 
         // Create regular attestation PDA
         let create_attestation_ix = CreateAttestationBuilder::new()
@@ -176,6 +142,7 @@ async fn setup(num_attestations: usize) -> TestFixtures {
         schema: schema_pda,
         authority,
         address_tree_pubkey,
+        event_auth_pda: derive_event_authority_pda(),
         attestations,
     }
 }
@@ -190,6 +157,7 @@ async fn test_compress_1_attestation_no_close() {
         authority,
         address_tree_pubkey,
         attestations,
+        ..
     } = setup(1).await;
 
     let attestation_pda = attestations[0];
@@ -216,8 +184,7 @@ async fn test_compress_1_attestation_no_close() {
         .value;
 
     // Derive event authority
-    let (event_authority, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let event_authority = derive_event_authority_pda();
 
     // Get tree pubkeys
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
@@ -314,6 +281,7 @@ async fn test_compress_2_attestations_no_close() {
         authority,
         address_tree_pubkey,
         attestations,
+        ..
     } = setup(2).await;
 
     let attestation_pda_1 = attestations[0];
@@ -351,8 +319,7 @@ async fn test_compress_2_attestations_no_close() {
         .unwrap()
         .value;
 
-    let (event_authority, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let event_authority = derive_event_authority_pda();
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
@@ -433,6 +400,7 @@ async fn test_compress_1_attestation_with_close() {
         authority,
         address_tree_pubkey,
         attestations,
+        ..
     } = setup(1).await;
 
     let attestation_pda = attestations[0];
@@ -459,8 +427,7 @@ async fn test_compress_1_attestation_with_close() {
         .value;
 
     // Derive event authority
-    let (event_authority, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let event_authority = derive_event_authority_pda();
 
     // Get tree pubkeys
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
@@ -523,6 +490,7 @@ async fn test_compress_2_attestations_with_close() {
         authority,
         address_tree_pubkey,
         attestations,
+        ..
     } = setup(2).await;
 
     let attestation_pda_1 = attestations[0];
@@ -560,8 +528,7 @@ async fn test_compress_2_attestations_with_close() {
         .unwrap()
         .value;
 
-    let (event_authority, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let event_authority = derive_event_authority_pda();
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
 
     // Serialize proof to fixed array [u8; 128]
@@ -633,6 +600,7 @@ async fn test_compress_attestation_unauthorized_signer() {
         authority: _,
         address_tree_pubkey,
         attestations,
+        ..
     } = setup(1).await;
 
     let attestation_pda = attestations[0];
@@ -662,8 +630,7 @@ async fn test_compress_attestation_unauthorized_signer() {
         .value;
 
     // Derive event authority
-    let (event_authority, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let event_authority = derive_event_authority_pda();
 
     // Get tree pubkeys
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
@@ -712,6 +679,7 @@ async fn test_compress_attestation_wrong_credential() {
         authority: _authority1,
         address_tree_pubkey,
         attestations,
+        ..
     } = setup(1).await;
 
     let attestation_pda = attestations[0];
@@ -767,8 +735,7 @@ async fn test_compress_attestation_wrong_credential() {
         .value;
 
     // Derive event authority
-    let (event_authority, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let event_authority = derive_event_authority_pda();
 
     // Get tree pubkeys
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;
@@ -813,6 +780,7 @@ async fn test_compress_attestation_invalid_address_tree() {
         authority,
         address_tree_pubkey: _correct_address_tree,
         attestations,
+        ..
     } = setup(1).await;
 
     let attestation_pda = attestations[0];
@@ -842,8 +810,7 @@ async fn test_compress_attestation_invalid_address_tree() {
         .value;
 
     // Derive event authority
-    let (event_authority, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let event_authority = derive_event_authority_pda();
 
     // Get tree pubkeys
     let output_queue = rpc.get_random_state_tree_info().unwrap().queue;

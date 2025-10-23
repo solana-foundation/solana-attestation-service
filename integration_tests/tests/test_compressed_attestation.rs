@@ -10,10 +10,10 @@ use solana_attestation_service_client::{
         ChangeSchemaStatusBuilder, CreateCompressedAttestationBuilder, CreateCredentialBuilder,
         CreateSchemaBuilder,
     },
+    pdas::{derive_attestation_pda, derive_credential_pda, derive_schema_pda},
     programs::SOLANA_ATTESTATION_SERVICE_ID,
     ALLOWED_ADDRESS_TREE,
 };
-use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_sdk::{
     clock::Clock,
     pubkey::Pubkey,
@@ -21,20 +21,8 @@ use solana_sdk::{
 };
 use solana_sdk_ids::system_program;
 
-#[derive(BorshSerialize, SchemaStructSerialize)]
-struct TestData {
-    name: String,
-    location: u8,
-}
-
-struct TestFixtures {
-    rpc: LightProgramTest,
-    payer: Keypair,
-    credential: Pubkey,
-    schema: Pubkey,
-    authority: Keypair,
-    address_tree_pubkey: Pubkey,
-}
+mod helpers;
+use helpers::{TestData, TestFixtures};
 
 async fn setup() -> TestFixtures {
     // Initialize Light Protocol test environment with SAS program
@@ -52,14 +40,7 @@ async fn setup() -> TestFixtures {
     let credential_name = "test";
 
     // Create credential PDA
-    let (credential_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority.pubkey().to_bytes(),
-            credential_name.as_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (credential_pda, _bump) = derive_credential_pda(&authority.pubkey(), credential_name);
 
     // Create credential
     let create_credential_ix = CreateCredentialBuilder::new()
@@ -85,15 +66,7 @@ async fn setup() -> TestFixtures {
     let schema_data = TestData::get_serialized_representation();
     let field_names = vec!["name".into(), "location".into()];
 
-    let (schema_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"schema",
-            &credential_pda.to_bytes(),
-            schema_name.as_bytes(),
-            &[1],
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (schema_pda, _bump) = derive_schema_pda(&credential_pda, schema_name, 1);
 
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(payer.pubkey())
@@ -121,6 +94,8 @@ async fn setup() -> TestFixtures {
         schema: schema_pda,
         authority,
         address_tree_pubkey,
+        event_auth_pda: Pubkey::default(),
+        attestations: vec![],
     }
 }
 
@@ -133,6 +108,7 @@ async fn test_create_compressed_attestation_success() {
         schema,
         authority,
         address_tree_pubkey,
+        ..
     } = setup().await;
 
     // Prepare attestation data
@@ -153,16 +129,7 @@ async fn test_create_compressed_attestation_success() {
     let nonce = Pubkey::new_unique();
 
     // Derive compressed attestation address
-    let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    )
-    .0;
+    let (attestation_pda, _) = derive_attestation_pda(&credential, &schema, &nonce);
 
     let (compressed_address, _) = derive_address(
         &[attestation_pda.as_ref()],
@@ -249,6 +216,7 @@ async fn test_create_compressed_attestation_invalid_data() {
         schema,
         authority,
         address_tree_pubkey,
+        ..
     } = setup().await;
 
     // Prepare INVALID attestation data (missing the location field)
@@ -266,16 +234,7 @@ async fn test_create_compressed_attestation_invalid_data() {
     let nonce = Pubkey::new_unique();
 
     // Derive compressed attestation address
-    let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    )
-    .0;
+    let (attestation_pda, _) = derive_attestation_pda(&credential, &schema, &nonce);
 
     let (compressed_address, _) = derive_address(
         &[attestation_pda.as_ref()],
@@ -342,6 +301,7 @@ async fn test_create_compressed_attestation_paused_schema() {
         schema,
         authority,
         address_tree_pubkey,
+        ..
     } = setup().await;
 
     // Pause the schema
@@ -374,16 +334,7 @@ async fn test_create_compressed_attestation_paused_schema() {
     let nonce = Pubkey::new_unique();
 
     // Derive compressed attestation address
-    let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    )
-    .0;
+    let (attestation_pda, _) = derive_attestation_pda(&credential, &schema, &nonce);
 
     let (compressed_address, _) = derive_address(
         &[attestation_pda.as_ref()],
@@ -450,6 +401,7 @@ async fn test_create_compressed_attestation_unauthorized_signer() {
         schema,
         authority: _,
         address_tree_pubkey,
+        ..
     } = setup().await;
 
     // Create an unauthorized signer (not in the credential's authorized signers)
@@ -473,16 +425,7 @@ async fn test_create_compressed_attestation_unauthorized_signer() {
     let nonce = Pubkey::new_unique();
 
     // Derive compressed attestation address
-    let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    )
-    .0;
+    let (attestation_pda, _) = derive_attestation_pda(&credential, &schema, &nonce);
 
     let (compressed_address, _) = derive_address(
         &[attestation_pda.as_ref()],
@@ -549,6 +492,7 @@ async fn test_create_compressed_attestation_expired() {
         schema,
         authority,
         address_tree_pubkey,
+        ..
     } = setup().await;
 
     // Prepare valid attestation data
@@ -569,16 +513,7 @@ async fn test_create_compressed_attestation_expired() {
     let nonce = Pubkey::new_unique();
 
     // Derive compressed attestation address
-    let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    )
-    .0;
+    let (attestation_pda, _) = derive_attestation_pda(&credential, &schema, &nonce);
 
     let (compressed_address, _) = derive_address(
         &[attestation_pda.as_ref()],
@@ -645,20 +580,14 @@ async fn test_create_compressed_attestation_wrong_credential() {
         schema: _schema1,
         authority: authority1,
         address_tree_pubkey,
+        ..
     } = setup().await;
 
     // Create a SECOND credential with different authority
     let authority2 = Keypair::new();
     let credential_name2 = "test2";
 
-    let (credential2_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority2.pubkey().to_bytes(),
-            credential_name2.as_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (credential2_pda, _bump) = derive_credential_pda(&authority2.pubkey(), credential_name2);
 
     let create_credential2_ix = CreateCredentialBuilder::new()
         .payer(payer.pubkey())
@@ -683,15 +612,7 @@ async fn test_create_compressed_attestation_wrong_credential() {
     let schema_data2 = TestData::get_serialized_representation();
     let field_names2 = vec!["name".into(), "location".into()];
 
-    let (schema2_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"schema",
-            &credential2_pda.to_bytes(),
-            schema_name2.as_bytes(),
-            &[1],
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (schema2_pda, _bump) = derive_schema_pda(&credential2_pda, schema_name2, 1);
 
     let create_schema2_ix = CreateSchemaBuilder::new()
         .payer(payer.pubkey())
@@ -805,6 +726,7 @@ async fn test_create_compressed_attestation_wrong_address_tree() {
         schema,
         authority,
         address_tree_pubkey: _,
+        ..
     } = setup().await;
 
     // Prepare valid attestation data

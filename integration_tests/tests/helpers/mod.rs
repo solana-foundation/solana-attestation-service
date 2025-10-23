@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+use light_program_test::LightProgramTest;
 use solana_program_test::{ProgramTest, ProgramTestContext};
 
 /// Get ProgramTestContext with SAS program loaded.
@@ -10,4 +12,27 @@ pub async fn program_test_context() -> ProgramTestContext {
     );
     let ctx = program_test.start_with_context().await;
     ctx
+}
+
+use borsh::BorshSerialize;
+use solana_attestation_service_macros::SchemaStructSerialize;
+use solana_sdk::pubkey::Pubkey;
+use solana_sdk::signature::Keypair;
+
+/// Common test data structure used across integration tests
+#[derive(BorshSerialize, SchemaStructSerialize)]
+pub struct TestData {
+    pub name: String,
+    pub location: u8,
+}
+
+pub struct TestFixtures {
+    pub rpc: LightProgramTest,
+    pub payer: Keypair,
+    pub credential: Pubkey,
+    pub schema: Pubkey,
+    pub authority: Keypair,
+    pub address_tree_pubkey: Pubkey,
+    pub event_auth_pda: Pubkey,
+    pub attestations: Vec<Pubkey>, // Attestation PDAs created during setup
 }

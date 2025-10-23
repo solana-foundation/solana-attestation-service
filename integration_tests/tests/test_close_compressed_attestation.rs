@@ -10,10 +10,13 @@ use solana_attestation_service_client::{
         ChangeSchemaStatusBuilder, CloseCompressedAttestationBuilder,
         CreateCompressedAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder,
     },
+    pdas::{
+        derive_attestation_pda, derive_credential_pda, derive_event_authority_pda,
+        derive_schema_pda,
+    },
     programs::SOLANA_ATTESTATION_SERVICE_ID,
     ALLOWED_ADDRESS_TREE,
 };
-use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_sdk::transaction::Transaction;
 use solana_sdk::{
     clock::Clock,
@@ -22,21 +25,8 @@ use solana_sdk::{
 };
 use solana_sdk_ids::system_program;
 
-#[derive(BorshSerialize, SchemaStructSerialize)]
-struct TestData {
-    name: String,
-    location: u8,
-}
-
-struct TestFixtures {
-    rpc: LightProgramTest,
-    payer: Keypair,
-    credential: Pubkey,
-    schema: Pubkey,
-    authority: Keypair,
-    address_tree_pubkey: Pubkey,
-    event_auth_pda: Pubkey,
-}
+mod helpers;
+use helpers::{TestData, TestFixtures};
 
 async fn setup() -> TestFixtures {
     // Initialize Light Protocol test environment with SAS program
@@ -54,14 +44,7 @@ async fn setup() -> TestFixtures {
     let credential_name = "test";
 
     // Create credential PDA
-    let (credential_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority.pubkey().to_bytes(),
-            credential_name.as_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (credential_pda, _bump) = derive_credential_pda(&authority.pubkey(), credential_name);
 
     // Create credential
     let create_credential_ix = CreateCredentialBuilder::new()
@@ -87,15 +70,7 @@ async fn setup() -> TestFixtures {
     let schema_data = TestData::get_serialized_representation();
     let field_names = vec!["name".into(), "location".into()];
 
-    let (schema_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"schema",
-            &credential_pda.to_bytes(),
-            schema_name.as_bytes(),
-            &[1],
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (schema_pda, _bump) = derive_schema_pda(&credential_pda, schema_name, 1);
 
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(payer.pubkey())
@@ -116,8 +91,7 @@ async fn setup() -> TestFixtures {
     // Use the allowed address tree constant
     let address_tree_pubkey = ALLOWED_ADDRESS_TREE;
 
-    let (event_auth_pda, _) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let event_auth_pda = derive_event_authority_pda();
 
     TestFixtures {
         rpc,
@@ -127,6 +101,7 @@ async fn setup() -> TestFixtures {
         authority,
         address_tree_pubkey,
         event_auth_pda,
+        attestations: vec![],
     }
 }
 
@@ -161,16 +136,7 @@ async fn create_compressed_attestation_helper(
     let nonce = Pubkey::new_unique();
 
     // Derive compressed attestation address
-    let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    )
-    .0;
+    let (attestation_pda, _) = derive_attestation_pda(&credential, &schema, &nonce);
 
     let (compressed_address, _) = derive_address(
         &[attestation_pda.as_ref()],
@@ -246,6 +212,7 @@ async fn test_close_compressed_attestation_success() {
         authority,
         address_tree_pubkey,
         event_auth_pda,
+        ..
     } = setup().await;
 
     // Create a compressed attestation
@@ -348,6 +315,7 @@ async fn test_close_compressed_attestation_unauthorized_signer() {
         authority,
         address_tree_pubkey,
         event_auth_pda,
+        ..
     } = setup().await;
 
     // Create a compressed attestation with the authorized authority
@@ -443,6 +411,7 @@ async fn test_close_compressed_attestation_wrong_credential() {
         authority: authority1,
         address_tree_pubkey,
         event_auth_pda,
+        ..
     } = setup().await;
 
     // Create compressed attestation with credential1 and schema1
@@ -462,14 +431,7 @@ async fn test_close_compressed_attestation_wrong_credential() {
     // Create a SECOND credential with different authority
     let authority2 = Keypair::new();
     let credential_name2 = "test2";
-    let (credential2_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority2.pubkey().to_bytes(),
-            credential_name2.as_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (credential2_pda, _bump) = derive_credential_pda(&authority2.pubkey(), credential_name2);
 
     let create_credential2_ix = CreateCredentialBuilder::new()
         .payer(payer.pubkey())
@@ -565,6 +527,7 @@ async fn test_close_compressed_attestation_paused_schema_success() {
         authority,
         address_tree_pubkey,
         event_auth_pda,
+        ..
     } = setup().await;
 
     // Create a compressed attestation BEFORE pausing the schema
@@ -676,6 +639,7 @@ async fn test_close_compressed_attestation_invalid_attestation_data() {
         authority,
         address_tree_pubkey,
         event_auth_pda,
+        ..
     } = setup().await;
 
     // Create a compressed attestation
@@ -784,6 +748,7 @@ async fn test_close_compressed_attestation_max_data_size() {
         authority,
         address_tree_pubkey,
         event_auth_pda,
+        ..
     } = setup().await;
 
     // Create schema with VecU8 layout to test maximum data size
@@ -792,15 +757,7 @@ async fn test_close_compressed_attestation_max_data_size() {
     let schema_data = vec![13]; // VecU8 type
     let field_names = vec!["large_data".into()];
 
-    let (large_schema_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"schema",
-            &credential.to_bytes(),
-            schema_name.as_bytes(),
-            &[1],
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (large_schema_pda, _bump) = derive_schema_pda(&credential, schema_name, 1);
 
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(payer.pubkey())
@@ -835,16 +792,7 @@ async fn test_close_compressed_attestation_max_data_size() {
     let nonce = Pubkey::new_unique();
 
     // Derive compressed attestation address
-    let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &large_schema_pda.to_bytes(),
-            &nonce.to_bytes(),
-        ],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    )
-    .0;
+    let (attestation_pda, _) = derive_attestation_pda(&credential, &large_schema_pda, &nonce);
 
     let (compressed_address, _) = derive_address(
         &[attestation_pda.as_ref()],

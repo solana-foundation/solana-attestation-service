@@ -9,6 +9,7 @@ repository = "https://github.com/solana-foundation/solana-attestation-service"
 [dependencies]
 borsh = { workspace = true }
 solana-program = { workspace = true }
+const-crypto = { workspace = true }
 
 [lints.rust.unexpected_cfgs]
 level = "allow"
