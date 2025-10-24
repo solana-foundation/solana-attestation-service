@@ -17,9 +17,9 @@ solana-attestation-service-client = { path = "../../../../clients/rust" }
 solana-attestation-service-macros = { path = "../../../../cereal_macro" }
 
 # Light Protocol dependencies
-light-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "df1b6b78b6f4bd8c030197b391d9fe0f62ab63a1", features = ["v2"] }
-light-sdk = { git = "https://github.com/Lightprotocol/light-protocol", rev = "df1b6b78b6f4bd8c030197b391d9fe0f62ab63a1", features = ["v2", "keccak"] }
-light-prover-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "df1b6b78b6f4bd8c030197b391d9fe0f62ab63a1" }
+light-client = { version = "0.16.0", features = ["v2"] }
+light-sdk = { version = "0.16.0", features = ["v2", "keccak"] }
+light-prover-client = { version = "4.0.0" }
 
 # Async runtime
 tokio = { version = "1.0", features = ["full"] }

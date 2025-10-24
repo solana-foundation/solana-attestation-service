@@ -49,12 +49,12 @@ syn = "2.0.72"
 thiserror = { version = "2.0", default-features = false }
 tokio = "1.43.0"
 bs58 = "0.4"
-light-sdk-pinocchio = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false, features = ["v2"] }
-light-sdk-types = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false, features = ["v2"] }
-light-macros = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false }
-light-compressed-account = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false }
-light-hasher = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", default-features = false}
+light-sdk-pinocchio = { version = "0.16.0", default-features = false, features = ["v2"] }
+light-sdk-types = { version = "0.16.0", default-features = false, features = ["v2"] }
+light-macros = { version = "2.2.0", default-features = false }
+light-compressed-account = { version = "0.6.1", default-features = false }
+light-hasher = { version = "5.0.0", default-features = false}
 # Test dependencies for Compressed Account
-light-program-test = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", features = ["v2"] }
-light-client = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", features = ["v2"] }
-light-sdk = { git = "https://github.com/Lightprotocol/light-protocol", rev = "04bccc882f083bd5d428d13dec3dcfba1f88a18f", features = ["v2"] }
+light-program-test = { version = "0.16.0", features = ["v2"] }
+light-client = { version = "0.16.0", features = ["v2"] }
+light-sdk = { version = "0.16.0", features = ["v2"] }
