@@ -173,7 +173,7 @@ pub fn process_compress_attestations(
     // Emit single CompressAttestationEvent for the batch
     let event = CompressAttestationEvent {
         discriminator: EventDiscriminators::CompressEvent as u8,
-        pdas_closed: true,
+        pdas_closed: args.close_accounts,
         attestations: event_attestations,
     };
 
