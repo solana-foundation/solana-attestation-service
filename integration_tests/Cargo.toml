@@ -31,3 +31,4 @@ bincode = "1.3"
 rand = "0.8"
 solana-pubkey = { workspace = true , features = ["std", "rand", "borsh","curve25519", "sha2"] }
 solana-attestation-service = { path = "../program" }
+light-hasher = { workspace = true, features = ["std", "sha256"] }

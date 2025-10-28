@@ -30,6 +30,8 @@ use solana_sdk_ids::system_program;
 mod helpers;
 use helpers::{TestData, TestFixtures};
 
+use crate::helpers::hash;
+
 async fn setup(num_attestations: usize) -> TestFixtures {
     // Initialize Light Protocol test environment with SAS program
     let config = ProgramTestConfig::new_v2(
@@ -271,6 +273,11 @@ async fn test_compress_1_attestation_no_close() {
     assert_eq!(compressed_attestation.nonce, pda_attestation.nonce);
     assert_eq!(compressed_attestation.data, pda_attestation.data);
     assert_eq!(compressed_attestation.expiry, pda_attestation.expiry);
+    assert_eq!(
+        compressed_account.data.as_ref().unwrap().data_hash,
+        hash(&compressed_attestation),
+        "Discriminator should match Attestation::LIGHT_DISCRIMINATOR"
+    );
 }
 
 #[tokio::test]
@@ -390,6 +397,18 @@ async fn test_compress_2_attestations_no_close() {
     assert_eq!(compressed_attestation_1.data, pda_attestation_1.data);
     assert_eq!(compressed_attestation_2.nonce, pda_attestation_2.nonce);
     assert_eq!(compressed_attestation_2.data, pda_attestation_2.data);
+
+    // Verify hash computation for both attestations
+    assert_eq!(
+        compressed_account_1.data.as_ref().unwrap().data_hash,
+        hash(&compressed_attestation_1),
+        "Hash should match for attestation 1"
+    );
+    assert_eq!(
+        compressed_account_2.data.as_ref().unwrap().data_hash,
+        hash(&compressed_attestation_2),
+        "Hash should match for attestation 2"
+    );
 }
 
 #[tokio::test]
@@ -476,6 +495,13 @@ async fn test_compress_1_attestation_with_close() {
     assert_eq!(compressed_attestation.schema, schema);
     assert_eq!(compressed_attestation.signer, authority.pubkey());
     assert_eq!(compressed_attestation.token_account, Pubkey::default());
+
+    // Verify hash computation
+    assert_eq!(
+        compressed_account.data.as_ref().unwrap().data_hash,
+        hash(&compressed_attestation),
+        "Hash should match stored data_hash"
+    );
 
     // Verify original PDA is closed
     let pda_account = rpc.get_account(attestation_pda).await.unwrap();
@@ -584,6 +610,18 @@ async fn test_compress_2_attestations_with_close() {
     assert_eq!(compressed_attestation_1.schema, schema);
     assert_eq!(compressed_attestation_2.credential, credential);
     assert_eq!(compressed_attestation_2.schema, schema);
+
+    // Verify hash computation for both attestations
+    assert_eq!(
+        compressed_account_1.data.as_ref().unwrap().data_hash,
+        hash(&compressed_attestation_1),
+        "Hash should match for attestation 1"
+    );
+    assert_eq!(
+        compressed_account_2.data.as_ref().unwrap().data_hash,
+        hash(&compressed_attestation_2),
+        "Hash should match for attestation 2"
+    );
 
     // Verify original PDAs are closed
     let pda_account_1 = rpc.get_account(attestation_pda_1).await.unwrap();

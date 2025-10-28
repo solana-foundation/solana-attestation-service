@@ -9342,6 +9342,7 @@ dependencies = [
  "borsh 1.5.7",
  "light-client",
  "light-compressed-account",
+ "light-hasher",
  "light-program-test",
  "light-sdk",
  "light-sdk-pinocchio",

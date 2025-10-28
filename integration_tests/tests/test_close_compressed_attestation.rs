@@ -27,7 +27,7 @@ use solana_sdk::{
 use solana_sdk_ids::system_program;
 
 mod helpers;
-use helpers::{TestData, TestFixtures};
+use helpers::{hash, TestData, TestFixtures};
 
 async fn setup() -> TestFixtures {
     // Initialize Light Protocol test environment with SAS program
@@ -239,7 +239,9 @@ async fn test_close_compressed_attestation_success() {
         .unwrap();
 
     // Get the full attestation account data with discriminator
-    let attestation_account_data = compressed_account_before.data.unwrap().data;
+    let compressed_data = compressed_account_before.data.as_ref().unwrap();
+    let attestation_account_data = &compressed_data.data;
+    let stored_data_hash = compressed_data.data_hash;
 
     // Get validity proof for closing (input account)
     let rpc_result = rpc
@@ -273,7 +275,14 @@ async fn test_close_compressed_attestation_success() {
     }
 
     // Parse attestation account data
-    let attestation = Attestation::from_bytes(&attestation_account_data).unwrap();
+    let attestation = Attestation::from_bytes(attestation_account_data).unwrap();
+
+    // Verify hash computation
+    assert_eq!(
+        stored_data_hash,
+        hash(&attestation),
+        "Hash should match stored data_hash"
+    );
 
     let close_compressed_attestation_ix = builder
         .nonce(attestation.nonce)
@@ -344,7 +353,8 @@ async fn test_close_compressed_attestation_unauthorized_signer() {
         .value
         .unwrap();
 
-    let attestation_account_data = compressed_account_before.data.unwrap().data;
+    let compressed_data = compressed_account_before.data.as_ref().unwrap();
+    let attestation_account_data = &compressed_data.data;
 
     // Get validity proof for closing
     let rpc_result = rpc
@@ -376,7 +386,7 @@ async fn test_close_compressed_attestation_unauthorized_signer() {
     }
 
     // Parse attestation account data
-    let attestation = Attestation::from_bytes(&attestation_account_data).unwrap();
+    let attestation = Attestation::from_bytes(attestation_account_data).unwrap();
 
     let close_compressed_attestation_ix = builder
         .nonce(attestation.nonce)
@@ -464,7 +474,8 @@ async fn test_close_compressed_attestation_wrong_credential() {
         .value
         .unwrap();
 
-    let attestation_account_data = compressed_account_before.data.unwrap().data;
+    let compressed_data = compressed_account_before.data.as_ref().unwrap();
+    let attestation_account_data = &compressed_data.data;
 
     // Get validity proof for closing
     let rpc_result = rpc
@@ -496,7 +507,7 @@ async fn test_close_compressed_attestation_wrong_credential() {
     }
 
     // Parse attestation account data
-    let attestation = Attestation::from_bytes(&attestation_account_data).unwrap();
+    let attestation = Attestation::from_bytes(attestation_account_data).unwrap();
 
     let close_compressed_attestation_ix = builder
         .nonce(attestation.nonce)
@@ -570,7 +581,9 @@ async fn test_close_compressed_attestation_paused_schema_success() {
         .value
         .unwrap();
 
-    let attestation_account_data = compressed_account_before.data.unwrap().data;
+    let compressed_data = compressed_account_before.data.as_ref().unwrap();
+    let attestation_account_data = &compressed_data.data;
+    let stored_data_hash = compressed_data.data_hash;
 
     // Get validity proof for closing
     let rpc_result = rpc
@@ -602,7 +615,14 @@ async fn test_close_compressed_attestation_paused_schema_success() {
     }
 
     // Parse attestation account data
-    let attestation = Attestation::from_bytes(&attestation_account_data).unwrap();
+    let attestation = Attestation::from_bytes(attestation_account_data).unwrap();
+
+    // Verify hash computation
+    assert_eq!(
+        stored_data_hash,
+        hash(&attestation),
+        "Hash should match stored data_hash"
+    );
 
     let close_compressed_attestation_ix = builder
         .nonce(attestation.nonce)

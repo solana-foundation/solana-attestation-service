@@ -23,7 +23,7 @@ use solana_sdk::{
 use solana_sdk_ids::system_program;
 
 mod helpers;
-use helpers::{TestData, TestFixtures};
+use helpers::{hash, TestData, TestFixtures};
 
 async fn setup() -> TestFixtures {
     // Initialize Light Protocol test environment with SAS program
@@ -206,6 +206,13 @@ async fn test_create_compressed_attestation_success() {
     assert_eq!(attestation.signer, authority.pubkey());
     assert_eq!(attestation.expiry, expiry);
     assert_eq!(attestation.token_account, Pubkey::default());
+
+    // Verify hash computation
+    assert_eq!(
+        compressed_account.data.as_ref().unwrap().data_hash,
+        hash(&attestation),
+        "Hash should match stored data_hash"
+    );
 }
 
 #[tokio::test]
