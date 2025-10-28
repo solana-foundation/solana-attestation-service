@@ -6,7 +6,7 @@ use pinocchio::{
     sysvars::{rent::Rent, Sysvar},
     ProgramResult,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
+use solana_pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::SCHEMA_SEED,
@@ -122,7 +122,7 @@ struct CreateSchemaArgs<'a> {
     field_names_bytes: &'a [u8],
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CreateSchemaArgs, ProgramError> {
+fn process_instruction_data<'a>(data: &'a [u8]) -> Result<CreateSchemaArgs<'a>, ProgramError> {
     let mut offset: usize = 0;
 
     require_len!(data, 4);

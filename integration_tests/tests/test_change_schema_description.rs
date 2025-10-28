@@ -5,9 +5,8 @@ use solana_attestation_service_client::{
     instructions::{ChangeSchemaDescriptionBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
 use solana_attestation_service_macros::SchemaStructSerialize;
-use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
-};
+use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transaction::Transaction};
+use solana_sdk_ids::system_program;
 
 mod helpers;
 
@@ -28,7 +27,7 @@ async fn change_schema_description_success() {
             &authority.pubkey().to_bytes(),
             credential_name.as_bytes(),
         ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
 
     let create_credential_ix = CreateCredentialBuilder::new()
@@ -63,7 +62,7 @@ async fn change_schema_description_success() {
             schema_name.as_bytes(),
             &[1],
         ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -123,6 +122,6 @@ async fn change_schema_description_success() {
         borsh::to_vec(&field_names).unwrap()[4..]
     );
     assert_eq!(schema.description, description.as_bytes());
-    assert_eq!(schema.is_paused, false);
+    assert!(!schema.is_paused);
     assert_eq!(schema.name, schema_name.as_bytes());
 }

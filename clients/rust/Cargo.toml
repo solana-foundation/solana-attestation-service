@@ -9,3 +9,17 @@ repository = "https://github.com/solana-foundation/solana-attestation-service"
 [dependencies]
 borsh = { workspace = true }
 solana-program = { workspace = true }
+const-crypto = { workspace = true }
+num-derive = { workspace = true }
+num-traits = { workspace = true }
+thiserror = { workspace = true, default-features = true }
+
+[lints.rust]
+deprecated = "allow"
+
+[lints.rust.unexpected_cfgs]
+level = "allow"
+check-cfg = [
+    'cfg(target_os, values("solana"))',
+    'cfg(feature, values("frozen-abi", "no-entrypoint", "serde", "fetch", "anchor", "anchor-idl-build"))',
+]

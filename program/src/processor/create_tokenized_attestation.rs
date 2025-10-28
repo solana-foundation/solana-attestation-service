@@ -20,7 +20,7 @@ use pinocchio_token::{
     instructions::{InitializeMint2, MintToChecked, TokenProgramVariant},
     TOKEN_2022_PROGRAM_ID,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
+use solana_pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::{sas_pda, ATTESTATION_MINT_SEED, SAS_SEED, SCHEMA_MINT_SEED},
@@ -226,7 +226,9 @@ struct CreateTokenizedAttestationArgs<'a> {
     mint_account_space: u16,
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CreateTokenizedAttestationArgs, ProgramError> {
+fn process_instruction_data<'a>(
+    data: &'a [u8],
+) -> Result<CreateTokenizedAttestationArgs<'a>, ProgramError> {
     let mut offset: usize = 32; // Skip Nonce
 
     require_len!(data, offset + 4);

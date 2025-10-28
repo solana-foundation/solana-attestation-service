@@ -1,0 +1,3 @@
+packages:
+  - 'clients/typescript'
+  - 'examples/typescript/attestation-flow-guides'

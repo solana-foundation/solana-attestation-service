@@ -1,0 +1,84 @@
+name: Examples
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOLANA_CLI_VERSION: "2.3.11"
+  RUST_TOOLCHAIN: "1.90.0"
+
+jobs:
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          rust-toolchain: ${{ env.RUST_TOOLCHAIN }}
+          solana-cli-version: ${{ env.SOLANA_CLI_VERSION }}
+          node-version: "20"
+          install-light-cli: "true"
+          install-pnpm: "true"
+          pnpm-version: "9.10.0"
+          photon-indexer: "true"
+
+      - name: Build Solana program
+        run: make build-sbf
+
+      - name: Install and build root dependencies
+        run: make install && make build
+
+      - name: Test TypeScript client
+        working-directory: clients/typescript
+        run: pnpm test
+
+      - name: Start test validator
+        run: |
+          light test-validator \
+            --sbf-program 22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG target/deploy/solana_attestation_service.so \
+            &
+          echo "VALIDATOR_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for validator to be ready
+        run: sleep 20
+
+      - name: Fund default wallet
+        run: solana airdrop 1 -ul
+
+      - name: Run standard-demo
+        working-directory: examples/rust/attestation-flow-guide/standard-demo
+        run: |
+          cargo run
+        timeout-minutes: 5
+
+      - name: Run tokenization-demo
+        working-directory: examples/rust/attestation-flow-guide/tokenization-demo
+        run: |
+          cargo run
+        timeout-minutes: 5
+
+      - name: Run compression-demo
+        working-directory: examples/rust/attestation-flow-guide/compression-demo
+        run: cargo run
+
+      - name: Run TypeScript examples
+        working-directory: examples/typescript/attestation-flow-guides
+        run: |
+          pnpm gill:standard
+          pnpm gill:tokenized
+          pnpm gill:compressed
+          pnpm kit:standard
+          pnpm kit:tokenized
+          pnpm kit:compressed

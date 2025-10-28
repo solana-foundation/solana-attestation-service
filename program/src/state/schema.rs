@@ -146,6 +146,15 @@ impl Schema {
     }
 
     pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
+        // Minimum size: 1 (discriminator) + 32 (credential) + 4 (name_len) + 0 (min name)
+        //              + 4 (desc_len) + 0 (min desc) + 4 (layout_len) + 0 (min layout)
+        //              + 4 (field_names_len) + 0 (min field_names) + 1 (is_paused) + 1 (version)
+        const MIN_SCHEMA_SIZE: usize = 51;
+
+        if data.len() < MIN_SCHEMA_SIZE {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
         // Check discriminator
         if data[0] != Self::DISCRIMINATOR {
             msg!("Invalid Schema Data");

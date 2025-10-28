@@ -4,9 +4,8 @@ use solana_attestation_service_client::{
     accounts::Credential,
     instructions::{ChangeAuthorizedSignersBuilder, CreateCredentialBuilder},
 };
-use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
-};
+use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transaction::Transaction};
+use solana_sdk_ids::system_program;
 
 mod helpers;
 
@@ -23,7 +22,7 @@ async fn change_authorized_signers_success() {
             &authority.pubkey().to_bytes(),
             name.as_bytes(),
         ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
 
     let ix = CreateCredentialBuilder::new()
@@ -79,12 +78,16 @@ async fn change_authorized_signers_success() {
     assert_eq!(credential.authority, authority.pubkey());
     assert_eq!(credential.name, name.as_bytes());
     assert_eq!(credential.authorized_signers.len(), new_signers.len());
-    for i in 0..credential.authorized_signers.len() {
-        assert_eq!(credential.authorized_signers[i], new_signers[i]);
+    for (authority, new_signer) in credential.authorized_signers.iter().zip(new_signers.iter()) {
+        assert_eq!(authority, new_signer);
     }
 
     // Test upsizing authorized_signers.
-    let new_signers = vec![Keypair::new().pubkey(), Keypair::new().pubkey(), Keypair::new().pubkey()];
+    let new_signers = vec![
+        Keypair::new().pubkey(),
+        Keypair::new().pubkey(),
+        Keypair::new().pubkey(),
+    ];
     let ix = ChangeAuthorizedSignersBuilder::new()
         .payer(ctx.payer.pubkey())
         .authority(authority.pubkey())
@@ -116,8 +119,8 @@ async fn change_authorized_signers_success() {
     assert_eq!(credential.authority, authority.pubkey());
     assert_eq!(credential.name, name.as_bytes());
     assert_eq!(credential.authorized_signers.len(), new_signers.len());
-    for i in 0..credential.authorized_signers.len() {
-        assert_eq!(credential.authorized_signers[i], new_signers[i]);
+    for (authority, new_signer) in credential.authorized_signers.iter().zip(new_signers.iter()) {
+        assert_eq!(authority, new_signer);
     }
 
     // Test updating with same number of authorized_signers.
@@ -153,7 +156,7 @@ async fn change_authorized_signers_success() {
     assert_eq!(credential.authority, authority.pubkey());
     assert_eq!(credential.name, name.as_bytes());
     assert_eq!(credential.authorized_signers.len(), new_signers.len());
-    for i in 0..credential.authorized_signers.len() {
-        assert_eq!(credential.authorized_signers[i], new_signers[i]);
+    for (authority, new_signer) in credential.authorized_signers.iter().zip(new_signers.iter()) {
+        assert_eq!(authority, new_signer);
     }
 }

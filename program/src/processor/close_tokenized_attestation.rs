@@ -5,7 +5,7 @@ use pinocchio::{
     pubkey::Pubkey,
     ProgramResult,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
+use solana_pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::{sas_pda, ATTESTATION_MINT_SEED, SAS_SEED},

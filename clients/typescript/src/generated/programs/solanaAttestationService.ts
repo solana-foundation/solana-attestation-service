@@ -18,8 +18,11 @@ import {
   type ParsedChangeSchemaStatusInstruction,
   type ParsedChangeSchemaVersionInstruction,
   type ParsedCloseAttestationInstruction,
+  type ParsedCloseCompressedAttestationInstruction,
   type ParsedCloseTokenizedAttestationInstruction,
+  type ParsedCompressAttestationsInstruction,
   type ParsedCreateAttestationInstruction,
+  type ParsedCreateCompressedAttestationInstruction,
   type ParsedCreateCredentialInstruction,
   type ParsedCreateSchemaInstruction,
   type ParsedCreateTokenizedAttestationInstruction,
@@ -48,6 +51,9 @@ export enum SolanaAttestationServiceInstruction {
   TokenizeSchema,
   CreateTokenizedAttestation,
   CloseTokenizedAttestation,
+  CreateCompressedAttestation,
+  CloseCompressedAttestation,
+  CompressAttestations,
   EmitEvent,
 }
 
@@ -87,6 +93,15 @@ export function identifySolanaAttestationServiceInstruction(
   }
   if (containsBytes(data, getU8Encoder().encode(11), 0)) {
     return SolanaAttestationServiceInstruction.CloseTokenizedAttestation;
+  }
+  if (containsBytes(data, getU8Encoder().encode(12), 0)) {
+    return SolanaAttestationServiceInstruction.CreateCompressedAttestation;
+  }
+  if (containsBytes(data, getU8Encoder().encode(13), 0)) {
+    return SolanaAttestationServiceInstruction.CloseCompressedAttestation;
+  }
+  if (containsBytes(data, getU8Encoder().encode(14), 0)) {
+    return SolanaAttestationServiceInstruction.CompressAttestations;
   }
   if (containsBytes(data, getU8Encoder().encode(228), 0)) {
     return SolanaAttestationServiceInstruction.EmitEvent;
@@ -132,6 +147,15 @@ export type ParsedSolanaAttestationServiceInstruction<
   | ({
       instructionType: SolanaAttestationServiceInstruction.CloseTokenizedAttestation;
     } & ParsedCloseTokenizedAttestationInstruction<TProgram>)
+  | ({
+      instructionType: SolanaAttestationServiceInstruction.CreateCompressedAttestation;
+    } & ParsedCreateCompressedAttestationInstruction<TProgram>)
+  | ({
+      instructionType: SolanaAttestationServiceInstruction.CloseCompressedAttestation;
+    } & ParsedCloseCompressedAttestationInstruction<TProgram>)
+  | ({
+      instructionType: SolanaAttestationServiceInstruction.CompressAttestations;
+    } & ParsedCompressAttestationsInstruction<TProgram>)
   | ({
       instructionType: SolanaAttestationServiceInstruction.EmitEvent;
     } & ParsedEmitEventInstruction<TProgram>);

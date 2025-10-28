@@ -1,0 +1,35 @@
+name: Rust Integration Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOLANA_CLI_VERSION: "2.3.11"
+  RUST_TOOLCHAIN: "1.90.0"
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          rust-toolchain: ${{ env.RUST_TOOLCHAIN }}
+          solana-cli-version: ${{ env.SOLANA_CLI_VERSION }}
+          node-version: "20"
+          install-light-cli: "true"
+
+      - name: Build Solana program and run all tests
+        run: make test
