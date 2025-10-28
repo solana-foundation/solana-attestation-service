@@ -36,7 +36,7 @@ pub fn process_close_compressed_attestation(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let args = process_instruction_data(instruction_data)?;
+    let args = CloseCompressedAttestationArgs::process_instruction_data(instruction_data)?;
 
     // Account destructuring - 12 accounts
     if accounts.len() != 12 {
@@ -114,72 +114,74 @@ pub fn process_close_compressed_attestation(
     Ok(())
 }
 
-struct CloseCompressedAttestationArgs {
-    proof: ValidityProof,
-    root_index: u16,
-    leaf_index: u32,
-    compressed_address: [u8; 32],
-    attestation: CloseAttestation,
+pub struct CloseCompressedAttestationArgs {
+    pub proof: ValidityProof,
+    pub root_index: u16,
+    pub leaf_index: u32,
+    pub compressed_address: [u8; 32],
+    pub attestation: CloseAttestation,
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CloseCompressedAttestationArgs, ProgramError> {
-    // Minimum size: 1 (is_some) + 2 (root_index) + 4 (leaf_index) + 32 (address)
-    //               + 32 (nonce) + 32 (schema) + 32 (signer) + 8 (expiry) + 4 (data_len) + 0 (min data)
-    const MIN_INSTRUCTION_SIZE: usize = 7 + 32 + 108;
+impl CloseCompressedAttestationArgs {
+    pub fn process_instruction_data(data: &[u8]) -> Result<Self, ProgramError> {
+        // Minimum size: 1 (is_some) + 2 (root_index) + 4 (leaf_index) + 32 (address)
+        //               + 32 (nonce) + 32 (schema) + 32 (signer) + 8 (expiry) + 4 (data_len) + 0 (min data)
+        const MIN_INSTRUCTION_SIZE: usize = 7 + 32 + 108;
 
-    if data.len() < MIN_INSTRUCTION_SIZE {
-        return Err(ProgramError::InvalidInstructionData);
-    }
+        if data.len() < MIN_INSTRUCTION_SIZE {
+            return Err(ProgramError::InvalidInstructionData);
+        }
 
-    // Parse ValidityProof (Option<CompressedProof>)
-    // First byte indicates if Some or None
-    let (is_some_bytes, remaining) = data.split_at(1);
-    let is_some = is_some_bytes[0] != 0;
+        // Parse ValidityProof (Option<CompressedProof>)
+        // First byte indicates if Some or None
+        let (is_some_bytes, remaining) = data.split_at(1);
+        let is_some = is_some_bytes[0] != 0;
 
-    // If proof is Some, validate we have enough bytes for the 128-byte proof
-    if is_some && data.len() < MIN_INSTRUCTION_SIZE + 128 {
-        return Err(ProgramError::InvalidInstructionData);
-    }
+        // If proof is Some, validate we have enough bytes for the 128-byte proof
+        if is_some && data.len() < MIN_INSTRUCTION_SIZE + 128 {
+            return Err(ProgramError::InvalidInstructionData);
+        }
 
-    let (proof, remaining) = if is_some {
-        let (proof_bytes, remaining) = remaining.split_at(128);
-        let validity_proof =
-            ValidityProof::try_from(proof_bytes).map_err(|e| ProgramError::Custom(u32::from(e)))?;
-        (validity_proof, remaining)
-    } else {
-        (ValidityProof(None), remaining)
-    };
+        let (proof, remaining) = if is_some {
+            let (proof_bytes, remaining) = remaining.split_at(128);
+            let validity_proof = ValidityProof::try_from(proof_bytes)
+                .map_err(|e| ProgramError::Custom(u32::from(e)))?;
+            (validity_proof, remaining)
+        } else {
+            (ValidityProof(None), remaining)
+        };
 
-    // Parse root_index (2 bytes)
-    let (root_index_bytes, remaining) = remaining.split_at(2);
-    let root_index = u16::from_le_bytes(
-        root_index_bytes
+        // Parse root_index (2 bytes)
+        let (root_index_bytes, remaining) = remaining.split_at(2);
+        let root_index = u16::from_le_bytes(
+            root_index_bytes
+                .try_into()
+                .map_err(|_| ProgramError::InvalidInstructionData)?,
+        );
+
+        // Parse leaf_index (4 bytes)
+        let (leaf_index_bytes, remaining) = remaining.split_at(4);
+        let leaf_index = u32::from_le_bytes(
+            leaf_index_bytes
+                .try_into()
+                .map_err(|_| ProgramError::InvalidInstructionData)?,
+        );
+
+        // Parse compressed_address (32 bytes)
+        let (address_bytes, remaining) = remaining.split_at(32);
+        let compressed_address: [u8; 32] = address_bytes
             .try_into()
-            .map_err(|_| ProgramError::InvalidInstructionData)?,
-    );
+            .map_err(|_| ProgramError::InvalidInstructionData)?;
+        let attestation = CloseAttestation::try_from_slice(remaining)?;
 
-    // Parse leaf_index (4 bytes)
-    let (leaf_index_bytes, remaining) = remaining.split_at(4);
-    let leaf_index = u32::from_le_bytes(
-        leaf_index_bytes
-            .try_into()
-            .map_err(|_| ProgramError::InvalidInstructionData)?,
-    );
-
-    // Parse compressed_address (32 bytes)
-    let (address_bytes, remaining) = remaining.split_at(32);
-    let compressed_address: [u8; 32] = address_bytes
-        .try_into()
-        .map_err(|_| ProgramError::InvalidInstructionData)?;
-    let attestation = CloseAttestation::try_from_slice(remaining)?;
-
-    Ok(CloseCompressedAttestationArgs {
-        proof,
-        attestation,
-        leaf_index,
-        root_index,
-        compressed_address,
-    })
+        Ok(Self {
+            proof,
+            attestation,
+            leaf_index,
+            root_index,
+            compressed_address,
+        })
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, ShankType)]

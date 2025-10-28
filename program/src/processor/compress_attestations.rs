@@ -38,7 +38,7 @@ pub fn process_compress_attestations(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let args = process_instruction_data(instruction_data)?;
+    let args = CompressAttestationsArgs::process_instruction_data(instruction_data)?;
 
     // Validate num_attestations is non-zero
     if args.num_attestations == 0 {
@@ -193,42 +193,44 @@ pub fn process_compress_attestations(
     Ok(())
 }
 
-struct CompressAttestationsArgs {
-    proof: CompressedProof,
-    close_accounts: bool,
-    address_root_index: u16,
-    num_attestations: u8,
+pub struct CompressAttestationsArgs {
+    pub proof: CompressedProof,
+    pub close_accounts: bool,
+    pub address_root_index: u16,
+    pub num_attestations: u8,
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CompressAttestationsArgs, ProgramError> {
-    // Expected: proof(128) + close_accounts(1) + address_root_index(2) + num_attestations(1) = 132 bytes
-    if data.len() < 132 {
-        return Err(ProgramError::InvalidInstructionData);
+impl CompressAttestationsArgs {
+    pub fn process_instruction_data(data: &[u8]) -> Result<Self, ProgramError> {
+        // Expected: proof(128) + close_accounts(1) + address_root_index(2) + num_attestations(1) = 132 bytes
+        if data.len() < 132 {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+        // Parse CompressedProof (128 bytes: 32 + 64 + 32)
+        let (proof_bytes, remaining) = data.split_at(128);
+        let proof = CompressedProof::try_from(proof_bytes)
+            .map_err(|e| ProgramError::Custom(u32::from(e)))?;
+
+        // Parse close_accounts (1 byte)
+        let (close_bytes, remaining) = remaining.split_at(1);
+        let close_accounts = close_bytes[0] != 0;
+
+        // Parse address_root_index (2 bytes)
+        let (root_index_bytes, remaining) = remaining.split_at(2);
+        let address_root_index = u16::from_le_bytes(
+            root_index_bytes
+                .try_into()
+                .map_err(|_| ProgramError::InvalidInstructionData)?,
+        );
+
+        // Parse num_attestations (1 byte)
+        let num_attestations = remaining[0];
+
+        Ok(Self {
+            proof,
+            close_accounts,
+            address_root_index,
+            num_attestations,
+        })
     }
-    // Parse CompressedProof (128 bytes: 32 + 64 + 32)
-    let (proof_bytes, remaining) = data.split_at(128);
-    let proof =
-        CompressedProof::try_from(proof_bytes).map_err(|e| ProgramError::Custom(u32::from(e)))?;
-
-    // Parse close_accounts (1 byte)
-    let (close_bytes, remaining) = remaining.split_at(1);
-    let close_accounts = close_bytes[0] != 0;
-
-    // Parse address_root_index (2 bytes)
-    let (root_index_bytes, remaining) = remaining.split_at(2);
-    let address_root_index = u16::from_le_bytes(
-        root_index_bytes
-            .try_into()
-            .map_err(|_| ProgramError::InvalidInstructionData)?,
-    );
-
-    // Parse num_attestations (1 byte)
-    let num_attestations = remaining[0];
-
-    Ok(CompressAttestationsArgs {
-        proof,
-        close_accounts,
-        address_root_index,
-        num_attestations,
-    })
 }

@@ -31,7 +31,7 @@ pub fn process_create_compressed_attestation(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let args = process_instruction_data(instruction_data)?;
+    let args = CreateCompressedAttestationArgs::process_instruction_data(instruction_data)?;
     // Expect 12 accounts.
     // 4 attestation
     // 6 light system accounts
@@ -138,69 +138,69 @@ pub fn process_create_compressed_attestation(
     Ok(())
 }
 
-struct CreateCompressedAttestationArgs<'a> {
-    proof: CompressedProof,
-    nonce: Pubkey,
-    expiry: i64,
-    address_root_index: u16,
-    data: &'a [u8],
+pub struct CreateCompressedAttestationArgs<'a> {
+    pub proof: CompressedProof,
+    pub nonce: Pubkey,
+    pub expiry: i64,
+    pub address_root_index: u16,
+    pub data: &'a [u8],
 }
 
-fn process_instruction_data<'a>(
-    data: &'a [u8],
-) -> Result<CreateCompressedAttestationArgs<'a>, ProgramError> {
-    // Minimum size: 32 (proof_a) + 64 (proof_b) + 32 (proof_c) + 32 (nonce)
-    //               + 8 (expiry) + 2 (address_root_index) + 4 (data_len) + 0 (min data)
-    const MIN_INSTRUCTION_SIZE: usize = 174;
+impl<'a> CreateCompressedAttestationArgs<'a> {
+    pub fn process_instruction_data(data: &'a [u8]) -> Result<Self, ProgramError> {
+        // Minimum size: 32 (proof_a) + 64 (proof_b) + 32 (proof_c) + 32 (nonce)
+        //               + 8 (expiry) + 2 (address_root_index) + 4 (data_len) + 0 (min data)
+        const MIN_INSTRUCTION_SIZE: usize = 174;
 
-    if data.len() < MIN_INSTRUCTION_SIZE {
-        return Err(ProgramError::InvalidInstructionData);
+        if data.len() < MIN_INSTRUCTION_SIZE {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+
+        let (proof_bytes, remaining) = data.split_at(128);
+        let proof = CompressedProof::try_from(proof_bytes)
+            .map_err(|e| ProgramError::Custom(u32::from(e)))?;
+
+        // Parse nonce (32 bytes)
+        let (nonce_bytes, remaining) = remaining.split_at(32);
+        let nonce: Pubkey = nonce_bytes
+            .try_into()
+            .map_err(|_| ProgramError::InvalidInstructionData)?;
+
+        // Parse expiry (8 bytes)
+        let (expiry_bytes, remaining) = remaining.split_at(8);
+        let expiry = i64::from_le_bytes(
+            expiry_bytes
+                .try_into()
+                .map_err(|_| ProgramError::InvalidInstructionData)?,
+        );
+
+        // Parse address_root_index (2 bytes)
+        let (address_tree_info_bytes, remaining) = remaining.split_at(2);
+        let address_root_index = u16::from_le_bytes(
+            address_tree_info_bytes
+                .try_into()
+                .map_err(|_| ProgramError::InvalidInstructionData)?,
+        );
+
+        // Parse data length (4 bytes)
+        let (len_bytes, data) = remaining.split_at(4);
+        let data_len = u32::from_le_bytes(
+            len_bytes
+                .try_into()
+                .map_err(|_| ProgramError::InvalidInstructionData)?,
+        ) as usize;
+
+        // Validate remaining data matches expected length
+        if data.len() != data_len {
+            return Err(ProgramError::InvalidInstructionData);
+        }
+
+        Ok(Self {
+            proof,
+            nonce,
+            expiry,
+            address_root_index,
+            data,
+        })
     }
-
-    let (proof_bytes, remaining) = data.split_at(128);
-    let proof =
-        CompressedProof::try_from(proof_bytes).map_err(|e| ProgramError::Custom(u32::from(e)))?;
-
-    // Parse nonce (32 bytes)
-    let (nonce_bytes, remaining) = remaining.split_at(32);
-    let nonce: Pubkey = nonce_bytes
-        .try_into()
-        .map_err(|_| ProgramError::InvalidInstructionData)?;
-
-    // Parse expiry (8 bytes)
-    let (expiry_bytes, remaining) = remaining.split_at(8);
-    let expiry = i64::from_le_bytes(
-        expiry_bytes
-            .try_into()
-            .map_err(|_| ProgramError::InvalidInstructionData)?,
-    );
-
-    // Parse address_root_index (2 bytes)
-    let (address_tree_info_bytes, remaining) = remaining.split_at(2);
-    let address_root_index = u16::from_le_bytes(
-        address_tree_info_bytes
-            .try_into()
-            .map_err(|_| ProgramError::InvalidInstructionData)?,
-    );
-
-    // Parse data length (4 bytes)
-    let (len_bytes, data) = remaining.split_at(4);
-    let data_len = u32::from_le_bytes(
-        len_bytes
-            .try_into()
-            .map_err(|_| ProgramError::InvalidInstructionData)?,
-    ) as usize;
-
-    // Validate remaining data matches expected length
-    if data.len() != data_len {
-        return Err(ProgramError::InvalidInstructionData);
-    }
-
-    Ok(CreateCompressedAttestationArgs {
-        proof,
-        nonce,
-        expiry,
-        address_root_index,
-        data,
-    })
 }
