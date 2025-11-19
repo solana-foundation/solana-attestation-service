@@ -13,15 +13,15 @@
   },
   "packageManager": "pnpm@10.12.3",
   "dependencies": {
-    "@solana-program/compute-budget": "^0.8.0",
-    "@solana-program/token-2022": "^0.4.2",
-    "@solana/kit": "^2.3.0",
+    "@solana-program/compute-budget": "^0.11.0",
+    "@solana-program/token-2022": "^0.6.1",
+    "@solana/kit": "^5.0.0",
     "gill": "^0.10.2",
-    "sas-lib": "^1.0.9"
+    "sas-lib": "^1.0.10"
   },
   "devDependencies": {
     "@types/node": "^24.0.4",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.8.3"
   }
 }

@@ -2,6 +2,7 @@ const codama = require("codama");
 const anchorIdl = require("@codama/nodes-from-anchor");
 const path = require("path");
 const renderers = require("@codama/renderers");
+const { renderVisitor: renderJavaScriptVisitor } = require("@codama/renderers-js");
 const fs = require("fs");
 
 const TOKEN_2022_PROGRAM_ID = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
@@ -106,7 +107,7 @@ sasCodama.accept(
 );
 
 sasCodama.accept(
-  renderers.renderJavaScriptVisitor(
+  renderJavaScriptVisitor(
     path.join(typescriptClientsDir, "src", "generated"),
     {
       formatCode: true,
