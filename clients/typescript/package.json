@@ -1,6 +1,6 @@
 {
   "name": "sas-lib",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -16,16 +16,14 @@
     "@types/chai": "^5.2.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.11.24",
-    "chai": "^5.2.0",
+    "chai": "^4.4.1",
     "mocha": "^10.8.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@solana/kit": "^2.1.0",
-    "bn.js": "^5.2.1",
+    "@solana/kit": "^5.0.0",
     "borsh": "^2.0.0",
     "borsher": "^4.0.0"
   }
 }
-

@@ -19,11 +19,16 @@ import {
     Instruction,
     Commitment,
     signTransactionMessageWithSigners,
-    CompilableTransactionMessage,
+    TransactionMessage,
+    TransactionMessageWithFeePayer,
     TransactionMessageWithBlockhashLifetime,
     getSignatureFromTransaction,
     Address,
     MicroLamports,
+    assertIsFullySignedTransaction,
+    assertIsTransactionWithBlockhashLifetime,
+    assertIsSendableTransaction,
+    assertIsTransactionWithinSizeLimit,
 } from "@solana/kit";
 import { 
     updateOrAppendSetComputeUnitLimitInstruction, 
@@ -125,13 +130,20 @@ export const createDefaultTransaction = async (
 };
 export const signAndSendTransaction = async (
     client: Client,
-    transactionMessage: CompilableTransactionMessage &
+    transactionMessage: TransactionMessage &
+        TransactionMessageWithFeePayer &
         TransactionMessageWithBlockhashLifetime,
     commitment: Commitment = 'confirmed'
 ) => {
     const signedTransaction =
         await signTransactionMessageWithSigners(transactionMessage);
     const signature = getSignatureFromTransaction(signedTransaction);
+
+    assertIsFullySignedTransaction(signedTransaction);
+    assertIsTransactionWithinSizeLimit(signedTransaction);
+    assertIsSendableTransaction(signedTransaction);
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
+    
     await sendAndConfirmTransactionFactory(client)(signedTransaction, {
         commitment,
     });
