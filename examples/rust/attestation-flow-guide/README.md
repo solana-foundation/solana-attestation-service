@@ -6,6 +6,7 @@ This repository contains Rust implementation examples for the Solana Attestation
 |-------|-----------|-------------|-------------|
 | Standard Attestation Demo | `standard-demo/` | [How to Build Digital Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/rust/how-to-create-digital-credentials) | Basic credential and attestation workflow using Rust |
 | Tokenized Attestation Demo | `tokenization-demo/` | [How to Create Tokenized Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/rust/tokenized-attestations) | Create credentials as SPL tokens using Token-2022 and Rust |
+| Compression Attestation Demo | `compression-demo/` | tdb |  Basic compressed credential and attestation workflow using Rust |
 
 
 ## Requirements
@@ -26,7 +27,7 @@ cd examples/rust/attestation-flow-guide
 
 All demos will automatically:
 - Create test wallets
-- Request airdrop for payer wallet  
+- Request airdrop for payer wallet
 - Execute the full attestation workflow
 
 ### Local Development
@@ -57,9 +58,19 @@ For local development and testing:
 
    ```bash
    # Tokenized demo
-   cd tokenization-demo  
+   cd tokenization-demo
    cargo run tokenized
    ```
+
+   Compression Attestation Workflow (automatically spawns Light validator):
+
+   ```bash
+   # Compression demo
+   cd compression-demo
+   cargo run
+   ```
+
+   **Note:** The compression demo automatically spawns a local Light validator with indexer and prover server.
 
 ## Project Structure
 
@@ -73,6 +84,11 @@ standard-demo/
 
 tokenization-demo/
 ├── src/
-│   └── main.rs          # Complete tokenized demo implementation  
+│   └── main.rs          # Complete tokenized demo implementation
 └── Cargo.toml           # Dependencies and configuration
+
+compression-demo/
+├── src/
+│   └── main.rs          # Complete compression demo implementation
+└── Cargo.toml           # Dependencies and Light Protocol configuration
 ```

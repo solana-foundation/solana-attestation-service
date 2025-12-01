@@ -1,0 +1,34 @@
+[package]
+name = "sas-compression-demo"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+# Solana core dependencies
+solana-sdk = "2.3.1"
+solana-client = "2.3.2"
+solana-program = "2.3.0"
+solana-system-interface = "1.0.0"
+
+# Solana Attestation Service client (local development version)
+solana-attestation-service-client = { path = "../../../../clients/rust" }
+solana-attestation-service-macros = { path = "../../../../cereal_macro" }
+
+# Light Protocol dependencies
+light-client = { version = "0.16.0", features = ["v2"] }
+light-sdk = { version = "0.16.0", features = ["v2", "keccak"] }
+light-prover-client = { version = "4.0.0" }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Serialization
+borsh = "0.10"
+
+# Error handling
+anyhow = "1.0"
+
+# Utilities
+hex = "0.4"

@@ -8,9 +8,8 @@ use solana_attestation_service_client::types::CloseAttestationEvent;
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::clock::Clock;
-use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
-};
+use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transaction::Transaction};
+use solana_sdk_ids::system_program;
 
 mod helpers;
 

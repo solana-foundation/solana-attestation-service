@@ -10,8 +10,14 @@ use solana_attestation_service_client::{
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
-    clock::Clock, instruction::InstructionError, pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::{Transaction, TransactionError}
+    clock::Clock,
+    instruction::InstructionError,
+    pubkey::Pubkey,
+    signature::Keypair,
+    signer::Signer,
+    transaction::{Transaction, TransactionError},
 };
+use solana_sdk_ids::system_program;
 
 mod helpers;
 
@@ -218,8 +224,7 @@ async fn create_attestation_fail_bad_data() {
         .banks_client
         .process_transaction(transaction)
         .await
-        .err()
-        .expect("should error")
+        .expect_err("should error")
         .unwrap();
     assert_eq!(
         tx_err,
@@ -296,8 +301,7 @@ async fn create_attestation_fail_schema_paused() {
         .banks_client
         .process_transaction(transaction)
         .await
-        .err()
-        .expect("should error")
+        .expect_err("should error")
         .unwrap();
     assert_eq!(
         tx_err,
