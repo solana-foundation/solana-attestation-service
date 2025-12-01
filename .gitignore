@@ -2,4 +2,6 @@
 *keypair.json
 node_modules
 dist/
+.claude
+test-ledger
 .DS_Store

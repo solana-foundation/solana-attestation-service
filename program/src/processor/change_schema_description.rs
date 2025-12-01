@@ -63,7 +63,7 @@ pub fn process_change_schema_description(
     if new_description_len != prev_description_len {
         let previous_space = schema_info.data_len();
         let new_space = previous_space + new_description_len - prev_description_len;
-        schema_info.realloc(new_space, false)?;
+        schema_info.resize(new_space)?;
         let diff = new_space.saturating_sub(previous_space);
         if diff > 0 {
             // top up lamports to account for additional rent.

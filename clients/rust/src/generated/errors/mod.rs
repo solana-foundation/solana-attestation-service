@@ -4,3 +4,7 @@
 //!
 //! <https://github.com/codama-idl/codama>
 //!
+
+pub(crate) mod solana_attestation_service;
+
+pub use self::solana_attestation_service::SolanaAttestationServiceError;

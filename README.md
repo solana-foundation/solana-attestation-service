@@ -7,7 +7,7 @@
 Run integration tests with the following script
 
 ```
-cargo-build-sbf && SBF_OUT_DIR=$(pwd)/target/sbpf-solana-solana/release cargo test
+cargo test-sbf -p tests-solana-attestation-service
 ```
 
 ## Generating IDL

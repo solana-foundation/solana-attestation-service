@@ -7,7 +7,8 @@
   "license": "MIT",
   "scripts": {
     "generate-clients": "node ./scripts/generate-clients.js",
-    "generate-idl": "shank idl -r program -o idl"
+    "generate-idl": "shank idl -r program -o idl",
+    "build": "pnpm -r build"
   },
   "dependencies": {
     "@codama/nodes-from-anchor": "^1.3.0",

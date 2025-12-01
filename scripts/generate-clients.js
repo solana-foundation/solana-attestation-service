@@ -9,6 +9,13 @@ const TOKEN_2022_PROGRAM_ID = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
 const SAS_PROGRAM_ID = '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG';
 const ATA_PROGRAM_ID = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
 const EVENT_AUTHORITY_PDA = 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g';
+// Light Protocol System Accounts
+const LIGHT_SYSTEM_PROGRAM_ID = 'SySTEM1eSU2p4BGQfQpimFEWWSC1XDFeun3Nqzz3rT7';
+const ACCOUNT_COMPRESSION_PROGRAM_ID = 'compr6CUsB5m2jS4Y3831ztGSTnDpnKJTKS95d64XVq';
+const ACCOUNT_COMPRESSION_AUTHORITY_PDA = 'HwXnGK3tPkkVY6P439H2p68AxpeuWXd5PcrAxFpbmfbA';
+const REGISTERED_PROGRAM_PDA = '35hkDgaAKwMCaxRz2ocSZ6NaUrtKkyNqU6c4RV3tYJRh';
+const CPI_SIGNER_PDA = '4J8ZeHg2hqPTKv1ck9bqucEcbVDBS6fVZsNCuThmDHFC';
+const ALLOWED_ADDRESS_TREE = 'amt2kaJA14v3urZbZvnc5v2np8jqvc4Z8zDep5wbtzx';
 
 const projectRoot = path.join(__dirname, "..");
 const idlDir = path.join(projectRoot, "idl");
@@ -92,6 +99,31 @@ sasCodama.update(
     {
       account: 'eventAuthority',
       defaultValue: codama.publicKeyValueNode(EVENT_AUTHORITY_PDA)
+    },
+    // Light Protocol System Accounts
+    {
+      account: 'lightSystemProgram',
+      defaultValue: codama.publicKeyValueNode(LIGHT_SYSTEM_PROGRAM_ID)
+    },
+    {
+      account: 'cpiSigner',
+      defaultValue: codama.publicKeyValueNode(CPI_SIGNER_PDA)
+    },
+    {
+      account: 'accountCompressionProgram',
+      defaultValue: codama.publicKeyValueNode(ACCOUNT_COMPRESSION_PROGRAM_ID)
+    },
+    {
+      account: 'accountCompressionAuthority',
+      defaultValue: codama.publicKeyValueNode(ACCOUNT_COMPRESSION_AUTHORITY_PDA)
+    },
+    {
+      account: 'registeredProgramPda',
+      defaultValue: codama.publicKeyValueNode(REGISTERED_PROGRAM_PDA)
+    },
+    {
+      account: 'addressMerkleTree',
+      defaultValue: codama.publicKeyValueNode(ALLOWED_ADDRESS_TREE)
     }
   ]),
 );

@@ -3,9 +3,8 @@ use helpers::program_test_context;
 use solana_attestation_service_client::{
     accounts::Credential, instructions::CreateCredentialBuilder,
 };
-use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
-};
+use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, transaction::Transaction};
+use solana_sdk_ids::system_program;
 
 mod helpers;
 
@@ -22,7 +21,7 @@ async fn create_credential_success() {
             &authority.pubkey().to_bytes(),
             name.as_bytes(),
         ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
 
     let ix = CreateCredentialBuilder::new()
