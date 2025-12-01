@@ -1,6 +1,10 @@
 use borsh::BorshDeserialize;
 use solana_attestation_service::{
-    events::CloseAttestationEvent as ProgramCloseAttestationEvent,
+    events::{
+        CloseAttestationEvent as ProgramCloseAttestationEvent,
+        CompressAttestation as ProgramCompressAttestation,
+        CompressAttestationEvent as ProgramCompressAttestationEvent,
+    },
     processor::{
         close_compressed_attestation::CloseCompressedAttestationArgs,
         compress_attestations::CompressAttestationsArgs,
@@ -12,9 +16,43 @@ use solana_attestation_service_client::{
         CloseCompressedAttestationInstructionArgs, CompressAttestationsInstructionArgs,
         CreateCompressedAttestationInstructionArgs,
     },
-    types::CloseAttestationEvent,
+    types::{CloseAttestationEvent, CompressAttestationEvent},
 };
 use solana_pubkey::Pubkey;
+
+#[test]
+fn test_compress_attestation_event_serialization_roundtrip_randomized() {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+
+    for _ in 0..1000 {
+        let attestations: Vec<ProgramCompressAttestation> = (0..rng.gen_range(1..=10))
+            .map(|_| ProgramCompressAttestation {
+                schema: Pubkey::new_unique().to_bytes(),
+                attestation_data: (0..rng.gen_range(0..=500)).map(|_| rng.gen()).collect(),
+            })
+            .collect();
+
+        let original = ProgramCompressAttestationEvent {
+            discriminator: rng.gen(),
+            attestations,
+        };
+
+        let serialized = original.to_bytes();
+        let deserialized = CompressAttestationEvent::try_from_slice(&serialized[8..]).unwrap();
+
+        assert_eq!(original.discriminator, deserialized.discriminator);
+        assert_eq!(original.attestations.len(), deserialized.attestations.len());
+        for (prog, client) in original
+            .attestations
+            .iter()
+            .zip(deserialized.attestations.iter())
+        {
+            assert_eq!(prog.schema, client.schema.to_bytes());
+            assert_eq!(prog.attestation_data, client.attestation_data);
+        }
+    }
+}
 
 #[test]
 fn test_close_attestation_event_serialization_roundtrip_randomized() {

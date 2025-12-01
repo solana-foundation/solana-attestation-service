@@ -4,7 +4,9 @@ use crate::{
         MAX_COMPRESSED_ATTESTATION_SIZE,
     },
     error::AttestationServiceError,
-    events::{CloseAttestationEvent, EventDiscriminators},
+    events::{
+        CloseAttestationEvent, CompressAttestation, CompressAttestationEvent, EventDiscriminators,
+    },
     state::{Attestation, Credential},
 };
 extern crate alloc;
@@ -144,17 +146,27 @@ pub fn process_compress_attestations(
         .with_new_addresses(&new_address_params)
         .invoke(light_cpi_accounts)?;
 
+    // Collect event data while closing accounts
+    let mut compress_attestations = Vec::with_capacity(args.num_attestations as usize);
+
     // Close accounts and emit CloseAttestationEvent for each
     for attestation_info in attestation_accounts {
         // Read attestation for event data BEFORE closing
         let attestation_data = attestation_info.try_borrow_data()?;
         let attestation = Attestation::try_from_bytes(&attestation_data)?;
 
-        let event = CloseAttestationEvent {
+        let close_event = CloseAttestationEvent {
             discriminator: EventDiscriminators::CloseEvent as u8,
             schema: attestation.schema,
             attestation_data: attestation.data.clone(),
         };
+
+        // Collect for CompressAttestationEvent
+        compress_attestations.push(CompressAttestation {
+            schema: attestation.schema,
+            attestation_data: attestation.data.clone(),
+        });
+
         drop(attestation_data);
 
         // Close account and transfer rent to payer
@@ -171,7 +183,7 @@ pub fn process_compress_attestations(
             &Instruction {
                 program_id,
                 accounts: &[AccountMeta::new(event_authority_info.key(), false, true)],
-                data: event.to_bytes().as_slice(),
+                data: close_event.to_bytes().as_slice(),
             },
             &[event_authority_info],
             &[Signer::from(&[
@@ -180,6 +192,25 @@ pub fn process_compress_attestations(
             ])],
         )?;
     }
+
+    // Emit single CompressAttestationEvent for the batch
+    let compress_event = CompressAttestationEvent {
+        discriminator: EventDiscriminators::CompressEvent as u8,
+        attestations: compress_attestations,
+    };
+
+    invoke_signed(
+        &Instruction {
+            program_id,
+            accounts: &[AccountMeta::new(event_authority_info.key(), false, true)],
+            data: compress_event.to_bytes().as_slice(),
+        },
+        &[event_authority_info],
+        &[Signer::from(&[
+            Seed::from(EVENT_AUTHORITY_SEED),
+            Seed::from(&[event_authority_pda::BUMP]),
+        ])],
+    )?;
 
     Ok(())
 }
