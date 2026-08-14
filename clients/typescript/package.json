@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "mocha --require ts-node/register 'test/**/*'"
+    "test": "mocha --require ts-node/register 'test/*.ts'",
+    "test:surfpool": "mocha --require ts-node/register --timeout 120000 'test/surfpool/**/*.ts'"
   },
   "devDependencies": {
     "@solana/kit": "^7.0.0",
