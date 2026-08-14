@@ -7,3 +7,4 @@
  */
 
 export * from './closeAttestationEvent';
+export * from './schemaDataType';

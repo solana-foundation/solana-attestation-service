@@ -18,7 +18,7 @@ import {
   type Codec,
 } from "@solana/kit";
 
-import { Schema } from "./generated";
+import { Schema, SchemaDataType } from "./generated";
 
 type SchemaOutputTypes =
   | number
@@ -52,36 +52,36 @@ const getStringCodec = (): Codec<string> =>
   addCodecSizePrefix(getUtf8Codec(), getU32Codec());
 
 /**
- * Maps the SAS compact byte layout to the equivalent data type. Values mirror
- * the type identifiers emitted by the `SchemaStructSerialize` derive macro.
+ * Maps each schema data type to the codec that reads and writes the matching
+ * field of an Attestation's data blob.
  */
-const compactLayoutMapping: Record<number, () => Codec<any>> = {
-  0: getU8Codec,
-  1: getU16Codec,
-  2: getU32Codec,
-  3: getU64Codec,
-  4: getU128Codec,
-  5: getI8Codec,
-  6: getI16Codec,
-  7: getI32Codec,
-  8: getI64Codec,
-  9: getI128Codec,
-  10: getBooleanCodec,
-  11: getCharCodec,
-  12: getStringCodec,
-  13: () => getArrayCodec(getU8Codec()),
-  14: () => getArrayCodec(getU16Codec()),
-  15: () => getArrayCodec(getU32Codec()),
-  16: () => getArrayCodec(getU64Codec()),
-  17: () => getArrayCodec(getU128Codec()),
-  18: () => getArrayCodec(getI8Codec()),
-  19: () => getArrayCodec(getI16Codec()),
-  20: () => getArrayCodec(getI32Codec()),
-  21: () => getArrayCodec(getI64Codec()),
-  22: () => getArrayCodec(getI128Codec()),
-  23: () => getArrayCodec(getBooleanCodec()),
-  24: () => getArrayCodec(getCharCodec()),
-  25: () => getArrayCodec(getStringCodec()),
+const dataTypeCodecs: Record<SchemaDataType, () => Codec<any>> = {
+  [SchemaDataType.U8]: getU8Codec,
+  [SchemaDataType.U16]: getU16Codec,
+  [SchemaDataType.U32]: getU32Codec,
+  [SchemaDataType.U64]: getU64Codec,
+  [SchemaDataType.U128]: getU128Codec,
+  [SchemaDataType.I8]: getI8Codec,
+  [SchemaDataType.I16]: getI16Codec,
+  [SchemaDataType.I32]: getI32Codec,
+  [SchemaDataType.I64]: getI64Codec,
+  [SchemaDataType.I128]: getI128Codec,
+  [SchemaDataType.Bool]: getBooleanCodec,
+  [SchemaDataType.Char]: getCharCodec,
+  [SchemaDataType.String]: getStringCodec,
+  [SchemaDataType.VecU8]: () => getArrayCodec(getU8Codec()),
+  [SchemaDataType.VecU16]: () => getArrayCodec(getU16Codec()),
+  [SchemaDataType.VecU32]: () => getArrayCodec(getU32Codec()),
+  [SchemaDataType.VecU64]: () => getArrayCodec(getU64Codec()),
+  [SchemaDataType.VecU128]: () => getArrayCodec(getU128Codec()),
+  [SchemaDataType.VecI8]: () => getArrayCodec(getI8Codec()),
+  [SchemaDataType.VecI16]: () => getArrayCodec(getI16Codec()),
+  [SchemaDataType.VecI32]: () => getArrayCodec(getI32Codec()),
+  [SchemaDataType.VecI64]: () => getArrayCodec(getI64Codec()),
+  [SchemaDataType.VecI128]: () => getArrayCodec(getI128Codec()),
+  [SchemaDataType.VecBool]: () => getArrayCodec(getBooleanCodec()),
+  [SchemaDataType.VecChar]: () => getArrayCodec(getCharCodec()),
+  [SchemaDataType.VecString]: () => getArrayCodec(getStringCodec()),
 };
 
 /**
@@ -93,19 +93,13 @@ const compactLayoutMapping: Record<number, () => Codec<any>> = {
 export const getAttestationDataCodec = (
   schema: Schema
 ): Codec<AttestationData> => {
-  const textDecoder = new TextDecoder();
-  const fields = splitJoinedVecs(Uint8Array.from(schema.fieldNames)).map((f) =>
-    textDecoder.decode(Uint8Array.from(f))
-  );
-
-  if (fields.length !== schema.layout.length) {
+  if (schema.fieldNames.length !== schema.layout.length) {
     throw new Error("Schema field names and layout do not match");
   }
 
   return getStructCodec(
-    fields.map((field, index) => {
-      const layoutByte = schema.layout[index];
-      const getFieldCodec = compactLayoutMapping[layoutByte];
+    schema.fieldNames.map((field, index) => {
+      const getFieldCodec = dataTypeCodecs[schema.layout[index]];
       if (!getFieldCodec) {
         throw new Error("Invalid Schema layout value");
       }
@@ -136,27 +130,3 @@ export const deserializeAttestationData = <T>(
   schema: Schema,
   data: Uint8Array
 ): T => getAttestationDataCodec(schema).decode(data) as T;
-
-type ByteLike = Uint8Array | number[];
-
-const splitJoinedVecs = (bytes: ByteLike): ByteLike[] => {
-  let offset = 0;
-  const ret = [];
-  while (offset < bytes.length) {
-    const len = u32FromLeBytes(bytes.slice(offset, offset + 4));
-    offset += 4;
-    ret.push(bytes.slice(offset, offset + len));
-    offset += len;
-  }
-  return ret;
-};
-
-const u32FromLeBytes = (bytes: ByteLike): number => {
-  if (bytes.length !== 4) {
-    throw new Error("Input must be a 4-byte array");
-  }
-
-  return (
-    (bytes[0] << 0) | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24)
-  );
-};

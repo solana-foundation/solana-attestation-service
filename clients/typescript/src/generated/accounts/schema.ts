@@ -17,16 +17,18 @@ import {
   fetchEncodedAccounts,
   getAddressDecoder,
   getAddressEncoder,
+  getArrayDecoder,
+  getArrayEncoder,
   getBooleanDecoder,
   getBooleanEncoder,
-  getBytesDecoder,
-  getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
   getU32Decoder,
   getU32Encoder,
   getU8Decoder,
   getU8Encoder,
+  getUtf8Decoder,
+  getUtf8Encoder,
   type Account,
   type Address,
   type Codec,
@@ -37,31 +39,60 @@ import {
   type FetchAccountsConfig,
   type MaybeAccount,
   type MaybeEncodedAccount,
-  type ReadonlyUint8Array,
 } from '@solana/kit';
+import {
+  getSchemaDataTypeDecoder,
+  getSchemaDataTypeEncoder,
+  type SchemaDataType,
+  type SchemaDataTypeArgs,
+} from '../types';
 
 export type Schema = {
   discriminator: number;
   credential: Address;
-  name: ReadonlyUint8Array;
-  description: ReadonlyUint8Array;
-  layout: ReadonlyUint8Array;
-  fieldNames: ReadonlyUint8Array;
+  name: string;
+  description: string;
+  layout: Array<SchemaDataType>;
+  fieldNames: Array<string>;
   isPaused: boolean;
   version: number;
 };
 
-export type SchemaArgs = Schema;
+export type SchemaArgs = {
+  discriminator: number;
+  credential: Address;
+  name: string;
+  description: string;
+  layout: Array<SchemaDataTypeArgs>;
+  fieldNames: Array<string>;
+  isPaused: boolean;
+  version: number;
+};
 
 /** Gets the encoder for {@link SchemaArgs} account data. */
 export function getSchemaEncoder(): Encoder<SchemaArgs> {
   return getStructEncoder([
     ['discriminator', getU8Encoder()],
     ['credential', getAddressEncoder()],
-    ['name', addEncoderSizePrefix(getBytesEncoder(), getU32Encoder())],
-    ['description', addEncoderSizePrefix(getBytesEncoder(), getU32Encoder())],
-    ['layout', addEncoderSizePrefix(getBytesEncoder(), getU32Encoder())],
-    ['fieldNames', addEncoderSizePrefix(getBytesEncoder(), getU32Encoder())],
+    ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+    ['description', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+    [
+      'layout',
+      addEncoderSizePrefix(
+        getArrayEncoder(getSchemaDataTypeEncoder(), { size: 'remainder' }),
+        getU32Encoder()
+      ),
+    ],
+    [
+      'fieldNames',
+      addEncoderSizePrefix(
+        getArrayEncoder(
+          addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder()),
+          { size: 'remainder' }
+        ),
+        getU32Encoder()
+      ),
+    ],
     ['isPaused', getBooleanEncoder()],
     ['version', getU8Encoder()],
   ]);
@@ -72,10 +103,25 @@ export function getSchemaDecoder(): Decoder<Schema> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['credential', getAddressDecoder()],
-    ['name', addDecoderSizePrefix(getBytesDecoder(), getU32Decoder())],
-    ['description', addDecoderSizePrefix(getBytesDecoder(), getU32Decoder())],
-    ['layout', addDecoderSizePrefix(getBytesDecoder(), getU32Decoder())],
-    ['fieldNames', addDecoderSizePrefix(getBytesDecoder(), getU32Decoder())],
+    ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+    ['description', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+    [
+      'layout',
+      addDecoderSizePrefix(
+        getArrayDecoder(getSchemaDataTypeDecoder(), { size: 'remainder' }),
+        getU32Decoder()
+      ),
+    ],
+    [
+      'fieldNames',
+      addDecoderSizePrefix(
+        getArrayDecoder(
+          addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder()),
+          { size: 'remainder' }
+        ),
+        getU32Decoder()
+      ),
+    ],
     ['isPaused', getBooleanDecoder()],
     ['version', getU8Decoder()],
   ]);

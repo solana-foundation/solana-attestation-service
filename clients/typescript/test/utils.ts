@@ -1,41 +1,27 @@
 import { assert } from "chai";
 import { address } from "@solana/kit";
-import { getSchemaDecoder, Schema } from "../src/generated";
+import {
+  getSchemaDecoder,
+  getSchemaEncoder,
+  Schema,
+  SchemaDataType,
+} from "../src/generated";
 import {
   deserializeAttestationData,
   getAttestationDataCodec,
   serializeAttestationData,
 } from "../src/utils";
 
-/**
- * Encodes field names the way the program stores them: each name is prefixed
- * with its u32 little-endian length and the results are concatenated.
- */
-const encodeFieldNames = (names: string[]): Uint8Array => {
-  const encoder = new TextEncoder();
-  const parts = names.flatMap((name) => {
-    const bytes = encoder.encode(name);
-    const len = new Uint8Array(4);
-    new DataView(len.buffer).setUint32(0, bytes.length, true);
-    return [len, bytes];
-  });
-  const total = parts.reduce((n, p) => n + p.length, 0);
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const part of parts) {
-    out.set(part, offset);
-    offset += part.length;
-  }
-  return out;
-};
-
-const makeSchema = (layout: number[], fieldNames: string[]): Schema => ({
+const makeSchema = (
+  layout: SchemaDataType[],
+  fieldNames: string[]
+): Schema => ({
   discriminator: 1,
   credential: address("11111111111111111111111111111111"),
-  name: new TextEncoder().encode("test"),
-  description: new TextEncoder().encode("test"),
-  layout: Uint8Array.from(layout),
-  fieldNames: encodeFieldNames(fieldNames),
+  name: "test",
+  description: "test",
+  layout,
+  fieldNames,
   isPaused: false,
   version: 1,
 });
@@ -49,6 +35,29 @@ describe("Utils", () => {
     97, 116, 97, 2, 0, 0, 0, 12, 0, 20, 0, 0, 0, 4, 0, 0, 0, 110, 97, 109, 101,
     8, 0, 0, 0, 108, 111, 99, 97, 116, 105, 111, 110, 0, 1,
   ]);
+
+  describe("getSchemaDecoder", () => {
+    it("decodes the text, layout and field name blobs", () => {
+      const schema = getSchemaDecoder().decode(schemaAccountBytes);
+
+      assert.equal(schema.name, "test_data");
+      assert.equal(schema.description, "schema for test data");
+      assert.deepEqual(schema.layout, [
+        SchemaDataType.String,
+        SchemaDataType.U8,
+      ]);
+      assert.deepEqual(schema.fieldNames, ["name", "location"]);
+    });
+
+    it("round trips the account bytes it decoded", () => {
+      const schema = getSchemaDecoder().decode(schemaAccountBytes);
+
+      assert.deepEqual(
+        Array.from(getSchemaEncoder().encode(schema)),
+        Array.from(schemaAccountBytes)
+      );
+    });
+  });
 
   describe("getAttestationDataCodec", () => {
     it("round trips data for a Schema decoded from account bytes", () => {
@@ -67,7 +76,10 @@ describe("Utils", () => {
     it("matches the byte layout the program validates against", () => {
       // Mirrors the `u8, Vec<String>, u128` case in
       // program/src/state/attestation.rs::attestation_validate_data.
-      const schema = makeSchema([0, 25, 4], ["count", "tags", "big"]);
+      const schema = makeSchema(
+        [SchemaDataType.U8, SchemaDataType.VecString, SchemaDataType.U128],
+        ["count", "tags", "big"]
+      );
       const data = {
         count: 10,
         tags: ["test1", "test2"],
@@ -90,7 +102,10 @@ describe("Utils", () => {
     });
 
     it("encodes char as a 4 byte little-endian code point", () => {
-      const schema = makeSchema([11, 24], ["grade", "grades"]);
+      const schema = makeSchema(
+        [SchemaDataType.Char, SchemaDataType.VecChar],
+        ["grade", "grades"]
+      );
       const data = { grade: "A", grades: ["B", "C"] };
 
       const serialized = serializeAttestationData(schema, data);
@@ -106,8 +121,15 @@ describe("Utils", () => {
     it("round trips every supported layout type", () => {
       const schema = makeSchema(
         [
-          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-          20, 21, 22, 23, 24, 25,
+          SchemaDataType.U8, SchemaDataType.U16, SchemaDataType.U32,
+          SchemaDataType.U64, SchemaDataType.U128, SchemaDataType.I8,
+          SchemaDataType.I16, SchemaDataType.I32, SchemaDataType.I64,
+          SchemaDataType.I128, SchemaDataType.Bool, SchemaDataType.Char,
+          SchemaDataType.String, SchemaDataType.VecU8, SchemaDataType.VecU16,
+          SchemaDataType.VecU32, SchemaDataType.VecU64, SchemaDataType.VecU128,
+          SchemaDataType.VecI8, SchemaDataType.VecI16, SchemaDataType.VecI32,
+          SchemaDataType.VecI64, SchemaDataType.VecI128, SchemaDataType.VecBool,
+          SchemaDataType.VecChar, SchemaDataType.VecString,
         ],
         [
           "u8", "u16", "u32", "u64", "u128", "i8", "i16", "i32", "i64", "i128",
@@ -131,7 +153,7 @@ describe("Utils", () => {
     });
 
     it("throws when the layout contains an unknown type", () => {
-      const schema = makeSchema([26], ["mystery"]);
+      const schema = makeSchema([26 as SchemaDataType], ["mystery"]);
       assert.throws(
         () => getAttestationDataCodec(schema),
         "Invalid Schema layout value"
@@ -139,7 +161,10 @@ describe("Utils", () => {
     });
 
     it("throws when field names and layout lengths disagree", () => {
-      const schema = makeSchema([0, 0], ["only_one"]);
+      const schema = makeSchema(
+        [SchemaDataType.U8, SchemaDataType.U8],
+        ["only_one"]
+      );
       assert.throws(
         () => getAttestationDataCodec(schema),
         "Schema field names and layout do not match"

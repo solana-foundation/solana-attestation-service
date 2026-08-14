@@ -230,6 +230,88 @@ sasCodama.accept(
   }),
 );
 
+// The Schema account stores `name`, `description`, `layout` and `field_names` as
+// opaque length-prefixed byte blobs (see `program/src/state/schema.rs`), but the
+// blobs have known internal structure: the two text fields are UTF-8, `layout` is
+// a run of SchemaDataTypes discriminants, and `field_names` is a run of
+// u32-length-prefixed strings. Describing that structure here makes the generated
+// codecs decode straight to `string`, `SchemaDataType[]` and `string[]`.
+//
+// This runs after the Rust render because the Rust renderer discards the size
+// prefix wrapping a remainder-count array and emits `RemainderVec`, which reads
+// to the end of the buffer and so cannot represent an interior blob. The Rust
+// client keeps the raw `Vec<u8>` fields.
+const u32 = codama.numberTypeNode("u32");
+const prefixedStringType = codama.sizePrefixTypeNode(
+  codama.stringTypeNode("utf8"),
+  u32,
+);
+
+/** A byte blob holding a run of items that fills the blob exactly. */
+const joinedRunType = (item) =>
+  codama.sizePrefixTypeNode(
+    codama.arrayTypeNode(item, codama.remainderCountNode()),
+    u32,
+  );
+
+// Variant order defines the discriminants and must match the `SchemaDataTypes`
+// enum in `program/src/state/schema.rs`.
+const SCHEMA_DATA_TYPE_VARIANTS = [
+  "u8", "u16", "u32", "u64", "u128",
+  "i8", "i16", "i32", "i64", "i128",
+  "bool", "char", "string",
+  "vecU8", "vecU16", "vecU32", "vecU64", "vecU128",
+  "vecI8", "vecI16", "vecI32", "vecI64", "vecI128",
+  "vecBool", "vecChar", "vecString",
+];
+
+const SCHEMA_FIELD_TYPES = {
+  description: prefixedStringType,
+  fieldNames: joinedRunType(prefixedStringType),
+  layout: joinedRunType(codama.definedTypeLinkNode("schemaDataType")),
+  name: prefixedStringType,
+};
+
+sasCodama.update(
+  codama.bottomUpTransformerVisitor([
+    {
+      select: "[programNode]",
+      transform: (node) => ({
+        ...node,
+        definedTypes: [
+          ...node.definedTypes,
+          codama.definedTypeNode({
+            name: "schemaDataType",
+            type: codama.enumTypeNode(
+              SCHEMA_DATA_TYPE_VARIANTS.map((variant) =>
+                codama.enumEmptyVariantTypeNode(variant),
+              ),
+            ),
+          }),
+        ],
+      }),
+    },
+    {
+      select: "[accountNode]schema",
+      transform: (node) => {
+        codama.assertIsNode(node, "accountNode");
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            fields: node.data.fields.map((field) =>
+              field.name in SCHEMA_FIELD_TYPES
+                ? { ...field, type: SCHEMA_FIELD_TYPES[field.name] }
+                : field,
+            ),
+          },
+        };
+      },
+    },
+  ]),
+);
+
 // The renderer takes the package folder, writes to its src/generated, and syncs
 // the dependency ranges below into clients/typescript/package.json on every run —
 // so bumping kit means editing them here rather than in the manifest.
