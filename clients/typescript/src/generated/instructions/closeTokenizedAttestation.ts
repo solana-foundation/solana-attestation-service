@@ -33,8 +33,10 @@ import {
 } from '@solana/kit';
 import {
   getAccountMetaFactory,
+  getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
 } from '@solana/program-client-core';
+import { findAttestationMintPda, findSasAuthorityPda } from '../pdas';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 
 export const CLOSE_TOKENIZED_ATTESTATION_DISCRIMINATOR = 11;
@@ -132,6 +134,175 @@ export function getCloseTokenizedAttestationInstructionDataCodec(): FixedSizeCod
     getCloseTokenizedAttestationInstructionDataEncoder(),
     getCloseTokenizedAttestationInstructionDataDecoder()
   );
+}
+
+export type CloseTokenizedAttestationAsyncInput<
+  TAccountPayer extends string = string,
+  TAccountAuthority extends string = string,
+  TAccountCredential extends string = string,
+  TAccountAttestation extends string = string,
+  TAccountEventAuthority extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountAttestationProgram extends string = string,
+  TAccountAttestationMint extends string = string,
+  TAccountSasPda extends string = string,
+  TAccountAttestationTokenAccount extends string = string,
+  TAccountTokenProgram extends string = string,
+> = {
+  payer: TransactionSigner<TAccountPayer>;
+  /** Authorized signer of the Schema's Credential */
+  authority: TransactionSigner<TAccountAuthority>;
+  credential: Address<TAccountCredential>;
+  attestation: Address<TAccountAttestation>;
+  eventAuthority?: Address<TAccountEventAuthority>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  attestationProgram?: Address<TAccountAttestationProgram>;
+  /** Mint of Attestation Token */
+  attestationMint?: Address<TAccountAttestationMint>;
+  /** Program derived address used as program signer authority */
+  sasPda?: Address<TAccountSasPda>;
+  /** Associated token account of the related Attestation Token */
+  attestationTokenAccount: Address<TAccountAttestationTokenAccount>;
+  tokenProgram?: Address<TAccountTokenProgram>;
+};
+
+export async function getCloseTokenizedAttestationInstructionAsync<
+  TAccountPayer extends string,
+  TAccountAuthority extends string,
+  TAccountCredential extends string,
+  TAccountAttestation extends string,
+  TAccountEventAuthority extends string,
+  TAccountSystemProgram extends string,
+  TAccountAttestationProgram extends string,
+  TAccountAttestationMint extends string,
+  TAccountSasPda extends string,
+  TAccountAttestationTokenAccount extends string,
+  TAccountTokenProgram extends string,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+>(
+  input: CloseTokenizedAttestationAsyncInput<
+    TAccountPayer,
+    TAccountAuthority,
+    TAccountCredential,
+    TAccountAttestation,
+    TAccountEventAuthority,
+    TAccountSystemProgram,
+    TAccountAttestationProgram,
+    TAccountAttestationMint,
+    TAccountSasPda,
+    TAccountAttestationTokenAccount,
+    TAccountTokenProgram
+  >,
+  config?: { programAddress?: TProgramAddress }
+): Promise<
+  CloseTokenizedAttestationInstruction<
+    TProgramAddress,
+    TAccountPayer,
+    TAccountAuthority,
+    TAccountCredential,
+    TAccountAttestation,
+    TAccountEventAuthority,
+    TAccountSystemProgram,
+    TAccountAttestationProgram,
+    TAccountAttestationMint,
+    TAccountSasPda,
+    TAccountAttestationTokenAccount,
+    TAccountTokenProgram
+  >
+> {
+  // Program address.
+  const programAddress =
+    config?.programAddress ?? SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    payer: { value: input.payer ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: false },
+    credential: { value: input.credential ?? null, isWritable: false },
+    attestation: { value: input.attestation ?? null, isWritable: true },
+    eventAuthority: { value: input.eventAuthority ?? null, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    attestationProgram: {
+      value: input.attestationProgram ?? null,
+      isWritable: false,
+    },
+    attestationMint: { value: input.attestationMint ?? null, isWritable: true },
+    sasPda: { value: input.sasPda ?? null, isWritable: false },
+    attestationTokenAccount: {
+      value: input.attestationTokenAccount ?? null,
+      isWritable: true,
+    },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedInstructionAccount
+  >;
+
+  // Resolve default values.
+  if (!accounts.eventAuthority.value) {
+    accounts.eventAuthority.value =
+      'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g' as Address<'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+  if (!accounts.attestationProgram.value) {
+    accounts.attestationProgram.value =
+      '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG' as Address<'22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG'>;
+  }
+  if (!accounts.attestationMint.value) {
+    accounts.attestationMint.value = await findAttestationMintPda({
+      attestation: getAddressFromResolvedInstructionAccount(
+        'attestation',
+        accounts.attestation.value
+      ),
+    });
+  }
+  if (!accounts.sasPda.value) {
+    accounts.sasPda.value = await findSasAuthorityPda();
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  return Object.freeze({
+    accounts: [
+      getAccountMeta('payer', accounts.payer),
+      getAccountMeta('authority', accounts.authority),
+      getAccountMeta('credential', accounts.credential),
+      getAccountMeta('attestation', accounts.attestation),
+      getAccountMeta('eventAuthority', accounts.eventAuthority),
+      getAccountMeta('systemProgram', accounts.systemProgram),
+      getAccountMeta('attestationProgram', accounts.attestationProgram),
+      getAccountMeta('attestationMint', accounts.attestationMint),
+      getAccountMeta('sasPda', accounts.sasPda),
+      getAccountMeta(
+        'attestationTokenAccount',
+        accounts.attestationTokenAccount
+      ),
+      getAccountMeta('tokenProgram', accounts.tokenProgram),
+    ],
+    data: getCloseTokenizedAttestationInstructionDataEncoder().encode({}),
+    programAddress,
+  } as CloseTokenizedAttestationInstruction<
+    TProgramAddress,
+    TAccountPayer,
+    TAccountAuthority,
+    TAccountCredential,
+    TAccountAttestation,
+    TAccountEventAuthority,
+    TAccountSystemProgram,
+    TAccountAttestationProgram,
+    TAccountAttestationMint,
+    TAccountSasPda,
+    TAccountAttestationTokenAccount,
+    TAccountTokenProgram
+  >);
 }
 
 export type CloseTokenizedAttestationInput<

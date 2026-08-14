@@ -46,12 +46,10 @@ import {
     getChangeAuthorizedSignersInstruction,
     fetchAttestation,
     deserializeAttestationData,
-    deriveCredentialPda,
-    deriveSchemaPda,
-    deriveAttestationPda,
-    deriveEventAuthorityAddress,
+    findCredentialPda,
+    findSchemaPda,
+    findAttestationPda,
     getCloseAttestationInstruction,
-    SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS
 } from "sas-lib";
 
 const CONFIG = {
@@ -182,7 +180,7 @@ async function verifyAttestation({
             console.log(`    -  Schema is paused`);
             return false;
         }
-        const [attestationPda] = await deriveAttestationPda({
+        const [attestationPda] = await findAttestationPda({
             credential: schema.data.credential,
             schema: schemaPda,
             nonce: userAddress
@@ -211,7 +209,7 @@ async function main() {
 
     // Step 2: Create Credential
     console.log("\n2. Creating Credential...");
-    const [credentialPda] = await deriveCredentialPda({
+    const [credentialPda] = await findCredentialPda({
         authority: issuer.address,
         name: CONFIG.CREDENTIAL_NAME
     });
@@ -229,7 +227,7 @@ async function main() {
 
     // Step 3: Create Schema
     console.log("\n3.  Creating Schema...");
-    const [schemaPda] = await deriveSchemaPda({
+    const [schemaPda] = await findSchemaPda({
         credential: credentialPda,
         name: CONFIG.SCHEMA_NAME,
         version: CONFIG.SCHEMA_VERSION
@@ -251,7 +249,7 @@ async function main() {
 
     // Step 4: Create Attestation
     console.log("\n4. Creating Attestation...");
-    const [attestationPda] = await deriveAttestationPda({
+    const [attestationPda] = await findAttestationPda({
         credential: credentialPda,
         schema: schemaPda,
         nonce: testUser.address
@@ -306,14 +304,11 @@ async function main() {
     // Step 7. Close Attestation
     console.log("\n7. Closing Attestation...");
 
-    const eventAuthority = await deriveEventAuthorityAddress();
-    const closeAttestationInstruction = await getCloseAttestationInstruction({
+    const closeAttestationInstruction = getCloseAttestationInstruction({
         payer,
         attestation: attestationPda,
         authority: authorizedSigner1,
         credential: credentialPda,
-        eventAuthority,
-        attestationProgram: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS
     });
     await sendAndConfirmInstructions(client, payer, [closeAttestationInstruction], 'Closed attestation');
 

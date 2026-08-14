@@ -49,13 +49,13 @@ import {
   getChangeSchemaStatusInstruction,
   getChangeSchemaVersionInstruction,
   getCloseAttestationInstruction,
-  getCloseTokenizedAttestationInstruction,
-  getCreateAttestationInstruction,
-  getCreateCredentialInstruction,
-  getCreateSchemaInstruction,
-  getCreateTokenizedAttestationInstruction,
+  getCloseTokenizedAttestationInstructionAsync,
+  getCreateAttestationInstructionAsync,
+  getCreateCredentialInstructionAsync,
+  getCreateSchemaInstructionAsync,
+  getCreateTokenizedAttestationInstructionAsync,
   getEmitEventInstruction,
-  getTokenizeSchemaInstruction,
+  getTokenizeSchemaInstructionAsync,
   parseChangeAuthorizedSignersInstruction,
   parseChangeSchemaDescriptionInstruction,
   parseChangeSchemaStatusInstruction,
@@ -73,11 +73,11 @@ import {
   type ChangeSchemaStatusInput,
   type ChangeSchemaVersionInput,
   type CloseAttestationInput,
-  type CloseTokenizedAttestationInput,
-  type CreateAttestationInput,
-  type CreateCredentialInput,
-  type CreateSchemaInput,
-  type CreateTokenizedAttestationInput,
+  type CloseTokenizedAttestationAsyncInput,
+  type CreateAttestationAsyncInput,
+  type CreateCredentialAsyncInput,
+  type CreateSchemaAsyncInput,
+  type CreateTokenizedAttestationAsyncInput,
   type EmitEventInput,
   type ParsedChangeAuthorizedSignersInstruction,
   type ParsedChangeSchemaDescriptionInstruction,
@@ -91,8 +91,17 @@ import {
   type ParsedCreateTokenizedAttestationInstruction,
   type ParsedEmitEventInstruction,
   type ParsedTokenizeSchemaInstruction,
-  type TokenizeSchemaInput,
+  type TokenizeSchemaAsyncInput,
 } from '../instructions';
+import {
+  findAttestationMintPda,
+  findAttestationPda,
+  findCredentialPda,
+  findEventAuthorityPda,
+  findSasAuthorityPda,
+  findSchemaMintPda,
+  findSchemaPda,
+} from '../pdas';
 
 export const SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS =
   '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG' as Address<'22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG'>;
@@ -315,6 +324,7 @@ export function parseSolanaAttestationServiceInstruction<
 export type SolanaAttestationServicePlugin = {
   accounts: SolanaAttestationServicePluginAccounts;
   instructions: SolanaAttestationServicePluginInstructions;
+  pdas: SolanaAttestationServicePluginPdas;
   identifyInstruction: typeof identifySolanaAttestationServiceInstruction;
   parseInstruction: typeof parseSolanaAttestationServiceInstruction;
 };
@@ -330,12 +340,13 @@ export type SolanaAttestationServicePluginAccounts = {
 
 export type SolanaAttestationServicePluginInstructions = {
   createCredential: (
-    input: MakeOptional<CreateCredentialInput, 'payer'>
-  ) => ReturnType<typeof getCreateCredentialInstruction> &
+    input: MakeOptional<CreateCredentialAsyncInput, 'payer'>
+  ) => ReturnType<typeof getCreateCredentialInstructionAsync> &
     SelfPlanAndSendFunctions;
   createSchema: (
-    input: MakeOptional<CreateSchemaInput, 'payer'>
-  ) => ReturnType<typeof getCreateSchemaInstruction> & SelfPlanAndSendFunctions;
+    input: MakeOptional<CreateSchemaAsyncInput, 'payer'>
+  ) => ReturnType<typeof getCreateSchemaInstructionAsync> &
+    SelfPlanAndSendFunctions;
   changeSchemaStatus: (
     input: ChangeSchemaStatusInput
   ) => ReturnType<typeof getChangeSchemaStatusInstruction> &
@@ -353,28 +364,38 @@ export type SolanaAttestationServicePluginInstructions = {
   ) => ReturnType<typeof getChangeSchemaVersionInstruction> &
     SelfPlanAndSendFunctions;
   createAttestation: (
-    input: MakeOptional<CreateAttestationInput, 'payer'>
-  ) => ReturnType<typeof getCreateAttestationInstruction> &
+    input: MakeOptional<CreateAttestationAsyncInput, 'payer'>
+  ) => ReturnType<typeof getCreateAttestationInstructionAsync> &
     SelfPlanAndSendFunctions;
   closeAttestation: (
     input: MakeOptional<CloseAttestationInput, 'payer'>
   ) => ReturnType<typeof getCloseAttestationInstruction> &
     SelfPlanAndSendFunctions;
   tokenizeSchema: (
-    input: MakeOptional<TokenizeSchemaInput, 'payer'>
-  ) => ReturnType<typeof getTokenizeSchemaInstruction> &
+    input: MakeOptional<TokenizeSchemaAsyncInput, 'payer'>
+  ) => ReturnType<typeof getTokenizeSchemaInstructionAsync> &
     SelfPlanAndSendFunctions;
   createTokenizedAttestation: (
-    input: MakeOptional<CreateTokenizedAttestationInput, 'payer'>
-  ) => ReturnType<typeof getCreateTokenizedAttestationInstruction> &
+    input: MakeOptional<CreateTokenizedAttestationAsyncInput, 'payer'>
+  ) => ReturnType<typeof getCreateTokenizedAttestationInstructionAsync> &
     SelfPlanAndSendFunctions;
   closeTokenizedAttestation: (
-    input: MakeOptional<CloseTokenizedAttestationInput, 'payer'>
-  ) => ReturnType<typeof getCloseTokenizedAttestationInstruction> &
+    input: MakeOptional<CloseTokenizedAttestationAsyncInput, 'payer'>
+  ) => ReturnType<typeof getCloseTokenizedAttestationInstructionAsync> &
     SelfPlanAndSendFunctions;
   emitEvent: (
     input: EmitEventInput
   ) => ReturnType<typeof getEmitEventInstruction> & SelfPlanAndSendFunctions;
+};
+
+export type SolanaAttestationServicePluginPdas = {
+  credential: typeof findCredentialPda;
+  schema: typeof findSchemaPda;
+  attestation: typeof findAttestationPda;
+  schemaMint: typeof findSchemaMintPda;
+  attestationMint: typeof findAttestationMintPda;
+  eventAuthority: typeof findEventAuthorityPda;
+  sasAuthority: typeof findSasAuthorityPda;
 };
 
 export type SolanaAttestationServicePluginRequirements = ClientWithRpc<
@@ -402,7 +423,7 @@ export function solanaAttestationServiceProgram() {
           createCredential: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCreateCredentialInstruction({
+              getCreateCredentialInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
               })
@@ -410,7 +431,7 @@ export function solanaAttestationServiceProgram() {
           createSchema: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCreateSchemaInstruction({
+              getCreateSchemaInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
               })
@@ -447,7 +468,7 @@ export function solanaAttestationServiceProgram() {
           createAttestation: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCreateAttestationInstruction({
+              getCreateAttestationInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
               })
@@ -463,7 +484,7 @@ export function solanaAttestationServiceProgram() {
           tokenizeSchema: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getTokenizeSchemaInstruction({
+              getTokenizeSchemaInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
               })
@@ -471,7 +492,7 @@ export function solanaAttestationServiceProgram() {
           createTokenizedAttestation: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCreateTokenizedAttestationInstruction({
+              getCreateTokenizedAttestationInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
               })
@@ -479,13 +500,22 @@ export function solanaAttestationServiceProgram() {
           closeTokenizedAttestation: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getCloseTokenizedAttestationInstruction({
+              getCloseTokenizedAttestationInstructionAsync({
                 ...input,
                 payer: input.payer ?? client.payer,
               })
             ),
           emitEvent: (input) =>
             addSelfPlanAndSendFunctions(client, getEmitEventInstruction(input)),
+        },
+        pdas: {
+          credential: findCredentialPda,
+          schema: findSchemaPda,
+          attestation: findAttestationPda,
+          schemaMint: findSchemaMintPda,
+          attestationMint: findAttestationMintPda,
+          eventAuthority: findEventAuthorityPda,
+          sasAuthority: findSasAuthorityPda,
         },
         identifyInstruction: identifySolanaAttestationServiceInstruction,
         parseInstruction: parseSolanaAttestationServiceInstruction,

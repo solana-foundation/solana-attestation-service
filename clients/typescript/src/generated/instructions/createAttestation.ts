@@ -43,8 +43,11 @@ import {
 } from '@solana/kit';
 import {
   getAccountMetaFactory,
+  getAddressFromResolvedInstructionAccount,
+  getNonNullResolvedInstructionInput,
   type ResolvedInstructionAccount,
 } from '@solana/program-client-core';
+import { findAttestationPda } from '../pdas';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 
 export const CREATE_ATTESTATION_DISCRIMINATOR = 6;
@@ -133,6 +136,123 @@ export function getCreateAttestationInstructionDataCodec(): Codec<
     getCreateAttestationInstructionDataEncoder(),
     getCreateAttestationInstructionDataDecoder()
   );
+}
+
+export type CreateAttestationAsyncInput<
+  TAccountPayer extends string = string,
+  TAccountAuthority extends string = string,
+  TAccountCredential extends string = string,
+  TAccountSchema extends string = string,
+  TAccountAttestation extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  payer: TransactionSigner<TAccountPayer>;
+  /** Authorized signer of the Schema's Credential */
+  authority: TransactionSigner<TAccountAuthority>;
+  /** Credential the Schema is associated with */
+  credential: Address<TAccountCredential>;
+  /** Schema the Attestation is associated with */
+  schema: Address<TAccountSchema>;
+  attestation?: Address<TAccountAttestation>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  nonce: CreateAttestationInstructionDataArgs['nonce'];
+  data: CreateAttestationInstructionDataArgs['data'];
+  expiry: CreateAttestationInstructionDataArgs['expiry'];
+};
+
+export async function getCreateAttestationInstructionAsync<
+  TAccountPayer extends string,
+  TAccountAuthority extends string,
+  TAccountCredential extends string,
+  TAccountSchema extends string,
+  TAccountAttestation extends string,
+  TAccountSystemProgram extends string,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+>(
+  input: CreateAttestationAsyncInput<
+    TAccountPayer,
+    TAccountAuthority,
+    TAccountCredential,
+    TAccountSchema,
+    TAccountAttestation,
+    TAccountSystemProgram
+  >,
+  config?: { programAddress?: TProgramAddress }
+): Promise<
+  CreateAttestationInstruction<
+    TProgramAddress,
+    TAccountPayer,
+    TAccountAuthority,
+    TAccountCredential,
+    TAccountSchema,
+    TAccountAttestation,
+    TAccountSystemProgram
+  >
+> {
+  // Program address.
+  const programAddress =
+    config?.programAddress ?? SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    payer: { value: input.payer ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: false },
+    credential: { value: input.credential ?? null, isWritable: false },
+    schema: { value: input.schema ?? null, isWritable: false },
+    attestation: { value: input.attestation ?? null, isWritable: true },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedInstructionAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.attestation.value) {
+    accounts.attestation.value = await findAttestationPda({
+      credential: getAddressFromResolvedInstructionAccount(
+        'credential',
+        accounts.credential.value
+      ),
+      schema: getAddressFromResolvedInstructionAccount(
+        'schema',
+        accounts.schema.value
+      ),
+      nonce: getNonNullResolvedInstructionInput('nonce', args.nonce),
+    });
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  return Object.freeze({
+    accounts: [
+      getAccountMeta('payer', accounts.payer),
+      getAccountMeta('authority', accounts.authority),
+      getAccountMeta('credential', accounts.credential),
+      getAccountMeta('schema', accounts.schema),
+      getAccountMeta('attestation', accounts.attestation),
+      getAccountMeta('systemProgram', accounts.systemProgram),
+    ],
+    data: getCreateAttestationInstructionDataEncoder().encode(
+      args as CreateAttestationInstructionDataArgs
+    ),
+    programAddress,
+  } as CreateAttestationInstruction<
+    TProgramAddress,
+    TAccountPayer,
+    TAccountAuthority,
+    TAccountCredential,
+    TAccountSchema,
+    TAccountAttestation,
+    TAccountSystemProgram
+  >);
 }
 
 export type CreateAttestationInput<

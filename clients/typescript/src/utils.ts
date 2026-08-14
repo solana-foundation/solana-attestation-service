@@ -1,10 +1,24 @@
-import { BorshSchema } from "borsher";
+import {
+  addCodecSizePrefix,
+  getArrayCodec,
+  getBooleanCodec,
+  getI128Codec,
+  getI16Codec,
+  getI32Codec,
+  getI64Codec,
+  getI8Codec,
+  getStructCodec,
+  getU128Codec,
+  getU16Codec,
+  getU32Codec,
+  getU64Codec,
+  getU8Codec,
+  getUtf8Codec,
+  transformCodec,
+  type Codec,
+} from "@solana/kit";
 
 import { Schema } from "./generated";
-
-// A char type does not exist on BorshSchema, so we (de)serialize
-// using the 4 byte representation.
-const CHAR_SCHEMA = BorshSchema.Array(BorshSchema.u8, 4);
 
 type SchemaOutputTypes =
   | number
@@ -15,48 +29,70 @@ type SchemaOutputTypes =
   | bigint[]
   | boolean
   | boolean[];
-/**
- * Maps the SAS compact byte layout to the equivalent data type.
- */
-const compactLayoutMapping: Record<number, BorshSchema<SchemaOutputTypes>> = {
-  0: BorshSchema.u8,
-  1: BorshSchema.u16,
-  2: BorshSchema.u32,
-  3: BorshSchema.u64,
-  4: BorshSchema.u128,
-  5: BorshSchema.i8,
-  6: BorshSchema.i16,
-  7: BorshSchema.i32,
-  8: BorshSchema.i64,
-  9: BorshSchema.i128,
-  10: BorshSchema.bool,
-  11: CHAR_SCHEMA,
-  12: BorshSchema.String,
-  13: BorshSchema.Vec(BorshSchema.u8),
-  14: BorshSchema.Vec(BorshSchema.u16),
-  15: BorshSchema.Vec(BorshSchema.u32),
-  16: BorshSchema.Vec(BorshSchema.u64),
-  17: BorshSchema.Vec(BorshSchema.u128),
-  18: BorshSchema.Vec(BorshSchema.i8),
-  19: BorshSchema.Vec(BorshSchema.i16),
-  20: BorshSchema.Vec(BorshSchema.i32),
-  21: BorshSchema.Vec(BorshSchema.i64),
-  22: BorshSchema.Vec(BorshSchema.i128),
-  23: BorshSchema.Vec(BorshSchema.bool),
-  24: BorshSchema.Vec(BorshSchema.String),
-  25: CHAR_SCHEMA,
-};
-const MAX_LAYOUT_VALUE = 25;
+
+type AttestationData = Record<string, SchemaOutputTypes>;
 
 /**
- * Given the onchain representation of a Schema, we generate a Borsh schema
- * for (de)serialization.
+ * Rust encodes a `char` as its 4-byte little-endian Unicode code point.
+ */
+const getCharCodec = (): Codec<string> =>
+  transformCodec(
+    getU32Codec(),
+    (character: string) => {
+      const codePoint = character.codePointAt(0);
+      if (codePoint === undefined || String.fromCodePoint(codePoint) !== character) {
+        throw new Error("Char fields must hold exactly one Unicode character");
+      }
+      return codePoint;
+    },
+    (codePoint) => String.fromCodePoint(codePoint)
+  );
+
+const getStringCodec = (): Codec<string> =>
+  addCodecSizePrefix(getUtf8Codec(), getU32Codec());
+
+/**
+ * Maps the SAS compact byte layout to the equivalent data type. Values mirror
+ * the type identifiers emitted by the `SchemaStructSerialize` derive macro.
+ */
+const compactLayoutMapping: Record<number, () => Codec<any>> = {
+  0: getU8Codec,
+  1: getU16Codec,
+  2: getU32Codec,
+  3: getU64Codec,
+  4: getU128Codec,
+  5: getI8Codec,
+  6: getI16Codec,
+  7: getI32Codec,
+  8: getI64Codec,
+  9: getI128Codec,
+  10: getBooleanCodec,
+  11: getCharCodec,
+  12: getStringCodec,
+  13: () => getArrayCodec(getU8Codec()),
+  14: () => getArrayCodec(getU16Codec()),
+  15: () => getArrayCodec(getU32Codec()),
+  16: () => getArrayCodec(getU64Codec()),
+  17: () => getArrayCodec(getU128Codec()),
+  18: () => getArrayCodec(getI8Codec()),
+  19: () => getArrayCodec(getI16Codec()),
+  20: () => getArrayCodec(getI32Codec()),
+  21: () => getArrayCodec(getI64Codec()),
+  22: () => getArrayCodec(getI128Codec()),
+  23: () => getArrayCodec(getBooleanCodec()),
+  24: () => getArrayCodec(getCharCodec()),
+  25: () => getArrayCodec(getStringCodec()),
+};
+
+/**
+ * Given the onchain representation of a Schema, build a codec that
+ * (de)serializes Attestation data conforming to that Schema.
  * @param schema
  * @returns
  */
-export const convertSasSchemaToBorshSchema = (
+export const getAttestationDataCodec = (
   schema: Schema
-): BorshSchema<Record<string, unknown>> => {
+): Codec<AttestationData> => {
   const textDecoder = new TextDecoder();
   const fields = splitJoinedVecs(Uint8Array.from(schema.fieldNames)).map((f) =>
     textDecoder.decode(Uint8Array.from(f))
@@ -66,19 +102,16 @@ export const convertSasSchemaToBorshSchema = (
     throw new Error("Schema field names and layout do not match");
   }
 
-  return BorshSchema.Struct(
-    fields.reduce(
-      (acc, field, index) => {
-        const layoutByte = schema.layout[index];
-        if (layoutByte > MAX_LAYOUT_VALUE) {
-          throw new Error("Invalid Schema layout value");
-        }
-        acc[field] = compactLayoutMapping[layoutByte];
-        return acc;
-      },
-      {} as Record<string, BorshSchema<SchemaOutputTypes>>
-    )
-  );
+  return getStructCodec(
+    fields.map((field, index) => {
+      const layoutByte = schema.layout[index];
+      const getFieldCodec = compactLayoutMapping[layoutByte];
+      if (!getFieldCodec) {
+        throw new Error("Invalid Schema layout value");
+      }
+      return [field, getFieldCodec()] as const;
+    })
+  ) as Codec<AttestationData>;
 };
 
 /**
@@ -89,10 +122,10 @@ export const convertSasSchemaToBorshSchema = (
 export const serializeAttestationData = (
   schema: Schema,
   data: Record<string, unknown>
-): Uint8Array => {
-  const borshSchema = convertSasSchemaToBorshSchema(schema);
-  return borshSchema.serialize(data);
-};
+): Uint8Array =>
+  new Uint8Array(
+    getAttestationDataCodec(schema).encode(data as AttestationData)
+  );
 
 /**
  * Given a SAS Schema and a byte array of Attestation data,
@@ -102,10 +135,7 @@ export const serializeAttestationData = (
 export const deserializeAttestationData = <T>(
   schema: Schema,
   data: Uint8Array
-): T => {
-  const borshSchema = convertSasSchemaToBorshSchema(schema);
-  return borshSchema.deserialize(data) as T;
-};
+): T => getAttestationDataCodec(schema).decode(data) as T;
 
 type ByteLike = Uint8Array | number[];
 

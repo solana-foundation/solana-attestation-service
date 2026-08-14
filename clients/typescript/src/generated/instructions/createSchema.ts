@@ -43,8 +43,11 @@ import {
 } from '@solana/kit';
 import {
   getAccountMetaFactory,
+  getAddressFromResolvedInstructionAccount,
+  getNonNullResolvedInstructionInput,
   type ResolvedInstructionAccount,
 } from '@solana/program-client-core';
+import { findSchemaPda } from '../pdas';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 
 export const CREATE_SCHEMA_DISCRIMINATOR = 1;
@@ -141,6 +144,111 @@ export function getCreateSchemaInstructionDataCodec(): Codec<
     getCreateSchemaInstructionDataEncoder(),
     getCreateSchemaInstructionDataDecoder()
   );
+}
+
+export type CreateSchemaAsyncInput<
+  TAccountPayer extends string = string,
+  TAccountAuthority extends string = string,
+  TAccountCredential extends string = string,
+  TAccountSchema extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  payer: TransactionSigner<TAccountPayer>;
+  authority: TransactionSigner<TAccountAuthority>;
+  /** Credential the Schema is associated with */
+  credential: Address<TAccountCredential>;
+  schema?: Address<TAccountSchema>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  name: CreateSchemaInstructionDataArgs['name'];
+  description: CreateSchemaInstructionDataArgs['description'];
+  layout: CreateSchemaInstructionDataArgs['layout'];
+  fieldNames: CreateSchemaInstructionDataArgs['fieldNames'];
+};
+
+export async function getCreateSchemaInstructionAsync<
+  TAccountPayer extends string,
+  TAccountAuthority extends string,
+  TAccountCredential extends string,
+  TAccountSchema extends string,
+  TAccountSystemProgram extends string,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+>(
+  input: CreateSchemaAsyncInput<
+    TAccountPayer,
+    TAccountAuthority,
+    TAccountCredential,
+    TAccountSchema,
+    TAccountSystemProgram
+  >,
+  config?: { programAddress?: TProgramAddress }
+): Promise<
+  CreateSchemaInstruction<
+    TProgramAddress,
+    TAccountPayer,
+    TAccountAuthority,
+    TAccountCredential,
+    TAccountSchema,
+    TAccountSystemProgram
+  >
+> {
+  // Program address.
+  const programAddress =
+    config?.programAddress ?? SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    payer: { value: input.payer ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: false },
+    credential: { value: input.credential ?? null, isWritable: false },
+    schema: { value: input.schema ?? null, isWritable: true },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedInstructionAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.schema.value) {
+    accounts.schema.value = await findSchemaPda({
+      credential: getAddressFromResolvedInstructionAccount(
+        'credential',
+        accounts.credential.value
+      ),
+      name: getNonNullResolvedInstructionInput('name', args.name),
+      version: 1,
+    });
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  return Object.freeze({
+    accounts: [
+      getAccountMeta('payer', accounts.payer),
+      getAccountMeta('authority', accounts.authority),
+      getAccountMeta('credential', accounts.credential),
+      getAccountMeta('schema', accounts.schema),
+      getAccountMeta('systemProgram', accounts.systemProgram),
+    ],
+    data: getCreateSchemaInstructionDataEncoder().encode(
+      args as CreateSchemaInstructionDataArgs
+    ),
+    programAddress,
+  } as CreateSchemaInstruction<
+    TProgramAddress,
+    TAccountPayer,
+    TAccountAuthority,
+    TAccountCredential,
+    TAccountSchema,
+    TAccountSystemProgram
+  >);
 }
 
 export type CreateSchemaInput<

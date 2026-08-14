@@ -23,8 +23,6 @@
   },
   "dependencies": {
     "@solana/kit": "^7.0.0",
-    "@solana/program-client-core": "^7.0.0",
-    "borsh": "^2.0.0",
-    "borsher": "^4.0.0"
+    "@solana/program-client-core": "^7.0.0"
   }
 }

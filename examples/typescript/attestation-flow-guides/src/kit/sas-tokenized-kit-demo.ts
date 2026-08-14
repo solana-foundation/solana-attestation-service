@@ -50,17 +50,15 @@ import {
     fetchSchema,
     fetchAttestation,
     deserializeAttestationData,
-    deriveAttestationPda,
-    deriveCredentialPda,
-    deriveSchemaPda,
+    findAttestationPda,
+    findCredentialPda,
+    findSchemaPda,
     getTokenizeSchemaInstruction,
-    deriveSchemaMintPda,
-    deriveSasAuthorityAddress,
-    deriveAttestationMintPda,
+    findSchemaMintPda,
+    findSasAuthorityPda,
+    findAttestationMintPda,
     getCreateTokenizedAttestationInstruction,
-    getCloseTokenizedAttestationInstruction,
-    SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-    deriveEventAuthorityAddress,
+    getCloseTokenizedAttestationInstructionAsync,
 } from "sas-lib";
 
 const CONFIG = {
@@ -192,7 +190,7 @@ async function verifyAttestation({
             console.log(`    -  Schema is paused`);
             return false;
         }
-        const [attestationPda] = await deriveAttestationPda({
+        const [attestationPda] = await findAttestationPda({
             credential: schema.data.credential,
             schema: schemaPda,
             nonce: userAddress
@@ -220,12 +218,12 @@ async function verifyTokenAttestation({
     try {
         const schema = await fetchSchema(client.rpc, schemaPda);
 
-        const [attestationPda] = await deriveAttestationPda({
+        const [attestationPda] = await findAttestationPda({
             credential: schema.data.credential,
             schema: schemaPda,
             nonce: userAddress
         });
-        const [attestationMint] = await deriveAttestationMintPda({
+        const [attestationMint] = await findAttestationMintPda({
             attestation: attestationPda
         })
         const mintAccount = await fetchMint(client.rpc, attestationMint);
@@ -236,7 +234,7 @@ async function verifyTokenAttestation({
         const { value: foundExtensions } = mintAccount.data.extensions;
 
         // Verify member of group
-        const [schemaMint] = await deriveSchemaMintPda({
+        const [schemaMint] = await findSchemaMintPda({
             schema: schemaPda
         });
         const tokenGroupMember = foundExtensions.find(ext => ext.__kind === 'TokenGroupMember');
@@ -276,7 +274,7 @@ async function main() {
 
     // Step 2: Create Credential
     console.log("\n2. Creating Credential...");
-    const [credentialPda] = await deriveCredentialPda({
+    const [credentialPda] = await findCredentialPda({
         authority: issuer.address,
         name: CONFIG.CREDENTIAL_NAME
     });
@@ -294,7 +292,7 @@ async function main() {
 
     // Step 3: Create Schema
     console.log("\n3.  Creating Schema...");
-    const [schemaPda] = await deriveSchemaPda({
+    const [schemaPda] = await findSchemaPda({
         credential: credentialPda,
         name: CONFIG.SCHEMA_NAME,
         version: CONFIG.SCHEMA_VERSION
@@ -316,10 +314,10 @@ async function main() {
 
     // Step 4: Tokenize Schema
     console.log("\n4. Tokenizing Schema...");
-    const [schemaMint] = await deriveSchemaMintPda({
+    const [schemaMint] = await findSchemaMintPda({
         schema: schemaPda
     });
-    const sasPda = await deriveSasAuthorityAddress();
+    const [sasPda] = await findSasAuthorityPda();
     const schemaMintAccountSpace = getMintSize([
         {
             __kind: "GroupPointer",
@@ -344,12 +342,12 @@ async function main() {
 
     // Step 5: Create Tokenized Attestation
     console.log("\n5. Creating Tokenized Attestation...");
-    const [attestationPda] = await deriveAttestationPda({
+    const [attestationPda] = await findAttestationPda({
         credential: credentialPda,
         schema: schemaPda,
         nonce: testUser.address
     });
-    const [attestationMint] = await deriveAttestationMintPda({
+    const [attestationMint] = await findAttestationMintPda({
         attestation: attestationPda
     })
 
@@ -438,17 +436,11 @@ async function main() {
 
     // Step 8: Close Tokenized Attestation
     console.log("\n8. Closing Tokenized Attestations...");
-    const eventAuthority = await deriveEventAuthorityAddress();
-
-    const closeTokenizedAttestationInstruction = getCloseTokenizedAttestationInstruction({
+    const closeTokenizedAttestationInstruction = await getCloseTokenizedAttestationInstructionAsync({
         payer,
         authority: authorizedSigner1,
         credential: credentialPda,
         attestation: attestationPda,
-        eventAuthority,
-        attestationProgram: SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-        attestationMint,
-        sasPda,
         attestationTokenAccount: recipientTokenAccount,
         tokenProgram: TOKEN_2022_PROGRAM_ADDRESS
     });

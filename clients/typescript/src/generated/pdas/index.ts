@@ -6,8 +6,10 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './accounts';
-export * from './instructions';
-export * from './pdas';
-export * from './programs';
-export * from './types';
+export * from './attestation';
+export * from './attestationMint';
+export * from './credential';
+export * from './eventAuthority';
+export * from './sasAuthority';
+export * from './schema';
+export * from './schemaMint';

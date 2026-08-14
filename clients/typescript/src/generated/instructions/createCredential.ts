@@ -43,8 +43,11 @@ import {
 } from '@solana/kit';
 import {
   getAccountMetaFactory,
+  getAddressFromResolvedInstructionAccount,
+  getNonNullResolvedInstructionInput,
   type ResolvedInstructionAccount,
 } from '@solana/program-client-core';
+import { findCredentialPda } from '../pdas';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 
 export const CREATE_CREDENTIAL_DISCRIMINATOR = 0;
@@ -121,6 +124,99 @@ export function getCreateCredentialInstructionDataCodec(): Codec<
     getCreateCredentialInstructionDataEncoder(),
     getCreateCredentialInstructionDataDecoder()
   );
+}
+
+export type CreateCredentialAsyncInput<
+  TAccountPayer extends string = string,
+  TAccountCredential extends string = string,
+  TAccountAuthority extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  payer: TransactionSigner<TAccountPayer>;
+  credential?: Address<TAccountCredential>;
+  authority: TransactionSigner<TAccountAuthority>;
+  systemProgram?: Address<TAccountSystemProgram>;
+  name: CreateCredentialInstructionDataArgs['name'];
+  signers: CreateCredentialInstructionDataArgs['signers'];
+};
+
+export async function getCreateCredentialInstructionAsync<
+  TAccountPayer extends string,
+  TAccountCredential extends string,
+  TAccountAuthority extends string,
+  TAccountSystemProgram extends string,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+>(
+  input: CreateCredentialAsyncInput<
+    TAccountPayer,
+    TAccountCredential,
+    TAccountAuthority,
+    TAccountSystemProgram
+  >,
+  config?: { programAddress?: TProgramAddress }
+): Promise<
+  CreateCredentialInstruction<
+    TProgramAddress,
+    TAccountPayer,
+    TAccountCredential,
+    TAccountAuthority,
+    TAccountSystemProgram
+  >
+> {
+  // Program address.
+  const programAddress =
+    config?.programAddress ?? SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    payer: { value: input.payer ?? null, isWritable: true },
+    credential: { value: input.credential ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedInstructionAccount
+  >;
+
+  // Original args.
+  const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.credential.value) {
+    accounts.credential.value = await findCredentialPda({
+      authority: getAddressFromResolvedInstructionAccount(
+        'authority',
+        accounts.authority.value
+      ),
+      name: getNonNullResolvedInstructionInput('name', args.name),
+    });
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  return Object.freeze({
+    accounts: [
+      getAccountMeta('payer', accounts.payer),
+      getAccountMeta('credential', accounts.credential),
+      getAccountMeta('authority', accounts.authority),
+      getAccountMeta('systemProgram', accounts.systemProgram),
+    ],
+    data: getCreateCredentialInstructionDataEncoder().encode(
+      args as CreateCredentialInstructionDataArgs
+    ),
+    programAddress,
+  } as CreateCredentialInstruction<
+    TProgramAddress,
+    TAccountPayer,
+    TAccountCredential,
+    TAccountAuthority,
+    TAccountSystemProgram
+  >);
 }
 
 export type CreateCredentialInput<
