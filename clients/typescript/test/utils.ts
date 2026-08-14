@@ -118,6 +118,36 @@ describe("Utils", () => {
       assert.deepEqual(deserializeAttestationData(schema, serialized), data);
     });
 
+    it("rejects char data that is not a Unicode character", () => {
+      // The program only advances four bytes for a char field without checking
+      // the value, so any u32 can reach the client.
+      const schema = makeSchema([SchemaDataType.Char], ["grade"]);
+
+      for (const codePoint of [0x110000, 0xffffffff, 0xd800, 0xdfff]) {
+        const encoded = Uint8Array.from([
+          codePoint & 0xff,
+          (codePoint >>> 8) & 0xff,
+          (codePoint >>> 16) & 0xff,
+          (codePoint >>> 24) & 0xff,
+        ]);
+        assert.throws(
+          () => deserializeAttestationData(schema, encoded),
+          `Char field holds ${codePoint}, which is not a Unicode character`
+        );
+      }
+    });
+
+    it("rejects char values that cannot round trip through Rust", () => {
+      const schema = makeSchema([SchemaDataType.Char], ["grade"]);
+
+      for (const character of ["", "ab", "\ud800"]) {
+        assert.throws(
+          () => serializeAttestationData(schema, { grade: character }),
+          "Char fields must hold exactly one Unicode character"
+        );
+      }
+    });
+
     it("round trips every supported layout type", () => {
       const schema = makeSchema(
         [

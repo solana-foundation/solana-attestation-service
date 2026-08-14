@@ -33,6 +33,13 @@ type SchemaOutputTypes =
 type AttestationData = Record<string, SchemaOutputTypes>;
 
 /**
+ * A Rust `char` holds a Unicode scalar value: at most U+10FFFF, and never a
+ * surrogate. Values outside that range have no character to map to.
+ */
+const isUnicodeScalarValue = (codePoint: number): boolean =>
+  codePoint <= 0x10ffff && (codePoint < 0xd800 || codePoint > 0xdfff);
+
+/**
  * Rust encodes a `char` as its 4-byte little-endian Unicode code point.
  */
 const getCharCodec = (): Codec<string> =>
@@ -40,12 +47,23 @@ const getCharCodec = (): Codec<string> =>
     getU32Codec(),
     (character: string) => {
       const codePoint = character.codePointAt(0);
-      if (codePoint === undefined || String.fromCodePoint(codePoint) !== character) {
+      if (
+        codePoint === undefined ||
+        !isUnicodeScalarValue(codePoint) ||
+        String.fromCodePoint(codePoint) !== character
+      ) {
         throw new Error("Char fields must hold exactly one Unicode character");
       }
       return codePoint;
     },
-    (codePoint) => String.fromCodePoint(codePoint)
+    (codePoint) => {
+      if (!isUnicodeScalarValue(codePoint)) {
+        throw new Error(
+          `Char field holds ${codePoint}, which is not a Unicode character`
+        );
+      }
+      return String.fromCodePoint(codePoint);
+    }
   );
 
 const getStringCodec = (): Codec<string> =>
