@@ -12,6 +12,8 @@ import {
   getStructEncoder,
   getU8Decoder,
   getU8Encoder,
+  SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+  SolanaError,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -29,12 +31,15 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/kit';
+import {
+  getAccountMetaFactory,
+  type ResolvedInstructionAccount,
+} from '@solana/program-client-core';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const CLOSE_ATTESTATION_DISCRIMINATOR = 7;
 
-export function getCloseAttestationDiscriminatorBytes() {
+export function getCloseAttestationDiscriminatorBytes(): ReadonlyUint8Array {
   return getU8Encoder().encode(CLOSE_ATTESTATION_DISCRIMINATOR);
 }
 
@@ -44,15 +49,12 @@ export type CloseAttestationInstruction<
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountCredential extends string | AccountMeta<string> = string,
   TAccountAttestation extends string | AccountMeta<string> = string,
-  TAccountEventAuthority extends
-    | string
-    | AccountMeta<string> = 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g',
-  TAccountSystemProgram extends
-    | string
-    | AccountMeta<string> = '11111111111111111111111111111111',
-  TAccountAttestationProgram extends
-    | string
-    | AccountMeta<string> = '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG',
+  TAccountEventAuthority extends string | AccountMeta<string> =
+    'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g',
+  TAccountSystemProgram extends string | AccountMeta<string> =
+    '11111111111111111111111111111111',
+  TAccountAttestationProgram extends string | AccountMeta<string> =
+    '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -137,8 +139,8 @@ export function getCloseAttestationInstruction<
   TAccountEventAuthority extends string,
   TAccountSystemProgram extends string,
   TAccountAttestationProgram extends string,
-  TProgramAddress extends
-    Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 >(
   input: CloseAttestationInput<
     TAccountPayer,
@@ -179,7 +181,7 @@ export function getCloseAttestationInstruction<
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
-    ResolvedAccount
+    ResolvedInstructionAccount
   >;
 
   // Resolve default values.
@@ -199,13 +201,13 @@ export function getCloseAttestationInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.authority),
-      getAccountMeta(accounts.credential),
-      getAccountMeta(accounts.attestation),
-      getAccountMeta(accounts.eventAuthority),
-      getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.attestationProgram),
+      getAccountMeta('payer', accounts.payer),
+      getAccountMeta('authority', accounts.authority),
+      getAccountMeta('credential', accounts.credential),
+      getAccountMeta('attestation', accounts.attestation),
+      getAccountMeta('eventAuthority', accounts.eventAuthority),
+      getAccountMeta('systemProgram', accounts.systemProgram),
+      getAccountMeta('attestationProgram', accounts.attestationProgram),
     ],
     data: getCloseAttestationInstructionDataEncoder().encode({}),
     programAddress,
@@ -248,8 +250,13 @@ export function parseCloseAttestationInstruction<
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedCloseAttestationInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new SolanaError(
+      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+      {
+        actualAccountMetas: instruction.accounts.length,
+        expectedAccountMetas: 7,
+      }
+    );
   }
   let accountIndex = 0;
   const getNextAccount = () => {

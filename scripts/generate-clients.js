@@ -22,7 +22,7 @@ const typescriptClientsDir = path.join(
 );
 
 function preserveConfigFiles() {
-  const filesToPreserve = ['package.json', 'tsconfig.json', '.npmignore', 'pnpm-lock.yaml', 'Cargo.toml'];
+  const filesToPreserve = ['tsconfig.json', '.npmignore', 'pnpm-lock.yaml', 'Cargo.toml'];
   const preservedFiles = new Map();
 
   filesToPreserve.forEach(filename => {
@@ -106,15 +106,27 @@ sasCodama.accept(
   }),
 );
 
+// The renderer takes the package folder, writes to its src/generated, and syncs
+// the dependency ranges below into clients/typescript/package.json on every run —
+// so bumping kit means editing them here rather than in the manifest.
 sasCodama.accept(
-  renderJavaScriptVisitor(
-    path.join(typescriptClientsDir, "src", "generated"),
-    {
-      formatCode: true,
-      crateFolder: typescriptClientsDir,
-      deleteFolderBeforeRendering: true,
+  renderJavaScriptVisitor(typescriptClientsDir, {
+    formatCode: true,
+    deleteFolderBeforeRendering: true,
+    dependencyVersions: {
+      "@solana/kit": "^7.0.0",
+      "@solana/program-client-core": "^7.0.0",
     },
-  ),
+    prettierOptions: {
+      arrowParens: "always",
+      printWidth: 80,
+      semi: true,
+      singleQuote: true,
+      tabWidth: 2,
+      trailingComma: "es5",
+      useTabs: false,
+    },
+  }),
 );
 
 // Restore configuration files after generation

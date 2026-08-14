@@ -7,12 +7,78 @@
  */
 
 import {
+  assertIsInstructionWithAccounts,
   containsBytes,
+  extendClient,
   getU8Encoder,
+  SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
+  SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
+  SolanaError,
   type Address,
+  type ClientWithPayer,
+  type ClientWithRpc,
+  type ClientWithTransactionPlanning,
+  type ClientWithTransactionSending,
+  type ExtendedClient,
+  type GetAccountInfoApi,
+  type GetMultipleAccountsApi,
+  type Instruction,
+  type InstructionWithData,
   type ReadonlyUint8Array,
 } from '@solana/kit';
 import {
+  addSelfFetchFunctions,
+  addSelfPlanAndSendFunctions,
+  type SelfFetchFunctions,
+  type SelfPlanAndSendFunctions,
+} from '@solana/program-client-core';
+import {
+  getAttestationCodec,
+  getCredentialCodec,
+  getSchemaCodec,
+  type Attestation,
+  type AttestationArgs,
+  type Credential,
+  type CredentialArgs,
+  type Schema,
+  type SchemaArgs,
+} from '../accounts';
+import {
+  getChangeAuthorizedSignersInstruction,
+  getChangeSchemaDescriptionInstruction,
+  getChangeSchemaStatusInstruction,
+  getChangeSchemaVersionInstruction,
+  getCloseAttestationInstruction,
+  getCloseTokenizedAttestationInstruction,
+  getCreateAttestationInstruction,
+  getCreateCredentialInstruction,
+  getCreateSchemaInstruction,
+  getCreateTokenizedAttestationInstruction,
+  getEmitEventInstruction,
+  getTokenizeSchemaInstruction,
+  parseChangeAuthorizedSignersInstruction,
+  parseChangeSchemaDescriptionInstruction,
+  parseChangeSchemaStatusInstruction,
+  parseChangeSchemaVersionInstruction,
+  parseCloseAttestationInstruction,
+  parseCloseTokenizedAttestationInstruction,
+  parseCreateAttestationInstruction,
+  parseCreateCredentialInstruction,
+  parseCreateSchemaInstruction,
+  parseCreateTokenizedAttestationInstruction,
+  parseEmitEventInstruction,
+  parseTokenizeSchemaInstruction,
+  type ChangeAuthorizedSignersInput,
+  type ChangeSchemaDescriptionInput,
+  type ChangeSchemaStatusInput,
+  type ChangeSchemaVersionInput,
+  type CloseAttestationInput,
+  type CloseTokenizedAttestationInput,
+  type CreateAttestationInput,
+  type CreateCredentialInput,
+  type CreateSchemaInput,
+  type CreateTokenizedAttestationInput,
+  type EmitEventInput,
   type ParsedChangeAuthorizedSignersInstruction,
   type ParsedChangeSchemaDescriptionInstruction,
   type ParsedChangeSchemaStatusInstruction,
@@ -25,6 +91,7 @@ import {
   type ParsedCreateTokenizedAttestationInstruction,
   type ParsedEmitEventInstruction,
   type ParsedTokenizeSchemaInstruction,
+  type TokenizeSchemaInput,
 } from '../instructions';
 
 export const SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS =
@@ -91,8 +158,9 @@ export function identifySolanaAttestationServiceInstruction(
   if (containsBytes(data, getU8Encoder().encode(228), 0)) {
     return SolanaAttestationServiceInstruction.EmitEvent;
   }
-  throw new Error(
-    'The provided instruction could not be identified as a solanaAttestationService instruction.'
+  throw new SolanaError(
+    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
+    { instructionData: data, programName: 'solanaAttestationService' }
   );
 }
 
@@ -135,3 +203,295 @@ export type ParsedSolanaAttestationServiceInstruction<
   | ({
       instructionType: SolanaAttestationServiceInstruction.EmitEvent;
     } & ParsedEmitEventInstruction<TProgram>);
+
+export function parseSolanaAttestationServiceInstruction<
+  TProgram extends string,
+>(
+  instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>
+): ParsedSolanaAttestationServiceInstruction<TProgram> {
+  const instructionType =
+    identifySolanaAttestationServiceInstruction(instruction);
+  switch (instructionType) {
+    case SolanaAttestationServiceInstruction.CreateCredential: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: SolanaAttestationServiceInstruction.CreateCredential,
+        ...parseCreateCredentialInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.CreateSchema: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: SolanaAttestationServiceInstruction.CreateSchema,
+        ...parseCreateSchemaInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.ChangeSchemaStatus: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: SolanaAttestationServiceInstruction.ChangeSchemaStatus,
+        ...parseChangeSchemaStatusInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.ChangeAuthorizedSigners: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType:
+          SolanaAttestationServiceInstruction.ChangeAuthorizedSigners,
+        ...parseChangeAuthorizedSignersInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.ChangeSchemaDescription: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType:
+          SolanaAttestationServiceInstruction.ChangeSchemaDescription,
+        ...parseChangeSchemaDescriptionInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.ChangeSchemaVersion: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType:
+          SolanaAttestationServiceInstruction.ChangeSchemaVersion,
+        ...parseChangeSchemaVersionInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.CreateAttestation: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: SolanaAttestationServiceInstruction.CreateAttestation,
+        ...parseCreateAttestationInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.CloseAttestation: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: SolanaAttestationServiceInstruction.CloseAttestation,
+        ...parseCloseAttestationInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.TokenizeSchema: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: SolanaAttestationServiceInstruction.TokenizeSchema,
+        ...parseTokenizeSchemaInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.CreateTokenizedAttestation: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType:
+          SolanaAttestationServiceInstruction.CreateTokenizedAttestation,
+        ...parseCreateTokenizedAttestationInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.CloseTokenizedAttestation: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType:
+          SolanaAttestationServiceInstruction.CloseTokenizedAttestation,
+        ...parseCloseTokenizedAttestationInstruction(instruction),
+      };
+    }
+    case SolanaAttestationServiceInstruction.EmitEvent: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: SolanaAttestationServiceInstruction.EmitEvent,
+        ...parseEmitEventInstruction(instruction),
+      };
+    }
+    default:
+      throw new SolanaError(
+        SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
+        {
+          instructionType: instructionType as string,
+          programName: 'solanaAttestationService',
+        }
+      );
+  }
+}
+
+export type SolanaAttestationServicePlugin = {
+  accounts: SolanaAttestationServicePluginAccounts;
+  instructions: SolanaAttestationServicePluginInstructions;
+  identifyInstruction: typeof identifySolanaAttestationServiceInstruction;
+  parseInstruction: typeof parseSolanaAttestationServiceInstruction;
+};
+
+export type SolanaAttestationServicePluginAccounts = {
+  attestation: ReturnType<typeof getAttestationCodec> &
+    SelfFetchFunctions<AttestationArgs, Attestation>;
+  credential: ReturnType<typeof getCredentialCodec> &
+    SelfFetchFunctions<CredentialArgs, Credential>;
+  schema: ReturnType<typeof getSchemaCodec> &
+    SelfFetchFunctions<SchemaArgs, Schema>;
+};
+
+export type SolanaAttestationServicePluginInstructions = {
+  createCredential: (
+    input: MakeOptional<CreateCredentialInput, 'payer'>
+  ) => ReturnType<typeof getCreateCredentialInstruction> &
+    SelfPlanAndSendFunctions;
+  createSchema: (
+    input: MakeOptional<CreateSchemaInput, 'payer'>
+  ) => ReturnType<typeof getCreateSchemaInstruction> & SelfPlanAndSendFunctions;
+  changeSchemaStatus: (
+    input: ChangeSchemaStatusInput
+  ) => ReturnType<typeof getChangeSchemaStatusInstruction> &
+    SelfPlanAndSendFunctions;
+  changeAuthorizedSigners: (
+    input: MakeOptional<ChangeAuthorizedSignersInput, 'payer'>
+  ) => ReturnType<typeof getChangeAuthorizedSignersInstruction> &
+    SelfPlanAndSendFunctions;
+  changeSchemaDescription: (
+    input: MakeOptional<ChangeSchemaDescriptionInput, 'payer'>
+  ) => ReturnType<typeof getChangeSchemaDescriptionInstruction> &
+    SelfPlanAndSendFunctions;
+  changeSchemaVersion: (
+    input: MakeOptional<ChangeSchemaVersionInput, 'payer'>
+  ) => ReturnType<typeof getChangeSchemaVersionInstruction> &
+    SelfPlanAndSendFunctions;
+  createAttestation: (
+    input: MakeOptional<CreateAttestationInput, 'payer'>
+  ) => ReturnType<typeof getCreateAttestationInstruction> &
+    SelfPlanAndSendFunctions;
+  closeAttestation: (
+    input: MakeOptional<CloseAttestationInput, 'payer'>
+  ) => ReturnType<typeof getCloseAttestationInstruction> &
+    SelfPlanAndSendFunctions;
+  tokenizeSchema: (
+    input: MakeOptional<TokenizeSchemaInput, 'payer'>
+  ) => ReturnType<typeof getTokenizeSchemaInstruction> &
+    SelfPlanAndSendFunctions;
+  createTokenizedAttestation: (
+    input: MakeOptional<CreateTokenizedAttestationInput, 'payer'>
+  ) => ReturnType<typeof getCreateTokenizedAttestationInstruction> &
+    SelfPlanAndSendFunctions;
+  closeTokenizedAttestation: (
+    input: MakeOptional<CloseTokenizedAttestationInput, 'payer'>
+  ) => ReturnType<typeof getCloseTokenizedAttestationInstruction> &
+    SelfPlanAndSendFunctions;
+  emitEvent: (
+    input: EmitEventInput
+  ) => ReturnType<typeof getEmitEventInstruction> & SelfPlanAndSendFunctions;
+};
+
+export type SolanaAttestationServicePluginRequirements = ClientWithRpc<
+  GetAccountInfoApi & GetMultipleAccountsApi
+> &
+  ClientWithPayer &
+  ClientWithTransactionPlanning &
+  ClientWithTransactionSending;
+
+export function solanaAttestationServiceProgram() {
+  return <T extends SolanaAttestationServicePluginRequirements>(
+    client: T
+  ): ExtendedClient<
+    T,
+    { solanaAttestationService: SolanaAttestationServicePlugin }
+  > => {
+    return extendClient(client, {
+      solanaAttestationService: <SolanaAttestationServicePlugin>{
+        accounts: {
+          attestation: addSelfFetchFunctions(client, getAttestationCodec()),
+          credential: addSelfFetchFunctions(client, getCredentialCodec()),
+          schema: addSelfFetchFunctions(client, getSchemaCodec()),
+        },
+        instructions: {
+          createCredential: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCreateCredentialInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          createSchema: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCreateSchemaInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          changeSchemaStatus: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getChangeSchemaStatusInstruction(input)
+            ),
+          changeAuthorizedSigners: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getChangeAuthorizedSignersInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          changeSchemaDescription: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getChangeSchemaDescriptionInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          changeSchemaVersion: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getChangeSchemaVersionInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          createAttestation: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCreateAttestationInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          closeAttestation: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCloseAttestationInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          tokenizeSchema: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getTokenizeSchemaInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          createTokenizedAttestation: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCreateTokenizedAttestationInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          closeTokenizedAttestation: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCloseTokenizedAttestationInstruction({
+                ...input,
+                payer: input.payer ?? client.payer,
+              })
+            ),
+          emitEvent: (input) =>
+            addSelfPlanAndSendFunctions(client, getEmitEventInstruction(input)),
+        },
+        identifyInstruction: identifySolanaAttestationServiceInstruction,
+        parseInstruction: parseSolanaAttestationServiceInstruction,
+      },
+    });
+  };
+}
+
+type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;

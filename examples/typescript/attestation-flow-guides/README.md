@@ -4,10 +4,8 @@ This repository contains the companion code for Solana Attestation Service (SAS)
 
 | Title | File | Guide | Description |
 |-------|------|-------|-------------|
-| Standard Attestation Demo | `src/gill/sas-tokenized-gill-demo.ts` | [How to Build Digital Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/how-to-create-digital-credentials) | Basic credential and attestation workflow |
-| Tokenized Attestation Demo | `src/gill/sas-standard-gill-demo.ts` | [How to Create Tokenized Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/tokenized-attestations) | Create credentials as SPL tokens using Token-2022 |
-
-Additionally, Solana Kit examples are provided in `src/kit`.
+| Standard Attestation Demo | `src/kit/sas-standard-kit-demo.ts` | [How to Build Digital Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/how-to-create-digital-credentials) | Basic credential and attestation workflow |
+| Tokenized Attestation Demo | `src/kit/sas-tokenized-kit-demo.ts` | [How to Create Tokenized Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/tokenized-attestations) | Create credentials as SPL tokens using Token-2022 |
 
 ## Requirements
 
@@ -32,16 +30,10 @@ pnpm install
 The simplest way to get started is using Solana devnet:
 
 ```bash
-# Run the standard attestation demo with Gill
-pnpm gill:standard
-
-# Run the tokenized attestation demo will Gill
-pnpm gill:tokenized
-
 # Run the standard attestation demo with Kit
 pnpm kit:standard
 
-# Run the tokenized attestation demo will Kit
+# Run the tokenized attestation demo with Kit
 pnpm kit:tokenized
 ```
 
@@ -67,22 +59,17 @@ For local development and testing:
 3. **Update configuration** in the demo files:
    ```typescript
    const CONFIG = {
-       CLUSTER_OR_RPC: 'localnet', // Change from 'devnet'
+       HTTP_CONNECTION_URL: 'http://127.0.0.1:8899',
+       WSS_CONNECTION_URL: 'ws://127.0.0.1:8900',
        // ... rest of config
    };
    ```
 
 4. **Run the demos:**
    ```bash
-    # Run the standard attestation demo with Gill
-    pnpm gill:standard
+   # Run the standard attestation demo with Kit
+   pnpm kit:standard
 
-    # Run the tokenized attestation demo will Gill
-    pnpm gill:tokenized
-
-    # Run the standard attestation demo with Kit
-    pnpm kit:standard
-
-    # Run the tokenized attestation demo will Kit
-    pnpm kit:tokenized
+   # Run the tokenized attestation demo with Kit
+   pnpm kit:tokenized
    ```

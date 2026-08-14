@@ -14,6 +14,8 @@ import {
   getStructEncoder,
   getU8Decoder,
   getU8Encoder,
+  SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+  SolanaError,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -30,12 +32,15 @@ import {
   type TransactionSigner,
   type WritableAccount,
 } from '@solana/kit';
+import {
+  getAccountMetaFactory,
+  type ResolvedInstructionAccount,
+} from '@solana/program-client-core';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const CHANGE_SCHEMA_STATUS_DISCRIMINATOR = 2;
 
-export function getChangeSchemaStatusDiscriminatorBytes() {
+export function getChangeSchemaStatusDiscriminatorBytes(): ReadonlyUint8Array {
   return getU8Encoder().encode(CHANGE_SCHEMA_STATUS_DISCRIMINATOR);
 }
 
@@ -114,8 +119,8 @@ export function getChangeSchemaStatusInstruction<
   TAccountAuthority extends string,
   TAccountCredential extends string,
   TAccountSchema extends string,
-  TProgramAddress extends
-    Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 >(
   input: ChangeSchemaStatusInput<
     TAccountAuthority,
@@ -141,7 +146,7 @@ export function getChangeSchemaStatusInstruction<
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
-    ResolvedAccount
+    ResolvedInstructionAccount
   >;
 
   // Original args.
@@ -150,9 +155,9 @@ export function getChangeSchemaStatusInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.authority),
-      getAccountMeta(accounts.credential),
-      getAccountMeta(accounts.schema),
+      getAccountMeta('authority', accounts.authority),
+      getAccountMeta('credential', accounts.credential),
+      getAccountMeta('schema', accounts.schema),
     ],
     data: getChangeSchemaStatusInstructionDataEncoder().encode(
       args as ChangeSchemaStatusInstructionDataArgs
@@ -190,8 +195,13 @@ export function parseChangeSchemaStatusInstruction<
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedChangeSchemaStatusInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new SolanaError(
+      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+      {
+        actualAccountMetas: instruction.accounts.length,
+        expectedAccountMetas: 3,
+      }
+    );
   }
   let accountIndex = 0;
   const getNextAccount = () => {

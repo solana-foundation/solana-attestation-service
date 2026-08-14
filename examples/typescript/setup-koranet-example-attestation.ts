@@ -23,6 +23,7 @@ import {
     createTransactionMessage,
     pipe,
     getSignatureFromTransaction,
+    assertIsTransactionWithBlockhashLifetime,
   } from "@solana/kit";
   import { createKeyPairSignerFromPrivateKeyBytes, signTransactionMessageWithSigners } from "@solana/signers";
   import * as bs58 from "bs58";
@@ -112,6 +113,8 @@ import {
     );
   
     const signedTransaction = await signTransactionMessageWithSigners(transactionMessage); 
+  
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
   
     const sendAndConfirm = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
   

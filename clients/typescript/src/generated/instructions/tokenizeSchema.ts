@@ -14,6 +14,8 @@ import {
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
+  SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+  SolanaError,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -31,12 +33,15 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/kit';
+import {
+  getAccountMetaFactory,
+  type ResolvedInstructionAccount,
+} from '@solana/program-client-core';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const TOKENIZE_SCHEMA_DISCRIMINATOR = 9;
 
-export function getTokenizeSchemaDiscriminatorBytes() {
+export function getTokenizeSchemaDiscriminatorBytes(): ReadonlyUint8Array {
   return getU8Encoder().encode(TOKENIZE_SCHEMA_DISCRIMINATOR);
 }
 
@@ -48,12 +53,10 @@ export type TokenizeSchemaInstruction<
   TAccountSchema extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
   TAccountSasPda extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | AccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTokenProgram extends
-    | string
-    | AccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+  TAccountSystemProgram extends string | AccountMeta<string> =
+    '11111111111111111111111111111111',
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -156,8 +159,8 @@ export function getTokenizeSchemaInstruction<
   TAccountSasPda extends string,
   TAccountSystemProgram extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends
-    Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 >(
   input: TokenizeSchemaInput<
     TAccountPayer,
@@ -198,7 +201,7 @@ export function getTokenizeSchemaInstruction<
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
-    ResolvedAccount
+    ResolvedInstructionAccount
   >;
 
   // Original args.
@@ -217,14 +220,14 @@ export function getTokenizeSchemaInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.authority),
-      getAccountMeta(accounts.credential),
-      getAccountMeta(accounts.schema),
-      getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.sasPda),
-      getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta('payer', accounts.payer),
+      getAccountMeta('authority', accounts.authority),
+      getAccountMeta('credential', accounts.credential),
+      getAccountMeta('schema', accounts.schema),
+      getAccountMeta('mint', accounts.mint),
+      getAccountMeta('sasPda', accounts.sasPda),
+      getAccountMeta('systemProgram', accounts.systemProgram),
+      getAccountMeta('tokenProgram', accounts.tokenProgram),
     ],
     data: getTokenizeSchemaInstructionDataEncoder().encode(
       args as TokenizeSchemaInstructionDataArgs
@@ -273,8 +276,13 @@ export function parseTokenizeSchemaInstruction<
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedTokenizeSchemaInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 8) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new SolanaError(
+      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+      {
+        actualAccountMetas: instruction.accounts.length,
+        expectedAccountMetas: 8,
+      }
+    );
   }
   let accountIndex = 0;
   const getNextAccount = () => {

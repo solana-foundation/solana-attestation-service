@@ -18,6 +18,8 @@ import {
   getU8Encoder,
   getUtf8Decoder,
   getUtf8Encoder,
+  SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+  SolanaError,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -35,12 +37,15 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/kit';
+import {
+  getAccountMetaFactory,
+  type ResolvedInstructionAccount,
+} from '@solana/program-client-core';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const CHANGE_SCHEMA_DESCRIPTION_DISCRIMINATOR = 4;
 
-export function getChangeSchemaDescriptionDiscriminatorBytes() {
+export function getChangeSchemaDescriptionDiscriminatorBytes(): ReadonlyUint8Array {
   return getU8Encoder().encode(CHANGE_SCHEMA_DESCRIPTION_DISCRIMINATOR);
 }
 
@@ -50,9 +55,8 @@ export type ChangeSchemaDescriptionInstruction<
   TAccountAuthority extends string | AccountMeta<string> = string,
   TAccountCredential extends string | AccountMeta<string> = string,
   TAccountSchema extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | AccountMeta<string> = '11111111111111111111111111111111',
+  TAccountSystemProgram extends string | AccountMeta<string> =
+    '11111111111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -141,8 +145,8 @@ export function getChangeSchemaDescriptionInstruction<
   TAccountCredential extends string,
   TAccountSchema extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends
-    Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 >(
   input: ChangeSchemaDescriptionInput<
     TAccountPayer,
@@ -174,7 +178,7 @@ export function getChangeSchemaDescriptionInstruction<
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
-    ResolvedAccount
+    ResolvedInstructionAccount
   >;
 
   // Original args.
@@ -189,11 +193,11 @@ export function getChangeSchemaDescriptionInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.authority),
-      getAccountMeta(accounts.credential),
-      getAccountMeta(accounts.schema),
-      getAccountMeta(accounts.systemProgram),
+      getAccountMeta('payer', accounts.payer),
+      getAccountMeta('authority', accounts.authority),
+      getAccountMeta('credential', accounts.credential),
+      getAccountMeta('schema', accounts.schema),
+      getAccountMeta('systemProgram', accounts.systemProgram),
     ],
     data: getChangeSchemaDescriptionInstructionDataEncoder().encode(
       args as ChangeSchemaDescriptionInstructionDataArgs
@@ -235,8 +239,13 @@ export function parseChangeSchemaDescriptionInstruction<
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedChangeSchemaDescriptionInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new SolanaError(
+      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+      {
+        actualAccountMetas: instruction.accounts.length,
+        expectedAccountMetas: 5,
+      }
+    );
   }
   let accountIndex = 0;
   const getNextAccount = () => {

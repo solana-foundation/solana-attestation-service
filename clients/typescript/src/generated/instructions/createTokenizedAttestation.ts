@@ -26,6 +26,8 @@ import {
   getU8Encoder,
   getUtf8Decoder,
   getUtf8Encoder,
+  SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+  SolanaError,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -43,12 +45,15 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/kit';
+import {
+  getAccountMetaFactory,
+  type ResolvedInstructionAccount,
+} from '@solana/program-client-core';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const CREATE_TOKENIZED_ATTESTATION_DISCRIMINATOR = 10;
 
-export function getCreateTokenizedAttestationDiscriminatorBytes() {
+export function getCreateTokenizedAttestationDiscriminatorBytes(): ReadonlyUint8Array {
   return getU8Encoder().encode(CREATE_TOKENIZED_ATTESTATION_DISCRIMINATOR);
 }
 
@@ -59,20 +64,17 @@ export type CreateTokenizedAttestationInstruction<
   TAccountCredential extends string | AccountMeta<string> = string,
   TAccountSchema extends string | AccountMeta<string> = string,
   TAccountAttestation extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | AccountMeta<string> = '11111111111111111111111111111111',
+  TAccountSystemProgram extends string | AccountMeta<string> =
+    '11111111111111111111111111111111',
   TAccountSchemaMint extends string | AccountMeta<string> = string,
   TAccountAttestationMint extends string | AccountMeta<string> = string,
   TAccountSasPda extends string | AccountMeta<string> = string,
   TAccountRecipientTokenAccount extends string | AccountMeta<string> = string,
   TAccountRecipient extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends
-    | string
-    | AccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
-  TAccountAssociatedTokenProgram extends
-    | string
-    | AccountMeta<string> = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+  TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
+    'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -245,8 +247,8 @@ export function getCreateTokenizedAttestationInstruction<
   TAccountRecipient extends string,
   TAccountTokenProgram extends string,
   TAccountAssociatedTokenProgram extends string,
-  TProgramAddress extends
-    Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 >(
   input: CreateTokenizedAttestationInput<
     TAccountPayer,
@@ -308,7 +310,7 @@ export function getCreateTokenizedAttestationInstruction<
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
-    ResolvedAccount
+    ResolvedInstructionAccount
   >;
 
   // Original args.
@@ -331,19 +333,19 @@ export function getCreateTokenizedAttestationInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.authority),
-      getAccountMeta(accounts.credential),
-      getAccountMeta(accounts.schema),
-      getAccountMeta(accounts.attestation),
-      getAccountMeta(accounts.systemProgram),
-      getAccountMeta(accounts.schemaMint),
-      getAccountMeta(accounts.attestationMint),
-      getAccountMeta(accounts.sasPda),
-      getAccountMeta(accounts.recipientTokenAccount),
-      getAccountMeta(accounts.recipient),
-      getAccountMeta(accounts.tokenProgram),
-      getAccountMeta(accounts.associatedTokenProgram),
+      getAccountMeta('payer', accounts.payer),
+      getAccountMeta('authority', accounts.authority),
+      getAccountMeta('credential', accounts.credential),
+      getAccountMeta('schema', accounts.schema),
+      getAccountMeta('attestation', accounts.attestation),
+      getAccountMeta('systemProgram', accounts.systemProgram),
+      getAccountMeta('schemaMint', accounts.schemaMint),
+      getAccountMeta('attestationMint', accounts.attestationMint),
+      getAccountMeta('sasPda', accounts.sasPda),
+      getAccountMeta('recipientTokenAccount', accounts.recipientTokenAccount),
+      getAccountMeta('recipient', accounts.recipient),
+      getAccountMeta('tokenProgram', accounts.tokenProgram),
+      getAccountMeta('associatedTokenProgram', accounts.associatedTokenProgram),
     ],
     data: getCreateTokenizedAttestationInstructionDataEncoder().encode(
       args as CreateTokenizedAttestationInstructionDataArgs
@@ -407,8 +409,13 @@ export function parseCreateTokenizedAttestationInstruction<
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedCreateTokenizedAttestationInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 13) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new SolanaError(
+      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+      {
+        actualAccountMetas: instruction.accounts.length,
+        expectedAccountMetas: 13,
+      }
+    );
   }
   let accountIndex = 0;
   const getNextAccount = () => {

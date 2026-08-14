@@ -12,6 +12,8 @@ import {
   getStructEncoder,
   getU8Decoder,
   getU8Encoder,
+  SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+  SolanaError,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -26,20 +28,22 @@ import {
   type ReadonlyUint8Array,
   type TransactionSigner,
 } from '@solana/kit';
+import {
+  getAccountMetaFactory,
+  type ResolvedInstructionAccount,
+} from '@solana/program-client-core';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const EMIT_EVENT_DISCRIMINATOR = 228;
 
-export function getEmitEventDiscriminatorBytes() {
+export function getEmitEventDiscriminatorBytes(): ReadonlyUint8Array {
   return getU8Encoder().encode(EMIT_EVENT_DISCRIMINATOR);
 }
 
 export type EmitEventInstruction<
   TProgram extends string = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
-  TAccountEventAuthority extends
-    | string
-    | AccountMeta<string> = 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g',
+  TAccountEventAuthority extends string | AccountMeta<string> =
+    'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -84,8 +88,8 @@ export type EmitEventInput<TAccountEventAuthority extends string = string> = {
 
 export function getEmitEventInstruction<
   TAccountEventAuthority extends string,
-  TProgramAddress extends
-    Address = typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
+  TProgramAddress extends Address =
+    typeof SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 >(
   input: EmitEventInput<TAccountEventAuthority>,
   config?: { programAddress?: TProgramAddress }
@@ -100,7 +104,7 @@ export function getEmitEventInstruction<
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
-    ResolvedAccount
+    ResolvedInstructionAccount
   >;
 
   // Resolve default values.
@@ -111,7 +115,7 @@ export function getEmitEventInstruction<
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
-    accounts: [getAccountMeta(accounts.eventAuthority)],
+    accounts: [getAccountMeta('eventAuthority', accounts.eventAuthority)],
     data: getEmitEventInstructionDataEncoder().encode({}),
     programAddress,
   } as EmitEventInstruction<TProgramAddress, TAccountEventAuthority>);
@@ -137,8 +141,13 @@ export function parseEmitEventInstruction<
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedEmitEventInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 1) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new SolanaError(
+      SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+      {
+        actualAccountMetas: instruction.accounts.length,
+        expectedAccountMetas: 1,
+      }
+    );
   }
   let accountIndex = 0;
   const getNextAccount = () => {
