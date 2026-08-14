@@ -24,6 +24,7 @@ import {
   getCreateCredentialInstructionAsync,
   getCreateSchemaInstructionAsync,
   Schema,
+  SchemaDataType,
   serializeAttestationData,
   SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 } from "../../src";
@@ -62,8 +63,12 @@ const findCustomProgramErrorCode = (error: unknown): number | undefined => {
 const CREDENTIAL_NAME = "surfpool-credential";
 const SCHEMA_NAME = "surfpool-schema";
 
-/** String, u8, char, Vec<String> */
-const SCHEMA_LAYOUT = Uint8Array.from([12, 0, 11, 25]);
+const SCHEMA_LAYOUT = [
+  SchemaDataType.String,
+  SchemaDataType.U8,
+  SchemaDataType.Char,
+  SchemaDataType.VecString,
+];
 const SCHEMA_FIELD_NAMES = ["name", "age", "grade", "tags"];
 
 type Client = Awaited<ReturnType<typeof startClient>>;
@@ -107,7 +112,7 @@ const createSchema = async (
   authority: KeyPairSigner,
   credential: Address,
   name: string,
-  layout: Uint8Array,
+  layout: SchemaDataType[],
   fieldNames: string[]
 ) => {
   const [schema] = await findSchemaPda({ credential, name, version: 1 });
@@ -211,8 +216,9 @@ describe("Surfpool", () => {
   });
 
   it("round trips every supported layout type through the program", async () => {
-    const layout = Uint8Array.from(
-      Array.from({ length: 26 }, (_, index) => index)
+    const layout = Array.from(
+      { length: 26 },
+      (_, index) => index as SchemaDataType
     );
     const fieldNames = Array.from({ length: 26 }, (_, index) => `f${index}`);
     const wideSchema = await createSchema(

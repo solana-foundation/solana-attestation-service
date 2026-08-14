@@ -220,32 +220,12 @@ sasCodama.update(
   ]),
 );
 
-const configPreserver = preserveConfigFiles();
-
-sasCodama.accept(
-  renderers.renderRustVisitor(path.join(rustClientsDir, "src", "generated"), {
-    formatCode: true,
-    crateFolder: rustClientsDir,
-    deleteFolderBeforeRendering: true,
-  }),
-);
-
-// The Schema account stores `name`, `description`, `layout` and `field_names` as
-// opaque length-prefixed byte blobs (see `program/src/state/schema.rs`), but the
-// blobs have known internal structure: the two text fields are UTF-8, `layout` is
-// a run of SchemaDataTypes discriminants, and `field_names` is a run of
-// u32-length-prefixed strings. Describing that structure here makes the generated
-// codecs decode straight to `string`, `SchemaDataType[]` and `string[]`.
-//
-// This runs after the Rust render because the Rust renderer discards the size
-// prefix wrapping a remainder-count array and emits `RemainderVec`, which reads
-// to the end of the buffer and so cannot represent an interior blob. The Rust
-// client keeps the raw `Vec<u8>` fields.
 const u32 = codama.numberTypeNode("u32");
 const prefixedStringType = codama.sizePrefixTypeNode(
   codama.stringTypeNode("utf8"),
   u32,
 );
+const schemaDataTypeLink = codama.definedTypeLinkNode("schemaDataType");
 
 /** A byte blob holding a run of items that fills the blob exactly. */
 const joinedRunType = (item) =>
@@ -265,10 +245,35 @@ const SCHEMA_DATA_TYPE_VARIANTS = [
   "vecBool", "vecChar", "vecString",
 ];
 
+const INSTRUCTIONS_TAKING_LAYOUT = ["createSchema", "changeSchemaVersion"];
+
+const configPreserver = preserveConfigFiles();
+
+sasCodama.accept(
+  renderers.renderRustVisitor(path.join(rustClientsDir, "src", "generated"), {
+    formatCode: true,
+    crateFolder: rustClientsDir,
+    deleteFolderBeforeRendering: true,
+  }),
+);
+
+// Everything below shapes the TypeScript client only, and so runs after the Rust
+// render. Two reasons it stays out of the Rust client: the Rust renderer discards
+// the size prefix wrapping a remainder-count array and emits `RemainderVec`, which
+// reads to the end of the buffer and so cannot represent an interior blob; and the
+// Rust caller's layouts come from `SchemaStructSerialize` as raw bytes, so typing
+// them as an enum would only add conversions. The Rust client keeps `Vec<u8>`.
+//
+// The Schema account stores `name`, `description`, `layout` and `field_names` as
+// opaque length-prefixed byte blobs (see `program/src/state/schema.rs`), but the
+// blobs have known internal structure: the two text fields are UTF-8, `layout` is
+// a run of SchemaDataTypes discriminants, and `field_names` is a run of
+// u32-length-prefixed strings. Describing that structure makes the generated
+// codecs decode straight to `string`, `SchemaDataType[]` and `string[]`.
 const SCHEMA_FIELD_TYPES = {
   description: prefixedStringType,
   fieldNames: joinedRunType(prefixedStringType),
-  layout: joinedRunType(codama.definedTypeLinkNode("schemaDataType")),
+  layout: joinedRunType(schemaDataTypeLink),
   name: prefixedStringType,
 };
 
@@ -291,6 +296,23 @@ sasCodama.update(
         ],
       }),
     },
+    // A layout argument is typed as a byte blob, which leaves callers writing raw
+    // SchemaDataTypes discriminants. A u32-prefixed array of the named enum has
+    // the same wire format and matches what reading a Schema back yields.
+    ...INSTRUCTIONS_TAKING_LAYOUT.map((instruction) => ({
+      select: `[instructionNode]${instruction}.[instructionArgumentNode]layout`,
+      transform: (node) => {
+        codama.assertIsNode(node, "instructionArgumentNode");
+
+        return {
+          ...node,
+          type: codama.arrayTypeNode(
+            schemaDataTypeLink,
+            codama.prefixedCountNode(u32),
+          ),
+        };
+      },
+    })),
     {
       select: "[accountNode]schema",
       transform: (node) => {

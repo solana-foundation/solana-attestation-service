@@ -12,8 +12,6 @@ import {
   combineCodec,
   getArrayDecoder,
   getArrayEncoder,
-  getBytesDecoder,
-  getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
   getU32Decoder,
@@ -46,6 +44,12 @@ import {
   type ResolvedInstructionAccount,
 } from '@solana/kit/program-client-core';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
+import {
+  getSchemaDataTypeDecoder,
+  getSchemaDataTypeEncoder,
+  type SchemaDataType,
+  type SchemaDataTypeArgs,
+} from '../types';
 
 export const CHANGE_SCHEMA_VERSION_DISCRIMINATOR = 5;
 
@@ -93,12 +97,12 @@ export type ChangeSchemaVersionInstruction<
 
 export type ChangeSchemaVersionInstructionData = {
   discriminator: number;
-  layout: ReadonlyUint8Array;
+  layout: Array<SchemaDataType>;
   fieldNames: Array<string>;
 };
 
 export type ChangeSchemaVersionInstructionDataArgs = {
-  layout: ReadonlyUint8Array;
+  layout: Array<SchemaDataTypeArgs>;
   fieldNames: Array<string>;
 };
 
@@ -106,7 +110,7 @@ export function getChangeSchemaVersionInstructionDataEncoder(): Encoder<ChangeSc
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['layout', addEncoderSizePrefix(getBytesEncoder(), getU32Encoder())],
+      ['layout', getArrayEncoder(getSchemaDataTypeEncoder())],
       [
         'fieldNames',
         getArrayEncoder(
@@ -124,7 +128,7 @@ export function getChangeSchemaVersionInstructionDataEncoder(): Encoder<ChangeSc
 export function getChangeSchemaVersionInstructionDataDecoder(): Decoder<ChangeSchemaVersionInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['layout', addDecoderSizePrefix(getBytesDecoder(), getU32Decoder())],
+    ['layout', getArrayDecoder(getSchemaDataTypeDecoder())],
     [
       'fieldNames',
       getArrayDecoder(addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())),

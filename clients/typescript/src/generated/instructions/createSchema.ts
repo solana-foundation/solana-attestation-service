@@ -12,8 +12,6 @@ import {
   combineCodec,
   getArrayDecoder,
   getArrayEncoder,
-  getBytesDecoder,
-  getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
   getU32Decoder,
@@ -49,6 +47,12 @@ import {
 } from '@solana/kit/program-client-core';
 import { findSchemaPda } from '../pdas';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
+import {
+  getSchemaDataTypeDecoder,
+  getSchemaDataTypeEncoder,
+  type SchemaDataType,
+  type SchemaDataTypeArgs,
+} from '../types';
 
 export const CREATE_SCHEMA_DISCRIMINATOR = 1;
 
@@ -94,14 +98,14 @@ export type CreateSchemaInstructionData = {
   discriminator: number;
   name: string;
   description: string;
-  layout: ReadonlyUint8Array;
+  layout: Array<SchemaDataType>;
   fieldNames: Array<string>;
 };
 
 export type CreateSchemaInstructionDataArgs = {
   name: string;
   description: string;
-  layout: ReadonlyUint8Array;
+  layout: Array<SchemaDataTypeArgs>;
   fieldNames: Array<string>;
 };
 
@@ -111,7 +115,7 @@ export function getCreateSchemaInstructionDataEncoder(): Encoder<CreateSchemaIns
       ['discriminator', getU8Encoder()],
       ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ['description', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-      ['layout', addEncoderSizePrefix(getBytesEncoder(), getU32Encoder())],
+      ['layout', getArrayEncoder(getSchemaDataTypeEncoder())],
       [
         'fieldNames',
         getArrayEncoder(
@@ -128,7 +132,7 @@ export function getCreateSchemaInstructionDataDecoder(): Decoder<CreateSchemaIns
     ['discriminator', getU8Decoder()],
     ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['description', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
-    ['layout', addDecoderSizePrefix(getBytesDecoder(), getU32Decoder())],
+    ['layout', getArrayDecoder(getSchemaDataTypeDecoder())],
     [
       'fieldNames',
       getArrayDecoder(addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())),
