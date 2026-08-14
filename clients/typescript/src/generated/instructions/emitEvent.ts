@@ -31,7 +31,7 @@ import {
 import {
   getAccountMetaFactory,
   type ResolvedInstructionAccount,
-} from '@solana/program-client-core';
+} from '@solana/kit/program-client-core';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 
 export const EMIT_EVENT_DISCRIMINATOR = 228;

@@ -13,7 +13,11 @@
     "test": "mocha --require ts-node/register 'test/**/*'"
   },
   "devDependencies": {
-    "@types/chai": "^5.2.2",
+    "@solana/kit": "^7.0.0",
+    "@solana/kit-plugin-rpc": "^0.16.0",
+    "@solana/kit-plugin-signer": "^0.13.0",
+    "@solana/surfpool": "^1.5.0",
+    "@types/chai": "^4.3.20",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.11.24",
     "chai": "^4.4.1",
@@ -21,8 +25,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   },
-  "dependencies": {
-    "@solana/kit": "^7.0.0",
-    "@solana/program-client-core": "^7.0.0"
+  "peerDependencies": {
+    "@solana/kit": "^7.0.0"
   }
 }

@@ -38,7 +38,7 @@ import {
 import {
   getAccountMetaFactory,
   type ResolvedInstructionAccount,
-} from '@solana/program-client-core';
+} from '@solana/kit/program-client-core';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 
 export const CHANGE_AUTHORIZED_SIGNERS_DISCRIMINATOR = 3;

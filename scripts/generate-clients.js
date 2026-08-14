@@ -239,7 +239,12 @@ sasCodama.accept(
     deleteFolderBeforeRendering: true,
     dependencyVersions: {
       "@solana/kit": "^7.0.0",
-      "@solana/program-client-core": "^7.0.0",
+    },
+    // `@solana/kit` re-exports the program client core helpers on a subpath.
+    // Importing them from there keeps kit as the client's only external
+    // package, matching the @solana-program clients.
+    dependencyMap: {
+      solanaProgramClientCore: "@solana/kit/program-client-core",
     },
     prettierOptions: {
       arrowParens: "always",

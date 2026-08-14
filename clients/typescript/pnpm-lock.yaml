@@ -7,17 +7,22 @@ settings:
 importers:
 
   .:
-    dependencies:
+    devDependencies:
       '@solana/kit':
         specifier: ^7.0.0
         version: 7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
-      '@solana/program-client-core':
-        specifier: ^7.0.0
-        version: 7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
-    devDependencies:
+      '@solana/kit-plugin-rpc':
+        specifier: ^0.16.0
+        version: 0.16.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))
+      '@solana/kit-plugin-signer':
+        specifier: ^0.13.0
+        version: 0.13.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))
+      '@solana/surfpool':
+        specifier: ^1.5.0
+        version: 1.5.0(@solana/kit-plugin-rpc@0.16.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)))(@solana/kit-plugin-signer@0.13.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)))(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))
       '@types/chai':
-        specifier: ^5.2.2
-        version: 5.2.2
+        specifier: ^4.3.20
+        version: 4.3.20
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -199,6 +204,21 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  '@solana/kit-plugin-instruction-plan@0.13.0':
+    resolution: {integrity: sha512-9RA94e0LLtVLN+bvGclpu8l0lAXGOGS72DxPIQ1VyGZs7vK/WTwPOqKnWhjJs2Cv/SDJ2xsCAhYkXr0UltVrOg==}
+    peerDependencies:
+      '@solana/kit': ^7.0.0
+
+  '@solana/kit-plugin-rpc@0.16.0':
+    resolution: {integrity: sha512-iMzlXEq7zU5YPN0G24aN+nl7XP7Kp+4cegsL5o8n4pBr6iazsSu0TU+5krK9LNR01vIKrXUw7MvnO+45XWVGUA==}
+    peerDependencies:
+      '@solana/kit': ^7.0.0
+
+  '@solana/kit-plugin-signer@0.13.0':
+    resolution: {integrity: sha512-Vtlyt2Td8WfeQvC30yOU7a+CFo4+loMCSQKUFwvSQvbpKG39S6UyQc1euhcvtwCbJRZR3m5nAZvHayQ1rxeUkA==}
+    peerDependencies:
+      '@solana/kit': ^7.0.0
 
   '@solana/kit@7.0.0':
     resolution: {integrity: sha512-ZCeai4LRJQooUmJXvpgMEGFTrCdJnV1ODbDJ8oqFZ+Y4t/9x1baQsFFpruqsdRyeGv2Rr+X6jV7cldVD+hyzRA==}
@@ -407,6 +427,40 @@ packages:
       typescript:
         optional: true
 
+  '@solana/surfpool-darwin-arm64@1.5.0':
+    resolution: {integrity: sha512-RdjEN7WDAr1Vrp1CD+NAS3pwT//TJclX9zyxjhAMpmBofwDzlCO8/yqv2CbD77UOuB/y3UWz3MvEEHxZfetKsw==}
+    engines: {node: '>=18'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@solana/surfpool-darwin-x64@1.5.0':
+    resolution: {integrity: sha512-8ScgLVX32JX7HH0XkijZxlpsNAALuzaJQDUTjJ1aPazKzunliek27TP9ZkVzzBHypyiY59wpwNue9PUGnGKdIw==}
+    engines: {node: '>=18'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@solana/surfpool-linux-x64-gnu@1.5.0':
+    resolution: {integrity: sha512-d+wUCBdzw7U4inKoe+Lj7XlH8Nmd6A00IZOsG3R61NQbqhRVp7zFpVCCzV00RvgAOsSedkI87I6B4ehAuyGPAg==}
+    engines: {node: '>=18'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@solana/surfpool@1.5.0':
+    resolution: {integrity: sha512-smTwmZpron2Zf/EcxwcjlJ5cva+nnf4GWpHf7RJj8nEzA4XcHlCDFkO+Dwoe5mapHKelePqFeWpId7Q/7zxEOg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@solana/kit': ^7.0.0
+      '@solana/kit-plugin-rpc': ^0.15.0
+      '@solana/kit-plugin-signer': ^0.13.0
+    peerDependenciesMeta:
+      '@solana/kit':
+        optional: true
+      '@solana/kit-plugin-rpc':
+        optional: true
+      '@solana/kit-plugin-signer':
+        optional: true
+
   '@solana/sysvars@7.0.0':
     resolution: {integrity: sha512-GKND6hCcBcrak3/VAtx6aEoAi9wQjJQzU2Fcu6JYmnTjGe5MHf21FqbjGl0aQ0C2HlJQQJmA07wgsuOiYDTDog==}
     engines: {node: '>=20.18.0'}
@@ -464,11 +518,8 @@ packages:
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
 
-  '@types/chai@5.2.2':
-    resolution: {integrity: sha512-8kB30R7Hwqf40JPiKhVzodJs2Qc1ZJ5zuT3uzw5Hq/dhNCl3G3l83jfpdI1e20BP348+fV7VIL/+FxaXkqBmWg==}
-
-  '@types/deep-eql@4.0.2':
-    resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
+  '@types/chai@4.3.20':
+    resolution: {integrity: sha512-/pC9HAB5I/xMlc5FP77qjCnI16ChlJfW0tGa0IUcFn38VJrTV6DeZ60NU5KZBtaOZqjdpwTWohz5HU1RrhiYxQ==}
 
   '@types/mocha@10.0.10':
     resolution: {integrity: sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==}
@@ -1026,6 +1077,19 @@ snapshots:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
 
+  '@solana/kit-plugin-instruction-plan@0.13.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))':
+    dependencies:
+      '@solana/kit': 7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
+
+  '@solana/kit-plugin-rpc@0.16.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))':
+    dependencies:
+      '@solana/kit': 7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
+      '@solana/kit-plugin-instruction-plan': 0.13.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))
+
+  '@solana/kit-plugin-signer@0.13.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))':
+    dependencies:
+      '@solana/kit': 7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
+
   '@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)':
     dependencies:
       '@solana/accounts': 7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
@@ -1305,6 +1369,24 @@ snapshots:
     optionalDependencies:
       typescript: 5.8.3
 
+  '@solana/surfpool-darwin-arm64@1.5.0':
+    optional: true
+
+  '@solana/surfpool-darwin-x64@1.5.0':
+    optional: true
+
+  '@solana/surfpool-linux-x64-gnu@1.5.0':
+    optional: true
+
+  '@solana/surfpool@1.5.0(@solana/kit-plugin-rpc@0.16.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)))(@solana/kit-plugin-signer@0.13.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)))(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))':
+    optionalDependencies:
+      '@solana/kit': 7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
+      '@solana/kit-plugin-rpc': 0.16.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))
+      '@solana/kit-plugin-signer': 0.13.0(@solana/kit@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3))
+      '@solana/surfpool-darwin-arm64': 1.5.0
+      '@solana/surfpool-darwin-x64': 1.5.0
+      '@solana/surfpool-linux-x64-gnu': 1.5.0
+
   '@solana/sysvars@7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)':
     dependencies:
       '@solana/accounts': 7.0.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.8.3)
@@ -1395,11 +1477,7 @@ snapshots:
 
   '@tsconfig/node16@1.0.4': {}
 
-  '@types/chai@5.2.2':
-    dependencies:
-      '@types/deep-eql': 4.0.2
-
-  '@types/deep-eql@4.0.2': {}
+  '@types/chai@4.3.20': {}
 
   '@types/mocha@10.0.10': {}
 

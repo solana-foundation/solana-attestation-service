@@ -50,7 +50,7 @@ import {
   getAddressFromResolvedInstructionAccount,
   getNonNullResolvedInstructionInput,
   type ResolvedInstructionAccount,
-} from '@solana/program-client-core';
+} from '@solana/kit/program-client-core';
 import {
   findAttestationMintPda,
   findAttestationPda,

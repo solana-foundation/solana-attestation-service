@@ -37,7 +37,7 @@ import {
   getAccountMetaFactory,
   getAddressFromResolvedInstructionAccount,
   type ResolvedInstructionAccount,
-} from '@solana/program-client-core';
+} from '@solana/kit/program-client-core';
 import { findSasAuthorityPda, findSchemaMintPda } from '../pdas';
 import { SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS } from '../programs';
 
