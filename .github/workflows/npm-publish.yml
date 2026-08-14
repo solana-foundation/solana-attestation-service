@@ -4,6 +4,15 @@ on:
   push:
     branches:
       - master
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -17,6 +26,8 @@ jobs:
           node-version: 'lts/*'
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
+      - name: Update npm for trusted publishing
+        run: npm install -g npm@latest
       - name: Install root dependencies
         run: pnpm install
       - name: Install TypeScript client dependencies
@@ -25,8 +36,18 @@ jobs:
       - name: Build client
         working-directory: clients/typescript
         run: pnpm build
+      - name: Determine npm dist-tag
+        id: dist-tag
+        working-directory: clients/typescript
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ "$VERSION" == *"-"* ]]; then
+            TAG=beta
+          else
+            TAG=latest
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Publishing version $VERSION with tag $TAG"
       - name: Publish client
         working-directory: clients/typescript
-        run: pnpm publish --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --tag ${{ steps.dist-tag.outputs.tag }}
