@@ -1,6 +1,6 @@
 {
   "name": "sas-lib",
-  "version": "2.0.0",
+  "version": "2.0.0-beta",
   "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
