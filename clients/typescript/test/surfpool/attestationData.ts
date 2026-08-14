@@ -19,6 +19,7 @@ import {
   findAttestationPda,
   findCredentialPda,
   findSchemaPda,
+  getChangeSchemaVersionInstruction,
   getCloseAttestationInstruction,
   getCreateAttestationInstructionAsync,
   getCreateCredentialInstructionAsync,
@@ -62,6 +63,7 @@ const findCustomProgramErrorCode = (error: unknown): number | undefined => {
 
 const CREDENTIAL_NAME = "surfpool-credential";
 const SCHEMA_NAME = "surfpool-schema";
+const SCHEMA_DESCRIPTION = "schema used by the surfpool integration test";
 
 const SCHEMA_LAYOUT = [
   SchemaDataType.String,
@@ -113,7 +115,8 @@ const createSchema = async (
   credential: Address,
   name: string,
   layout: SchemaDataType[],
-  fieldNames: string[]
+  fieldNames: string[],
+  description = SCHEMA_DESCRIPTION
 ) => {
   const [schema] = await findSchemaPda({ credential, name, version: 1 });
 
@@ -121,7 +124,7 @@ const createSchema = async (
     await getCreateSchemaInstructionAsync({
       authority,
       credential,
-      description: "schema used by the surfpool integration test",
+      description,
       fieldNames,
       layout,
       name,
@@ -179,6 +182,91 @@ describe("Surfpool", () => {
 
   after(() => {
     client?.surfnet.stop();
+  });
+
+  it("decodes the metadata, layout and field names the program wrote", async () => {
+    assert.equal(onchainSchema.name, SCHEMA_NAME);
+    assert.equal(onchainSchema.description, SCHEMA_DESCRIPTION);
+    assert.deepEqual(onchainSchema.layout, SCHEMA_LAYOUT);
+    assert.deepEqual(onchainSchema.fieldNames, SCHEMA_FIELD_NAMES);
+  });
+
+  it("round trips multi-byte text through the Schema metadata and field names", async () => {
+    // Every text field the Schema stores is prefixed with a byte length rather
+    // than a character count, so non-ASCII names must survive the round trip.
+    const name = "surfpool-schéma-📋";
+    const description = "descripción with ünicode";
+    const fieldNames = ["名前", "âge", "país-🌍"];
+
+    const unicodeSchema = await createSchema(
+      client,
+      authority,
+      credential,
+      name,
+      [SchemaDataType.String, SchemaDataType.U8, SchemaDataType.String],
+      fieldNames,
+      description
+    );
+    const decoded = (await fetchSchema(client.rpc, unicodeSchema)).data;
+
+    assert.equal(decoded.name, name);
+    assert.equal(decoded.description, description);
+    assert.deepEqual(decoded.fieldNames, fieldNames);
+
+    const data = { "名前": "アダ", "âge": 36, "país-🌍": "españa" };
+    assert.deepEqual(
+      deserializeAttestationData(
+        decoded,
+        serializeAttestationData(decoded, data)
+      ),
+      data
+    );
+  });
+
+  it("carries a new layout through ChangeSchemaVersion", async () => {
+    const name = "surfpool-schema-versioned";
+    const existingSchema = await createSchema(
+      client,
+      authority,
+      credential,
+      name,
+      [SchemaDataType.String],
+      ["name"]
+    );
+
+    const layout = [
+      SchemaDataType.String,
+      SchemaDataType.VecU64,
+      SchemaDataType.Bool,
+    ];
+    const fieldNames = ["name", "scores", "active"];
+    const [newSchema] = await findSchemaPda({ credential, name, version: 2 });
+
+    await client.sendTransaction(
+      getChangeSchemaVersionInstruction({
+        authority,
+        credential,
+        existingSchema,
+        fieldNames,
+        layout,
+        newSchema,
+        payer: client.payer,
+      })
+    );
+
+    const decoded = (await fetchSchema(client.rpc, newSchema)).data;
+    assert.equal(decoded.version, 2);
+    assert.deepEqual(decoded.layout, layout);
+    assert.deepEqual(decoded.fieldNames, fieldNames);
+
+    const data = { name: "Ada", scores: [1n, 2n, 3n], active: true };
+    assert.deepEqual(
+      deserializeAttestationData(
+        decoded,
+        serializeAttestationData(decoded, data)
+      ),
+      data
+    );
   });
 
   it("creates an Attestation from data serialized against the onchain Schema", async () => {
