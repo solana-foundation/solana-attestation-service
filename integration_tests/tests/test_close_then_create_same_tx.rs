@@ -218,6 +218,7 @@ async fn close_then_create_attestation_success() {
                 let data = inner.instruction.data;
                 if data.starts_with(EVENT_IX_TAG_LE) {
                     let event = CloseAttestationEvent::try_from_slice(&data[8..]).unwrap();
+                    assert_eq!(event.discriminator, 0);
                     assert_eq!(event.schema, schema);
                     assert_eq!(event.attestation_data, v1);
                     event_found = true;
