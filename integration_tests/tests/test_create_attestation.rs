@@ -304,3 +304,70 @@ async fn create_attestation_fail_schema_paused() {
         TransactionError::InstructionError(0, InstructionError::Custom(11))
     )
 }
+
+/// `expiry == 0` is the documented sentinel for "never expires"
+/// (program/src/state/attestation.rs). It is accepted at creation and persisted
+/// verbatim, and the verification examples rely on that meaning, so pin it here:
+/// nothing else in the suite covers the sentinel.
+#[tokio::test]
+async fn create_attestation_with_zero_expiry_succeeds() {
+    let TestFixtures {
+        ctx,
+        credential,
+        schema,
+        authority,
+    } = setup().await;
+
+    let mut serialized_attestation_data = Vec::new();
+    TestData {
+        name: "never expires".to_string(),
+        location: 1,
+    }
+    .serialize(&mut serialized_attestation_data)
+    .unwrap();
+
+    let nonce = Pubkey::new_unique();
+    let attestation_pda = Pubkey::find_program_address(
+        &[
+            b"attestation",
+            &credential.to_bytes(),
+            &schema.to_bytes(),
+            &nonce.to_bytes(),
+        ],
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+    )
+    .0;
+
+    let create_attestation_ix = CreateAttestationBuilder::new()
+        .payer(ctx.payer.pubkey())
+        .authority(authority.pubkey())
+        .credential(credential)
+        .schema(schema)
+        .attestation(attestation_pda)
+        .system_program(system_program::ID)
+        .data(serialized_attestation_data.clone())
+        .expiry(0)
+        .nonce(nonce)
+        .instruction();
+
+    let transaction = Transaction::new_signed_with_payer(
+        &[create_attestation_ix],
+        Some(&ctx.payer.pubkey()),
+        &[&ctx.payer, &authority],
+        ctx.last_blockhash,
+    );
+    ctx.banks_client
+        .process_transaction(transaction)
+        .await
+        .unwrap();
+
+    let attestation_account = ctx
+        .banks_client
+        .get_account(attestation_pda)
+        .await
+        .unwrap()
+        .unwrap();
+    let attestation = Attestation::try_from_slice(&attestation_account.data).unwrap();
+    assert_eq!(attestation.expiry, 0);
+    assert_eq!(attestation.data, serialized_attestation_data);
+}
