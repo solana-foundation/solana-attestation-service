@@ -2,6 +2,7 @@ import {
   addCodecSizePrefix,
   getArrayCodec,
   getBooleanCodec,
+  getBase16Decoder,
   getBytesCodec,
   getI128Codec,
   getI16Codec,
@@ -16,7 +17,6 @@ import {
   getU8Codec,
   transformCodec,
   type Codec,
-  type ReadonlyUint8Array,
 } from "@solana/kit";
 
 import { Schema, SchemaDataType } from "./generated";
@@ -70,8 +70,7 @@ const getCharCodec = (): Codec<string> =>
 const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
 const utf8Encoder = new TextEncoder();
 
-const toHex = (bytes: ReadonlyUint8Array): string =>
-  `0x${Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
+const base16Decoder = getBase16Decoder();
 
 /**
  * Attestations in the wild store raw binary (hashes, ciphertext) in fields a
@@ -91,7 +90,7 @@ const getStringCodec = (): Codec<string> =>
       try {
         return utf8Decoder.decode(bytes as Uint8Array);
       } catch {
-        return toHex(bytes);
+        return `0x${base16Decoder.decode(bytes)}`;
       }
     }
   );
