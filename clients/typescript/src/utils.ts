@@ -2,6 +2,7 @@ import {
   addCodecSizePrefix,
   getArrayCodec,
   getBooleanCodec,
+  getBytesCodec,
   getI128Codec,
   getI16Codec,
   getI32Codec,
@@ -13,9 +14,9 @@ import {
   getU32Codec,
   getU64Codec,
   getU8Codec,
-  getUtf8Codec,
   transformCodec,
   type Codec,
+  type ReadonlyUint8Array,
 } from "@solana/kit";
 
 import { Schema, SchemaDataType } from "./generated";
@@ -66,8 +67,34 @@ const getCharCodec = (): Codec<string> =>
     }
   );
 
+const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
+const utf8Encoder = new TextEncoder();
+
+const toHex = (bytes: ReadonlyUint8Array): string =>
+  `0x${Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
+
+/**
+ * Attestations in the wild store raw binary (hashes, ciphertext) in fields a
+ * Schema declares as `String`. Kit's UTF-8 codec is non-fatal, so decoding
+ * those bytes yields replacement characters that silently destroy the data.
+ * Decoding is therefore strict, and bytes that are not valid UTF-8 are
+ * surfaced losslessly as a `0x`-prefixed hex string instead.
+ *
+ * Encoding is always UTF-8: a hex string produced by this fallback is text
+ * like any other and will be written back out as its literal characters.
+ */
 const getStringCodec = (): Codec<string> =>
-  addCodecSizePrefix(getUtf8Codec(), getU32Codec());
+  transformCodec(
+    addCodecSizePrefix(getBytesCodec(), getU32Codec()),
+    (value: string) => utf8Encoder.encode(value),
+    (bytes) => {
+      try {
+        return utf8Decoder.decode(bytes as Uint8Array);
+      } catch {
+        return toHex(bytes);
+      }
+    }
+  );
 
 /**
  * Maps each schema data type to the codec that reads and writes the matching

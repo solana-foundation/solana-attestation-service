@@ -182,6 +182,35 @@ describe("Utils", () => {
       assert.deepEqual(deserializeAttestationData(schema, serialized), data);
     });
 
+    it("decodes non-UTF-8 String bytes as a hex string", () => {
+      // Mirrors mainnet attestation 2n4fmYfoTnU9Z4zrC6yYETTpnworVoEb9HTMaRHkMfNs,
+      // whose Schema declares String fields that hold raw hash bytes.
+      const hashBytes = Uint8Array.from([0xf5, 0x4f, 0x22, 0x80, 0x7c, 0xff]);
+      const data = Uint8Array.from([
+        hashBytes.length, 0, 0, 0, ...hashBytes,
+      ]);
+
+      const decoded = deserializeAttestationData<{ id: string }>(
+        makeSchema([SchemaDataType.String], ["id"]),
+        data
+      );
+
+      assert.equal(decoded.id, "0xf54f22807cff");
+      assert.notInclude(decoded.id, "\ufffd");
+    });
+
+    it("decodes valid UTF-8 String bytes as text", () => {
+      const text = new TextEncoder().encode("héllo");
+      const data = Uint8Array.from([text.length, 0, 0, 0, ...text]);
+
+      const decoded = deserializeAttestationData<{ id: string }>(
+        makeSchema([SchemaDataType.String], ["id"]),
+        data
+      );
+
+      assert.equal(decoded.id, "héllo");
+    });
+
     it("throws when the layout contains an unknown type", () => {
       const schema = makeSchema([26 as SchemaDataType], ["mystery"]);
       assert.throws(
