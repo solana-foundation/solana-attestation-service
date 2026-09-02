@@ -190,7 +190,8 @@ async function verifyAttestation({
         const attestationData = deserializeAttestationData(schema.data, attestation.data.data as Uint8Array);
         console.log(`    - Attestation data:`, attestationData);
         const currentTimestamp = BigInt(Math.floor(Date.now() / 1000));
-        return currentTimestamp < attestation.data.expiry;
+        // expiry 0 means never expires (program/src/state/attestation.rs)
+        return attestation.data.expiry === 0n || currentTimestamp < attestation.data.expiry;
     } catch (error) {
         return false;
     }

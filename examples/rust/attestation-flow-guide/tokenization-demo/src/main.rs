@@ -452,7 +452,8 @@ impl SasDemo {
                         .unwrap()
                         .as_secs() as i64;
 
-                    current_timestamp < attestation.expiry
+                    // expiry 0 means never expires (program/src/state/attestation.rs)
+                    attestation.expiry == 0 || current_timestamp < attestation.expiry
                 }
                 Err(_) => false,
             },
