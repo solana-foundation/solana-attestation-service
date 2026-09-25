@@ -9,4 +9,7 @@ include = ["Cargo.toml", "src/**/*.rs"]
 
 [dependencies]
 borsh = { workspace = true }
+num-derive = { workspace = true }
+num-traits = { workspace = true }
 solana-program = { workspace = true }
+thiserror = { workspace = true }

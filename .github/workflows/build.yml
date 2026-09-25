@@ -29,7 +29,6 @@ jobs:
           rust-cache-key: 'build'
           save-rust-cache: 'true'
           solana-version: ${{ env.SOLANA_VERSION }}
-          install-shank: 'true'
 
       - name: Build program and clients
         run: just build

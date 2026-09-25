@@ -1,5 +1,5 @@
 name: 'Setup CI Environment'
-description: 'Shared setup for Rust, Solana, pnpm, just and shank'
+description: 'Shared setup for Rust, Solana, pnpm and just'
 
 inputs:
   install-rust:
@@ -34,14 +34,6 @@ inputs:
     description: "Solana CLI version to install (e.g., 'v4.3.0')"
     required: false
     default: 'v4.3.0'
-  install-shank:
-    description: 'Install the shank CLI (needed to generate the IDL)'
-    required: false
-    default: 'false'
-  shank-version:
-    description: 'shank-cli version to install'
-    required: false
-    default: '0.4.9'
   install-just:
     description: 'Install just'
     required: false
@@ -116,19 +108,6 @@ runs:
     - name: Add local bin to PATH
       shell: bash
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Cache shank CLI
-      if: inputs.install-shank == 'true'
-      id: shank-cache
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-      with:
-        path: ~/.cargo/bin/shank
-        key: ${{ runner.os }}-shank-${{ inputs.shank-version }}
-
-    - name: Install shank CLI
-      if: inputs.install-shank == 'true' && steps.shank-cache.outputs.cache-hit != 'true'
-      shell: bash
-      run: cargo install shank-cli --version ${{ inputs.shank-version }} --locked
 
     - name: Install just
       if: inputs.install-just == 'true'

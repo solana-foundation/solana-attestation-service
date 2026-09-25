@@ -58,7 +58,6 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          install-shank: 'true'
           rust-cache-key: 'publish-typescript'
 
       - name: Build TypeScript client
