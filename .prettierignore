@@ -1,0 +1,19 @@
+# IDL files
+idl/
+
+# Generated files
+clients/typescript/src/generated/
+clients/rust/src/generated/
+
+# Build outputs
+dist/
+target/
+
+# Dependencies
+node_modules/
+package.json
+pnpm-lock.yaml
+
+# Editor / tool config
+.vscode/
+.remember/

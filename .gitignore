@@ -3,3 +3,11 @@
 node_modules
 dist/
 .DS_Store
+.env*
+*.log
+keys/
+test-ledger/
+.surfpool/
+.claude/
+.vscode/
+.idea/

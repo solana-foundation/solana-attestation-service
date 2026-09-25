@@ -59,27 +59,12 @@ pub fn process_create_credential(
 
     let rent = Rent::get()?;
     let bump_seed = [credential_bump];
-    let signer_seeds = [
-        Seed::from(CREDENTIAL_SEED),
-        Seed::from(authority_info.key()),
-        Seed::from(args.name),
-        Seed::from(&bump_seed),
-    ];
-    create_pda_account(
-        payer_info,
-        &rent,
-        space,
-        program_id,
-        credential_info,
-        signer_seeds,
-        None,
-    )?;
+    let signer_seeds =
+        [Seed::from(CREDENTIAL_SEED), Seed::from(authority_info.key()), Seed::from(args.name), Seed::from(&bump_seed)];
+    create_pda_account(payer_info, &rent, space, program_id, credential_info, signer_seeds, None)?;
 
-    let credential = Credential {
-        authority: *authority_info.key(),
-        name: args.name.to_vec(),
-        authorized_signers: args.signers,
-    };
+    let credential =
+        Credential { authority: *authority_info.key(), name: args.name.to_vec(), authorized_signers: args.signers };
     let mut credential_data = credential_info.try_borrow_mut_data()?;
     credential_data.copy_from_slice(&credential.to_bytes());
 
@@ -91,7 +76,7 @@ struct CreateCredentialArgs<'a> {
     signers: Vec<Pubkey>,
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CreateCredentialArgs, ProgramError> {
+fn process_instruction_data(data: &[u8]) -> Result<CreateCredentialArgs<'_>, ProgramError> {
     let mut offset: usize = 0;
 
     require_len!(data, 4);

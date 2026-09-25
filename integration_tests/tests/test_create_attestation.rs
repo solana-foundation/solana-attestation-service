@@ -2,15 +2,18 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use helpers::program_test_context;
 use solana_attestation_service_client::{
     accounts::Attestation,
-    instructions::{
-        ChangeSchemaStatusBuilder, CreateAttestationBuilder, CreateCredentialBuilder,
-        CreateSchemaBuilder,
-    },
+    instructions::{ChangeSchemaStatusBuilder, CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
-    clock::Clock, instruction::InstructionError, pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::{Transaction, TransactionError}
+    clock::Clock,
+    instruction::InstructionError,
+    pubkey::Pubkey,
+    signature::Keypair,
+    signer::Signer,
+    system_program,
+    transaction::{Transaction, TransactionError},
 };
 
 mod helpers;
@@ -34,11 +37,7 @@ async fn setup() -> TestFixtures {
     let authority = Keypair::new();
     let credential_name = "test";
     let (credential_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority.pubkey().to_bytes(),
-            credential_name.as_bytes(),
-        ],
+        &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
 
@@ -57,12 +56,7 @@ async fn setup() -> TestFixtures {
     let schema_data = TestData::get_serialized_representation();
     let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"schema",
-            &credential_pda.to_bytes(),
-            schema_name.as_bytes(),
-            &[1],
-        ],
+        &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
     let create_schema_ix = CreateSchemaBuilder::new()
@@ -83,46 +77,23 @@ async fn setup() -> TestFixtures {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
-    TestFixtures {
-        ctx,
-        credential: credential_pda,
-        schema: schema_pda,
-        authority,
-    }
+    TestFixtures { ctx, credential: credential_pda, schema: schema_pda, authority }
 }
 
 #[tokio::test]
 async fn create_attestation_success() {
-    let TestFixtures {
-        ctx,
-        credential,
-        schema,
-        authority,
-    } = setup().await;
+    let TestFixtures { ctx, credential, schema, authority } = setup().await;
     // Create Attestation
-    let attestation_data = TestData {
-        name: "attest".to_string(),
-        location: 11,
-    };
+    let attestation_data = TestData { name: "attest".to_string(), location: 11 };
     let clock: Clock = ctx.banks_client.get_sysvar().await.unwrap();
     let expiry: i64 = clock.unix_timestamp + 60;
     let mut serialized_attestation_data = Vec::new();
-    attestation_data
-        .serialize(&mut serialized_attestation_data)
-        .unwrap();
+    attestation_data.serialize(&mut serialized_attestation_data).unwrap();
     let nonce = Pubkey::new_unique();
     let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
+        &[b"attestation", &credential.to_bytes(), &schema.to_bytes(), &nonce.to_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     )
     .0;
@@ -144,18 +115,10 @@ async fn create_attestation_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     // Assert attestation
-    let attestation_account = ctx
-        .banks_client
-        .get_account(attestation_pda)
-        .await
-        .unwrap()
-        .unwrap();
+    let attestation_account = ctx.banks_client.get_account(attestation_pda).await.unwrap().unwrap();
     let attestation = Attestation::try_from_slice(&attestation_account.data).unwrap();
     assert_eq!(attestation.data, serialized_attestation_data);
     assert_eq!(attestation.credential, credential);
@@ -168,31 +131,16 @@ async fn create_attestation_success() {
 
 #[tokio::test]
 async fn create_attestation_fail_bad_data() {
-    let TestFixtures {
-        ctx,
-        credential,
-        schema,
-        authority,
-    } = setup().await;
+    let TestFixtures { ctx, credential, schema, authority } = setup().await;
     // Create Attestation
-    let attestation_data = TestData {
-        name: "attest".to_string(),
-        location: 11,
-    };
+    let attestation_data = TestData { name: "attest".to_string(), location: 11 };
     let expiry: i64 = 1000;
     let mut serialized_attestation_data = Vec::new();
     serialized_attestation_data.extend([1, 2, 3, 4, 5, 6, 7]);
-    attestation_data
-        .serialize(&mut serialized_attestation_data)
-        .unwrap();
+    attestation_data.serialize(&mut serialized_attestation_data).unwrap();
     let nonce = Pubkey::new_unique();
     let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
+        &[b"attestation", &credential.to_bytes(), &schema.to_bytes(), &nonce.to_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     )
     .0;
@@ -214,27 +162,13 @@ async fn create_attestation_fail_bad_data() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    let tx_err = ctx
-        .banks_client
-        .process_transaction(transaction)
-        .await
-        .err()
-        .expect("should error")
-        .unwrap();
-    assert_eq!(
-        tx_err,
-        TransactionError::InstructionError(0, InstructionError::Custom(6))
-    )
+    let tx_err = ctx.banks_client.process_transaction(transaction).await.expect_err("should error").unwrap();
+    assert_eq!(tx_err, TransactionError::InstructionError(0, InstructionError::Custom(6)))
 }
 
 #[tokio::test]
 async fn create_attestation_fail_schema_paused() {
-    let TestFixtures {
-        ctx,
-        credential,
-        schema,
-        authority,
-    } = setup().await;
+    let TestFixtures { ctx, credential, schema, authority } = setup().await;
     // Pause Schema
     let pause_schema_ix = ChangeSchemaStatusBuilder::new()
         .authority(authority.pubkey())
@@ -248,29 +182,16 @@ async fn create_attestation_fail_schema_paused() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     // Create Attestation
-    let attestation_data = TestData {
-        name: "attest".to_string(),
-        location: 11,
-    };
+    let attestation_data = TestData { name: "attest".to_string(), location: 11 };
     let expiry: i64 = 1000;
     let mut serialized_attestation_data = Vec::new();
-    attestation_data
-        .serialize(&mut serialized_attestation_data)
-        .unwrap();
+    attestation_data.serialize(&mut serialized_attestation_data).unwrap();
     let nonce = Pubkey::new_unique();
     let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
+        &[b"attestation", &credential.to_bytes(), &schema.to_bytes(), &nonce.to_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     )
     .0;
@@ -292,15 +213,6 @@ async fn create_attestation_fail_schema_paused() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    let tx_err = ctx
-        .banks_client
-        .process_transaction(transaction)
-        .await
-        .err()
-        .expect("should error")
-        .unwrap();
-    assert_eq!(
-        tx_err,
-        TransactionError::InstructionError(0, InstructionError::Custom(11))
-    )
+    let tx_err = ctx.banks_client.process_transaction(transaction).await.expect_err("should error").unwrap();
+    assert_eq!(tx_err, TransactionError::InstructionError(0, InstructionError::Custom(11)))
 }

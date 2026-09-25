@@ -1,16 +1,16 @@
 {
     "compilerOptions": {
-      "target": "es2020",
-      "module": "node16",
-      "moduleResolution": "node16",
-      "declaration": true,
-      "outDir": "./dist",
-      "strict": true,
-      "esModuleInterop": true,
-      "skipLibCheck": true,
-      "forceConsistentCasingInFileNames": true,
-      "types": ["mocha", "node"]
+        "target": "es2020",
+        "module": "node16",
+        "moduleResolution": "node16",
+        "declaration": true,
+        "outDir": "./dist",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "types": ["mocha", "node"]
     },
     "include": ["src/**/*", "test/**/*"],
     "exclude": ["node_modules", "dist"]
-  }
+}

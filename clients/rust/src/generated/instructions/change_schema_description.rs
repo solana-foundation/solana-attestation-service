@@ -37,35 +37,17 @@ impl ChangeSchemaDescription {
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.authority,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.credential,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.schema,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.system_program,
-            false,
-        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(self.payer, true));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(self.authority, true));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(self.credential, false));
+        accounts.push(solana_program::instruction::AccountMeta::new(self.schema, false));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(self.system_program, false));
         accounts.extend_from_slice(remaining_accounts);
         let mut data = borsh::to_vec(&ChangeSchemaDescriptionInstructionData::new()).unwrap();
         let mut args = borsh::to_vec(&args).unwrap();
         data.append(&mut args);
 
-        solana_program::instruction::Instruction {
-            program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
-            accounts,
-            data,
-        }
+        solana_program::instruction::Instruction { program_id: crate::SOLANA_ATTESTATION_SERVICE_ID, accounts, data }
     }
 }
 
@@ -152,19 +134,13 @@ impl ChangeSchemaDescriptionBuilder {
     }
     /// Add an additional account to the instruction.
     #[inline(always)]
-    pub fn add_remaining_account(
-        &mut self,
-        account: solana_program::instruction::AccountMeta,
-    ) -> &mut Self {
+    pub fn add_remaining_account(&mut self, account: solana_program::instruction::AccountMeta) -> &mut Self {
         self.__remaining_accounts.push(account);
         self
     }
     /// Add additional accounts to the instruction.
     #[inline(always)]
-    pub fn add_remaining_accounts(
-        &mut self,
-        accounts: &[solana_program::instruction::AccountMeta],
-    ) -> &mut Self {
+    pub fn add_remaining_accounts(&mut self, accounts: &[solana_program::instruction::AccountMeta]) -> &mut Self {
         self.__remaining_accounts.extend_from_slice(accounts);
         self
     }
@@ -175,9 +151,7 @@ impl ChangeSchemaDescriptionBuilder {
             authority: self.authority.expect("authority is not set"),
             credential: self.credential.expect("credential is not set"),
             schema: self.schema.expect("schema is not set"),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            system_program: self.system_program.unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
         let args = ChangeSchemaDescriptionInstructionArgs {
             description: self.description.clone().expect("description is not set"),
@@ -241,19 +215,12 @@ impl<'a, 'b> ChangeSchemaDescriptionCpi<'a, 'b> {
     #[inline(always)]
     pub fn invoke_with_remaining_accounts(
         &self,
-        remaining_accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
+        remaining_accounts: &[(&'b solana_program::account_info::AccountInfo<'a>, bool, bool)],
     ) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
     }
     #[inline(always)]
-    pub fn invoke_signed(
-        &self,
-        signers_seeds: &[&[&[u8]]],
-    ) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -262,33 +229,14 @@ impl<'a, 'b> ChangeSchemaDescriptionCpi<'a, 'b> {
     pub fn invoke_signed_with_remaining_accounts(
         &self,
         signers_seeds: &[&[&[u8]]],
-        remaining_accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
+        remaining_accounts: &[(&'b solana_program::account_info::AccountInfo<'a>, bool, bool)],
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.authority.key,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.credential.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.schema.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
-            false,
-        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(*self.payer.key, true));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(*self.authority.key, true));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(*self.credential.key, false));
+        accounts.push(solana_program::instruction::AccountMeta::new(*self.schema.key, false));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(*self.system_program.key, false));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -312,9 +260,7 @@ impl<'a, 'b> ChangeSchemaDescriptionCpi<'a, 'b> {
         account_infos.push(self.credential.clone());
         account_infos.push(self.schema.clone());
         account_infos.push(self.system_program.clone());
-        remaining_accounts
-            .iter()
-            .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
+        remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
         if signers_seeds.is_empty() {
             solana_program::program::invoke(&instruction, &account_infos)
@@ -358,36 +304,24 @@ impl<'a, 'b> ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn authority(
-        &mut self,
-        authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn authority(&mut self, authority: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.authority = Some(authority);
         self
     }
     /// Credential the Schema is associated with
     #[inline(always)]
-    pub fn credential(
-        &mut self,
-        credential: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn credential(&mut self, credential: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.credential = Some(credential);
         self
     }
     /// Credential the Schema is associated with
     #[inline(always)]
-    pub fn schema(
-        &mut self,
-        schema: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn schema(&mut self, schema: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.schema = Some(schema);
         self
     }
     #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn system_program(&mut self, system_program: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.system_program = Some(system_program);
         self
     }
@@ -404,9 +338,7 @@ impl<'a, 'b> ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
         is_writable: bool,
         is_signer: bool,
     ) -> &mut Self {
-        self.instruction
-            .__remaining_accounts
-            .push((account, is_writable, is_signer));
+        self.instruction.__remaining_accounts.push((account, is_writable, is_signer));
         self
     }
     /// Add additional accounts to the instruction.
@@ -416,15 +348,9 @@ impl<'a, 'b> ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
+        accounts: &[(&'b solana_program::account_info::AccountInfo<'a>, bool, bool)],
     ) -> &mut Self {
-        self.instruction
-            .__remaining_accounts
-            .extend_from_slice(accounts);
+        self.instruction.__remaining_accounts.extend_from_slice(accounts);
         self
     }
     #[inline(always)]
@@ -433,16 +359,9 @@ impl<'a, 'b> ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
     }
     #[allow(clippy::clone_on_copy)]
     #[allow(clippy::vec_init_then_push)]
-    pub fn invoke_signed(
-        &self,
-        signers_seeds: &[&[&[u8]]],
-    ) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program::entrypoint::ProgramResult {
         let args = ChangeSchemaDescriptionInstructionArgs {
-            description: self
-                .instruction
-                .description
-                .clone()
-                .expect("description is not set"),
+            description: self.instruction.description.clone().expect("description is not set"),
         };
         let instruction = ChangeSchemaDescriptionCpi {
             __program: self.instruction.__program,
@@ -455,16 +374,10 @@ impl<'a, 'b> ChangeSchemaDescriptionCpiBuilder<'a, 'b> {
 
             schema: self.instruction.schema.expect("schema is not set"),
 
-            system_program: self
-                .instruction
-                .system_program
-                .expect("system_program is not set"),
+            system_program: self.instruction.system_program.expect("system_program is not set"),
             __args: args,
         };
-        instruction.invoke_signed_with_remaining_accounts(
-            signers_seeds,
-            &self.instruction.__remaining_accounts,
-        )
+        instruction.invoke_signed_with_remaining_accounts(signers_seeds, &self.instruction.__remaining_accounts)
     }
 }
 
@@ -478,9 +391,5 @@ struct ChangeSchemaDescriptionCpiBuilderInstruction<'a, 'b> {
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     description: Option<String>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
-    __remaining_accounts: Vec<(
-        &'b solana_program::account_info::AccountInfo<'a>,
-        bool,
-        bool,
-    )>,
+    __remaining_accounts: Vec<(&'b solana_program::account_info::AccountInfo<'a>, bool, bool)>,
 }

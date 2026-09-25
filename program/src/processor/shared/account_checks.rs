@@ -39,10 +39,7 @@ pub fn verify_signer(info: &AccountInfo, expect_writable: bool) -> Result<(), Pr
 /// * `Result<(), ProgramError>` - The result of the operation
 pub fn verify_system_account(info: &AccountInfo, is_writable: bool) -> Result<(), ProgramError> {
     if !info.is_owned_by(&pinocchio_system::ID) {
-        log!(
-            "Account {} is not owned by the system program",
-            acc_info_as_str!(info)
-        );
+        log!("Account {} is not owned by the system program", acc_info_as_str!(info));
         return Err(ProgramError::InvalidAccountOwner);
     }
 
@@ -68,10 +65,7 @@ pub fn verify_system_account(info: &AccountInfo, is_writable: bool) -> Result<()
 /// * `Result<(), ProgramError>` - The result of the operation
 pub fn verify_system_program(info: &AccountInfo) -> Result<(), ProgramError> {
     if info.key().ne(&pinocchio_system::ID) {
-        log!(
-            "Account {} is not the system program",
-            acc_info_as_str!(info)
-        );
+        log!("Account {} is not the system program", acc_info_as_str!(info));
         return Err(ProgramError::IncorrectProgramId);
     }
 
@@ -87,10 +81,7 @@ pub fn verify_system_program(info: &AccountInfo) -> Result<(), ProgramError> {
 /// * `Result<(), ProgramError>` - The result of the operation
 pub fn verify_token22_program(info: &AccountInfo) -> Result<(), ProgramError> {
     if info.key().ne(&TOKEN_2022_PROGRAM_ID) {
-        log!(
-            "Account {} is not the Token 2022 program",
-            acc_info_as_str!(info)
-        );
+        log!("Account {} is not the Token 2022 program", acc_info_as_str!(info));
         return Err(ProgramError::IncorrectProgramId);
     }
 
@@ -106,10 +97,7 @@ pub fn verify_token22_program(info: &AccountInfo) -> Result<(), ProgramError> {
 /// * `Result<(), ProgramError>` - The result of the operation
 pub fn verify_ata_program(info: &AccountInfo) -> Result<(), ProgramError> {
     if info.key().ne(&ATA_PROGRAM_ID) {
-        log!(
-            "Account {} is not the Associated Token program",
-            acc_info_as_str!(info)
-        );
+        log!("Account {} is not the Associated Token program", acc_info_as_str!(info));
         return Err(ProgramError::IncorrectProgramId);
     }
 
@@ -125,10 +113,7 @@ pub fn verify_ata_program(info: &AccountInfo) -> Result<(), ProgramError> {
 /// * `Result<(), ProgramError>` - The result of the operation
 pub fn verify_current_program(info: &AccountInfo) -> Result<(), ProgramError> {
     if info.key().ne(&ID) {
-        log!(
-            "Account {} is not the current program",
-            acc_info_as_str!(info)
-        );
+        log!("Account {} is not the current program", acc_info_as_str!(info));
         return Err(ProgramError::IncorrectProgramId);
     }
 
@@ -144,24 +129,13 @@ pub fn verify_current_program(info: &AccountInfo) -> Result<(), ProgramError> {
 ///
 /// # Returns
 /// * `Result<(), ProgramError>` - The result of the operation
-pub fn verify_owner_mutability(
-    info: &AccountInfo,
-    owner: &Pubkey,
-    expect_writable: bool,
-) -> Result<(), ProgramError> {
+pub fn verify_owner_mutability(info: &AccountInfo, owner: &Pubkey, expect_writable: bool) -> Result<(), ProgramError> {
     if !info.is_owned_by(owner) {
-        log!(
-            "Owner of {} does not match {}",
-            acc_info_as_str!(info),
-            key_as_str!(owner),
-        );
+        log!("Owner of {} does not match {}", acc_info_as_str!(info), key_as_str!(owner),);
         return Err(ProgramError::InvalidAccountOwner);
     }
     if expect_writable && !info.is_writable() {
-        log!(
-            "{} does not have the right write access",
-            acc_info_as_str!(info),
-        );
+        log!("{} does not have the right write access", acc_info_as_str!(info),);
         return Err(ProgramError::InvalidAccountData);
     }
 

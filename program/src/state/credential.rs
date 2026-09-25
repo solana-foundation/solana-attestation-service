@@ -92,10 +92,6 @@ impl Credential {
             offset += 32;
         }
 
-        Ok(Self {
-            authority,
-            name,
-            authorized_signers,
-        })
+        Ok(Self { authority, name, authorized_signers })
     }
 }

@@ -25,8 +25,7 @@ pub fn process_create_attestation(
     token_account: Option<Pubkey>,
 ) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
-    let [payer_info, authorized_signer, credential_info, schema_info, attestation_info, system_program] =
-        accounts
+    let [payer_info, authorized_signer, credential_info, schema_info, attestation_info, system_program] = accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
@@ -69,12 +68,7 @@ pub fn process_create_attestation(
     // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
     // pubkey and associated bump (needed to be added as arg) is valid.
     let (attestation_pda, attestation_bump) = SolanaPubkey::find_program_address(
-        &[
-            ATTESTATION_SEED,
-            credential_info.key(),
-            schema_info.key(),
-            &args.nonce,
-        ],
+        &[ATTESTATION_SEED, credential_info.key(), schema_info.key(), &args.nonce],
         &SolanaPubkey::from(*program_id),
     );
 
@@ -106,15 +100,7 @@ pub fn process_create_attestation(
     ];
 
     let rent = Rent::get()?;
-    create_pda_account(
-        payer_info,
-        &rent,
-        space,
-        program_id,
-        attestation_info,
-        signer_seeds,
-        None,
-    )?;
+    create_pda_account(payer_info, &rent, space, program_id, attestation_info, signer_seeds, None)?;
 
     let attestation = Attestation {
         nonce: args.nonce,
@@ -141,7 +127,7 @@ struct CreateAttestationArgs<'a> {
     expiry: i64,
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CreateAttestationArgs, ProgramError> {
+fn process_instruction_data(data: &[u8]) -> Result<CreateAttestationArgs<'_>, ProgramError> {
     let mut offset: usize = 0;
 
     require_len!(data, 32);
@@ -159,9 +145,5 @@ fn process_instruction_data(data: &[u8]) -> Result<CreateAttestationArgs, Progra
     require_len!(data, offset + 8);
     let expiry = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
 
-    Ok(CreateAttestationArgs {
-        nonce,
-        data: data_bytes,
-        expiry,
-    })
+    Ok(CreateAttestationArgs { nonce, data: data_bytes, expiry })
 }

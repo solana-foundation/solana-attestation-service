@@ -9,7 +9,7 @@ Solana Attestation Service (SAS) is a Solana program that enables creating, mana
 The repository consists of several main components:
 
 - `program/`: Main Solana program written in Rust using Pinocchio framework
-- `core/`: Shared types and utilities for schema serialization 
+- `core/`: Shared types and utilities for schema serialization
 - `clients/`: Auto-generated client libraries for Rust and TypeScript
 - `integration_tests/`: Comprehensive test suite for all program functionality
 - `cereal_macro/`: Procedural macro for schema serialization
@@ -23,7 +23,7 @@ The repository consists of several main components:
 cargo-build-sbf
 
 # Run integration tests
-cargo-build-sbf && SBF_OUT_DIR=$(pwd)/target/sbf-solana-solana/release cargo test
+cargo-build-sbf && SBF_OUT_DIR=$(pwd)/target/sbpf-solana-solana/release cargo test
 
 # Run TypeScript client tests
 cd clients/typescript && npm test
@@ -63,18 +63,18 @@ cd clients/typescript && npm test
 The system consists of three main components:
 
 1. **Credential**: Represents an issuer's identity and authority to create schemas and attestations
-   - Contains issuer name and list of authorized signers
-   - Controls who can create schemas and attestations
+    - Contains issuer name and list of authorized signers
+    - Controls who can create schemas and attestations
 
 2. **Schema**: Defines the structure and metadata for attestations
-   - Includes field definitions, layout, and validation rules
-   - Can be paused/resumed and versioned
-   - Supports tokenization for creating NFT attestations utilizing Token 2022
+    - Includes field definitions, layout, and validation rules
+    - Can be paused/resumed and versioned
+    - Supports tokenization for creating NFT attestations utilizing Token 2022
 
 3. **Attestation**: Actual attestation data conforming to a schema
-   - Contains structured data, expiry time, and nonce
-   - Can be regular attestations or tokenized (as SPL tokens)
-   - Can be closed by authorized signers
+    - Contains structured data, expiry time, and nonce
+    - Can be regular attestations or tokenized (as SPL tokens)
+    - Can be closed by authorized signers
 
 ### Key Features
 
@@ -87,41 +87,41 @@ The system consists of three main components:
 ### Program Structure
 
 - **program/**: Main Solana program written in Rust using Pinocchio framework
-  - **src/processor/**: Business logic for each instruction with shared utilities
-    - **shared/**: Common utilities (`account_checks.rs`, `pda_utils.rs`, `data_utils.rs`)
-  - **src/state/**: On-chain account structures (`attestation.rs`, `credential.rs`, `schema.rs`)
-  - **src/**: Core files with specific purposes:
-    - `entrypoint.rs`: Program entry point and instruction discriminator routing
-    - `instructions.rs`: Shank instruction definitions for IDL generation
-    - `error.rs`: Custom error types and error code definitions
-    - `events.rs`: Event definitions for program logging and monitoring
-    - `constants.rs`: Program constants, seeds, and configuration values
-    - `lib.rs`: Main library entry point and module declarations
-    - `macros.rs`: Helper macros for common operations
+    - **src/processor/**: Business logic for each instruction with shared utilities
+        - **shared/**: Common utilities (`account_checks.rs`, `pda_utils.rs`, `data_utils.rs`)
+    - **src/state/**: On-chain account structures (`attestation.rs`, `credential.rs`, `schema.rs`)
+    - **src/**: Core files with specific purposes:
+        - `entrypoint.rs`: Program entry point and instruction discriminator routing
+        - `instructions.rs`: Shank instruction definitions for IDL generation
+        - `error.rs`: Custom error types and error code definitions
+        - `events.rs`: Event definitions for program logging and monitoring
+        - `constants.rs`: Program constants, seeds, and configuration values
+        - `lib.rs`: Main library entry point and module declarations
+        - `macros.rs`: Helper macros for common operations
 
 - **core/**: Shared types and utilities for schema serialization
-  - Primitive data types and schema field validation logic
+    - Primitive data types and schema field validation logic
 
 - **cereal_macro/**: Procedural macros for schema serialization
-  - `SchemaStructSerialize` derive macro for automatic byte representation
+    - `SchemaStructSerialize` derive macro for automatic byte representation
 
 - **clients/**: Auto-generated client libraries for Rust and TypeScript
-  - **rust/src/generated/**: Rust client (accounts, instructions, types, errors)
-  - **typescript/src/generated/**: TypeScript client (accounts, instructions, programs, types)
-  - **typescript/src/**: Client utilities (`pdas.ts`, `utils.ts`) and tests
+    - **rust/src/generated/**: Rust client (accounts, instructions, types, errors)
+    - **typescript/src/generated/**: TypeScript client (accounts, instructions, programs, types)
+    - **typescript/src/**: Client utilities (`pdas.ts`, `utils.ts`) and tests
 
 - **integration_tests/**: Comprehensive test suite for all program functionality
-  - **tests/helpers/**: Test utility functions and program context setup
-  - **tests/**: Individual test files for each instruction type and tokenization
+    - **tests/helpers/**: Test utility functions and program context setup
+    - **tests/**: Individual test files for each instruction type and tokenization
 
 - **scripts/**: Build and generation scripts
-  - Client generation (`generate-clients.js`) and IDL processing (`process-idl.js`)
+    - Client generation (`generate-clients.js`) and IDL processing (`process-idl.js`)
 
 - **examples/**: Usage examples and practical demonstrations
-  - **typescript/**: TypeScript examples for credential setup, schemas, and attestations
+    - **typescript/**: TypeScript examples for credential setup, schemas, and attestations
 
 - **idl/**: Interface Definition Language files
-  - **solana_attestation_service.json**: Program IDL defining accounts, instructions, and types
+    - **solana_attestation_service.json**: Program IDL defining accounts, instructions, and types
 
 ### Important Constants
 
@@ -134,6 +134,7 @@ The system consists of three main components:
 ### Program Framework
 
 The program uses [**Pinocchio**](https://github.com/anza-xyz/pinocchio) instead of Anchor, chosen for:
+
 - Smaller program size and reduced compute costs
 - More control over instruction parsing and execution
 - Direct account validation and manipulation
@@ -147,6 +148,7 @@ The program uses [**Pinocchio**](https://github.com/anza-xyz/pinocchio) instead 
 ### Token Extensions
 
 Uses SPL Token-2022 with extensions for tokenized attestations:
+
 - **NonTransferable**: Creates soulbound tokens that cannot be transferred
 - **MetadataPointer**: Enables on-chain metadata storage
 - **GroupMemberPointer**: Links attestations to schema token groups
@@ -172,6 +174,7 @@ All instruction processors must follow this consistent structure:
 5. **Event Emission**: Emit events if required for the instruction
 
 **Example processor structure:**
+
 ```rust
 #[inline(always)]
 pub fn process_my_instruction(
@@ -187,13 +190,13 @@ pub fn process_my_instruction(
     // 2. Verification and security checks
     verify_account_owner(account1)?;
     verify_pda_derivation(account2, seeds)?;
-    
+
     // 3. Business logic
     // ... implementation ...
 
     // 4. Event emission (if required)
     emit_event(...)?;
-    
+
     Ok(())
 }
 ```
@@ -238,11 +241,11 @@ When implementing new instructions:
 2. Update discriminator matching in `entrypoint.rs`
 3. Implement processor function in `processor/` directory with `#[inline(always)]`
 4. Follow processor code structure:
-   - Account destructuring using array pattern matching
-   - Verification and security checks using shared functions from `processor/shared/`
-   - Business logic implementation
-   - Account resizing if required (implement performantly with proper calculations)
-   - Event emission if required
+    - Account destructuring using array pattern matching
+    - Verification and security checks using shared functions from `processor/shared/`
+    - Business logic implementation
+    - Account resizing if required (implement performantly with proper calculations)
+    - Event emission if required
 5. Use PDA utilities from `processor/shared/pda_utils.rs` for account derivation
 6. Add comprehensive tests in `integration_tests/`
 7. Regenerate clients with `pnpm run generate-clients`
@@ -250,41 +253,41 @@ When implementing new instructions:
 ### Schema Design
 
 Schema layouts use numeric type identifiers:
+
 ### Schema Layout Data Types
 
 The `layout` field uses numeric values to specify data types for each field in the schema:
 
-| Value | Data Type | Description |
-|-------|-----------|-------------|
-| 0 | U8 | Unsigned 8-bit integer |
-| 1 | U16 | Unsigned 16-bit integer |
-| 2 | U32 | Unsigned 32-bit integer |
-| 3 | U64 | Unsigned 64-bit integer |
-| 4 | U128 | Unsigned 128-bit integer |
-| 5 | I8 | Signed 8-bit integer |
-| 6 | I16 | Signed 16-bit integer |
-| 7 | I32 | Signed 32-bit integer |
-| 8 | I64 | Signed 64-bit integer |
-| 9 | I128 | Signed 128-bit integer |
-| 10 | Bool | Boolean value |
-| 11 | Char | Single character |
-| 12 | String | Variable-length string |
-| 13 | VecU8 | Vector of unsigned 8-bit integers |
-| 14 | VecU16 | Vector of unsigned 16-bit integers |
-| 15 | VecU32 | Vector of unsigned 32-bit integers |
-| 16 | VecU64 | Vector of unsigned 64-bit integers |
-| 17 | VecU128 | Vector of unsigned 128-bit integers |
-| 18 | VecI8 | Vector of signed 8-bit integers |
-| 19 | VecI16 | Vector of signed 16-bit integers |
-| 20 | VecI32 | Vector of signed 32-bit integers |
-| 21 | VecI64 | Vector of signed 64-bit integers |
-| 22 | VecI128 | Vector of signed 128-bit integers |
-| 23 | VecBool | Vector of boolean values |
-| 24 | VecChar | Vector of characters |
-| 25 | VecString | Vector of strings |
+| Value | Data Type | Description                         |
+| ----- | --------- | ----------------------------------- |
+| 0     | U8        | Unsigned 8-bit integer              |
+| 1     | U16       | Unsigned 16-bit integer             |
+| 2     | U32       | Unsigned 32-bit integer             |
+| 3     | U64       | Unsigned 64-bit integer             |
+| 4     | U128      | Unsigned 128-bit integer            |
+| 5     | I8        | Signed 8-bit integer                |
+| 6     | I16       | Signed 16-bit integer               |
+| 7     | I32       | Signed 32-bit integer               |
+| 8     | I64       | Signed 64-bit integer               |
+| 9     | I128      | Signed 128-bit integer              |
+| 10    | Bool      | Boolean value                       |
+| 11    | Char      | Single character                    |
+| 12    | String    | Variable-length string              |
+| 13    | VecU8     | Vector of unsigned 8-bit integers   |
+| 14    | VecU16    | Vector of unsigned 16-bit integers  |
+| 15    | VecU32    | Vector of unsigned 32-bit integers  |
+| 16    | VecU64    | Vector of unsigned 64-bit integers  |
+| 17    | VecU128   | Vector of unsigned 128-bit integers |
+| 18    | VecI8     | Vector of signed 8-bit integers     |
+| 19    | VecI16    | Vector of signed 16-bit integers    |
+| 20    | VecI32    | Vector of signed 32-bit integers    |
+| 21    | VecI64    | Vector of signed 64-bit integers    |
+| 22    | VecI128   | Vector of signed 128-bit integers   |
+| 23    | VecBool   | Vector of boolean values            |
+| 24    | VecChar   | Vector of characters                |
+| 25    | VecString | Vector of strings                   |
 
 For example, a layout of `[12, 0, 12]` would define three fields: a String, followed by a U8 integer, followed by another String. The `fieldNames` array provides human-readable names that correspond positionally to each layout value, so with field names `["name", "age", "country"]`, the first String field would be named "name", the U8 field would be "age", and the second String field would be "country". Here's an example of how those would be utilized when creating a Schema:
-
 
 ### Tokenization Flow
 
@@ -312,13 +315,14 @@ For tokenized attestations:
 ### Program Constants
 
 Key seeds and identifiers are defined in `program/src/constants.rs`:
+
 - `CREDENTIAL_SEED`: For credential PDA derivation
 - `SCHEMA_SEED`: For schema PDA derivation
 - `ATTESTATION_SEED`: For attestation PDA derivation
 - `SCHEMA_MINT_SEED`: For tokenized schema mints
 - `ATTESTATION_MINT_SEED`: For tokenized attestation mints
 - `EVENT_AUTHORITY_SEED`: For event authority PDA
--  `SAS_SEED`: For SAS Program Authority PDA;
+- `SAS_SEED`: For SAS Program Authority PDA;
 
 ### Development Environment
 
@@ -335,41 +339,41 @@ Key seeds and identifiers are defined in `program/src/constants.rs`:
 
 All instruction processors MUST implement these security validations:
 
-1. **Program Ownership Assertions**: 
-   - Assert that all program accounts are owned by the correct program
-   - Verify system accounts are owned by System Program
-   - Check token accounts are owned by Token Program
+1. **Program Ownership Assertions**:
+    - Assert that all program accounts are owned by the correct program
+    - Verify system accounts are owned by System Program
+    - Check token accounts are owned by Token Program
 
 2. **Signer Verification**:
-   - Assert required accounts are signers using `account.is_signer()`
-   - Verify authorized signers against credential's signer list
-   - Validate authority accounts have signing privileges
+    - Assert required accounts are signers using `account.is_signer()`
+    - Verify authorized signers against credential's signer list
+    - Validate authority accounts have signing privileges
 
 3. **Account Mutability Checks**:
-   - Assert writable accounts using `account.is_writable()`
-   - Verify rent-exempt status for account modifications
+    - Assert writable accounts using `account.is_writable()`
+    - Verify rent-exempt status for account modifications
 
 4. **Discriminator Validation**:
-   - Assert account discriminators match expected types (Credential, Schema, Attestation)
-   - Prevent type confusion attacks by validating account data structure
-   - Check account initialization state
+    - Assert account discriminators match expected types (Credential, Schema, Attestation)
+    - Prevent type confusion attacks by validating account data structure
+    - Check account initialization state
 
 5. **PDA Derivation Verification**:
-   - Assert PDA accounts match expected derivation using seeds
-   - Verify bump seeds to prevent canonical bump attacks
-   - Validate account addresses against program-derived addresses
+    - Assert PDA accounts match expected derivation using seeds
+    - Verify bump seeds to prevent canonical bump attacks
+    - Validate account addresses against program-derived addresses
 
 ### Access Control
 
 - All operations require authorized signer verification against credential's authorized signers list
-- Credential owners control schema creation and management 
+- Credential owners control schema creation and management
 - Only authorized signers can create and close attestations
 - Schema pause/resume functionality restricted to credential authority
 
 ### Data Validation
 
 - Comprehensive schema validation ensures attestation data integrity and type safety
-- Account ownership verification prevents unauthorized access 
+- Account ownership verification prevents unauthorized access
 - PDA derivation validation ensures account authenticity
 - Instruction data parsing with proper error handling and bounds checking
 

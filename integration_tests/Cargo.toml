@@ -14,3 +14,6 @@ tokio = { workspace = true }
 spl-associated-token-account = { workspace = true }
 spl-token-group-interface = { workspace = true }
 spl-token-metadata-interface = { workspace = true }
+
+[lints]
+workspace = true

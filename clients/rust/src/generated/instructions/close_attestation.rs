@@ -37,41 +37,17 @@ impl CloseAttestation {
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.authority,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.credential,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.attestation,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.event_authority,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.system_program,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.attestation_program,
-            false,
-        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(self.payer, true));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(self.authority, true));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(self.credential, false));
+        accounts.push(solana_program::instruction::AccountMeta::new(self.attestation, false));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(self.event_authority, false));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(self.system_program, false));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(self.attestation_program, false));
         accounts.extend_from_slice(remaining_accounts);
         let data = borsh::to_vec(&CloseAttestationInstructionData::new()).unwrap();
 
-        solana_program::instruction::Instruction {
-            program_id: crate::SOLANA_ATTESTATION_SERVICE_ID,
-            accounts,
-            data,
-        }
+        solana_program::instruction::Instruction { program_id: crate::SOLANA_ATTESTATION_SERVICE_ID, accounts, data }
     }
 }
 
@@ -143,10 +119,7 @@ impl CloseAttestationBuilder {
     }
     /// `[optional account, default to 'DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g']`
     #[inline(always)]
-    pub fn event_authority(
-        &mut self,
-        event_authority: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
+    pub fn event_authority(&mut self, event_authority: solana_program::pubkey::Pubkey) -> &mut Self {
         self.event_authority = Some(event_authority);
         self
     }
@@ -158,28 +131,19 @@ impl CloseAttestationBuilder {
     }
     /// `[optional account, default to '22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG']`
     #[inline(always)]
-    pub fn attestation_program(
-        &mut self,
-        attestation_program: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
+    pub fn attestation_program(&mut self, attestation_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.attestation_program = Some(attestation_program);
         self
     }
     /// Add an additional account to the instruction.
     #[inline(always)]
-    pub fn add_remaining_account(
-        &mut self,
-        account: solana_program::instruction::AccountMeta,
-    ) -> &mut Self {
+    pub fn add_remaining_account(&mut self, account: solana_program::instruction::AccountMeta) -> &mut Self {
         self.__remaining_accounts.push(account);
         self
     }
     /// Add additional accounts to the instruction.
     #[inline(always)]
-    pub fn add_remaining_accounts(
-        &mut self,
-        accounts: &[solana_program::instruction::AccountMeta],
-    ) -> &mut Self {
+    pub fn add_remaining_accounts(&mut self, accounts: &[solana_program::instruction::AccountMeta]) -> &mut Self {
         self.__remaining_accounts.extend_from_slice(accounts);
         self
     }
@@ -190,15 +154,13 @@ impl CloseAttestationBuilder {
             authority: self.authority.expect("authority is not set"),
             credential: self.credential.expect("credential is not set"),
             attestation: self.attestation.expect("attestation is not set"),
-            event_authority: self.event_authority.unwrap_or(solana_program::pubkey!(
-                "DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g"
-            )),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
-            attestation_program: self.attestation_program.unwrap_or(solana_program::pubkey!(
-                "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG"
-            )),
+            event_authority: self
+                .event_authority
+                .unwrap_or(solana_program::pubkey!("DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g")),
+            system_program: self.system_program.unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            attestation_program: self
+                .attestation_program
+                .unwrap_or(solana_program::pubkey!("22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG")),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
@@ -265,19 +227,12 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
     #[inline(always)]
     pub fn invoke_with_remaining_accounts(
         &self,
-        remaining_accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
+        remaining_accounts: &[(&'b solana_program::account_info::AccountInfo<'a>, bool, bool)],
     ) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
     }
     #[inline(always)]
-    pub fn invoke_signed(
-        &self,
-        signers_seeds: &[&[&[u8]]],
-    ) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program::entrypoint::ProgramResult {
         self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -286,41 +241,16 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
     pub fn invoke_signed_with_remaining_accounts(
         &self,
         signers_seeds: &[&[&[u8]]],
-        remaining_accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
+        remaining_accounts: &[(&'b solana_program::account_info::AccountInfo<'a>, bool, bool)],
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.authority.key,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.credential.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.attestation.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.event_authority.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.attestation_program.key,
-            false,
-        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(*self.payer.key, true));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(*self.authority.key, true));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(*self.credential.key, false));
+        accounts.push(solana_program::instruction::AccountMeta::new(*self.attestation.key, false));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(*self.event_authority.key, false));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(*self.system_program.key, false));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(*self.attestation_program.key, false));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -344,9 +274,7 @@ impl<'a, 'b> CloseAttestationCpi<'a, 'b> {
         account_infos.push(self.event_authority.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.attestation_program.clone());
-        remaining_accounts
-            .iter()
-            .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
+        remaining_accounts.iter().for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
         if signers_seeds.is_empty() {
             solana_program::program::invoke(&instruction, &account_infos)
@@ -394,42 +322,27 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
     }
     /// Authorized signer of the Schema's Credential
     #[inline(always)]
-    pub fn authority(
-        &mut self,
-        authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn authority(&mut self, authority: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.authority = Some(authority);
         self
     }
     #[inline(always)]
-    pub fn credential(
-        &mut self,
-        credential: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn credential(&mut self, credential: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.credential = Some(credential);
         self
     }
     #[inline(always)]
-    pub fn attestation(
-        &mut self,
-        attestation: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn attestation(&mut self, attestation: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.attestation = Some(attestation);
         self
     }
     #[inline(always)]
-    pub fn event_authority(
-        &mut self,
-        event_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn event_authority(&mut self, event_authority: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.event_authority = Some(event_authority);
         self
     }
     #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
+    pub fn system_program(&mut self, system_program: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.system_program = Some(system_program);
         self
     }
@@ -449,9 +362,7 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
         is_writable: bool,
         is_signer: bool,
     ) -> &mut Self {
-        self.instruction
-            .__remaining_accounts
-            .push((account, is_writable, is_signer));
+        self.instruction.__remaining_accounts.push((account, is_writable, is_signer));
         self
     }
     /// Add additional accounts to the instruction.
@@ -461,15 +372,9 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
+        accounts: &[(&'b solana_program::account_info::AccountInfo<'a>, bool, bool)],
     ) -> &mut Self {
-        self.instruction
-            .__remaining_accounts
-            .extend_from_slice(accounts);
+        self.instruction.__remaining_accounts.extend_from_slice(accounts);
         self
     }
     #[inline(always)]
@@ -478,10 +383,7 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
     }
     #[allow(clippy::clone_on_copy)]
     #[allow(clippy::vec_init_then_push)]
-    pub fn invoke_signed(
-        &self,
-        signers_seeds: &[&[&[u8]]],
-    ) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program::entrypoint::ProgramResult {
         let instruction = CloseAttestationCpi {
             __program: self.instruction.__program,
 
@@ -491,30 +393,15 @@ impl<'a, 'b> CloseAttestationCpiBuilder<'a, 'b> {
 
             credential: self.instruction.credential.expect("credential is not set"),
 
-            attestation: self
-                .instruction
-                .attestation
-                .expect("attestation is not set"),
+            attestation: self.instruction.attestation.expect("attestation is not set"),
 
-            event_authority: self
-                .instruction
-                .event_authority
-                .expect("event_authority is not set"),
+            event_authority: self.instruction.event_authority.expect("event_authority is not set"),
 
-            system_program: self
-                .instruction
-                .system_program
-                .expect("system_program is not set"),
+            system_program: self.instruction.system_program.expect("system_program is not set"),
 
-            attestation_program: self
-                .instruction
-                .attestation_program
-                .expect("attestation_program is not set"),
+            attestation_program: self.instruction.attestation_program.expect("attestation_program is not set"),
         };
-        instruction.invoke_signed_with_remaining_accounts(
-            signers_seeds,
-            &self.instruction.__remaining_accounts,
-        )
+        instruction.invoke_signed_with_remaining_accounts(signers_seeds, &self.instruction.__remaining_accounts)
     }
 }
 
@@ -529,9 +416,5 @@ struct CloseAttestationCpiBuilderInstruction<'a, 'b> {
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     attestation_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
-    __remaining_accounts: Vec<(
-        &'b solana_program::account_info::AccountInfo<'a>,
-        bool,
-        bool,
-    )>,
+    __remaining_accounts: Vec<(&'b solana_program::account_info::AccountInfo<'a>, bool, bool)>,
 }

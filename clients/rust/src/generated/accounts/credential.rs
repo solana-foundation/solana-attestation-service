@@ -13,16 +13,10 @@ use solana_program::pubkey::Pubkey;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Credential {
     pub discriminator: u8,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
+    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
     pub authority: Pubkey,
     pub name: Vec<u8>,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>")
-    )]
+    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>"))]
     pub authorized_signers: Vec<Pubkey>,
 }
 
@@ -37,9 +31,7 @@ impl Credential {
 impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Credential {
     type Error = std::io::Error;
 
-    fn try_from(
-        account_info: &solana_program::account_info::AccountInfo<'a>,
-    ) -> Result<Self, Self::Error> {
+    fn try_from(account_info: &solana_program::account_info::AccountInfo<'a>) -> Result<Self, Self::Error> {
         let mut data: &[u8] = &(*account_info.data).borrow();
         Self::deserialize(&mut data)
     }
@@ -65,16 +57,11 @@ pub fn fetch_all_credential(
     let mut decoded_accounts: Vec<crate::shared::DecodedAccount<Credential>> = Vec::new();
     for i in 0..addresses.len() {
         let address = addresses[i];
-        let account = accounts[i].as_ref().ok_or(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Account not found: {}", address),
-        ))?;
+        let account = accounts[i]
+            .as_ref()
+            .ok_or(std::io::Error::new(std::io::ErrorKind::Other, format!("Account not found: {}", address)))?;
         let data = Credential::from_bytes(&account.data)?;
-        decoded_accounts.push(crate::shared::DecodedAccount {
-            address,
-            account: account.clone(),
-            data,
-        });
+        decoded_accounts.push(crate::shared::DecodedAccount { address, account: account.clone(), data });
     }
     Ok(decoded_accounts)
 }
@@ -101,13 +88,11 @@ pub fn fetch_all_maybe_credential(
         let address = addresses[i];
         if let Some(account) = accounts[i].as_ref() {
             let data = Credential::from_bytes(&account.data)?;
-            decoded_accounts.push(crate::shared::MaybeAccount::Exists(
-                crate::shared::DecodedAccount {
-                    address,
-                    account: account.clone(),
-                    data,
-                },
-            ));
+            decoded_accounts.push(crate::shared::MaybeAccount::Exists(crate::shared::DecodedAccount {
+                address,
+                account: account.clone(),
+                data,
+            }));
         } else {
             decoded_accounts.push(crate::shared::MaybeAccount::NotFound(address));
         }

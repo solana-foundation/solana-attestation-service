@@ -10,8 +10,25 @@ members = [
 
 resolver = "2"
 
-package.version = "0.1.0"
-package.edition = "2021"
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/solana-foundation/solana-attestation-service"
+
+[workspace.lints.rust]
+unused_imports = "deny"
+dead_code = "warn"
+unused_variables = "warn"
+deprecated = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(target_os, values("solana"))',
+] }
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
 
 [workspace.dependencies]
 borsh = "1.5.5"

@@ -67,16 +67,11 @@ pub fn process_create_tokenized_attestation(
         &[ATTESTATION_MINT_SEED, attestation_info.key()],
         &SolanaPubkey::from(*program_id),
     );
-    if attestation_mint_info
-        .key()
-        .ne(&attestation_mint_pda.to_bytes())
-    {
+    if attestation_mint_info.key().ne(&attestation_mint_pda.to_bytes()) {
         return Err(AttestationServiceError::InvalidMint.into());
     }
-    let (schema_mint_pda, _) = SolanaPubkey::find_program_address(
-        &[SCHEMA_MINT_SEED, schema_info.key()],
-        &SolanaPubkey::from(*program_id),
-    );
+    let (schema_mint_pda, _) =
+        SolanaPubkey::find_program_address(&[SCHEMA_MINT_SEED, schema_info.key()], &SolanaPubkey::from(*program_id));
 
     if schema_mint_info.key().ne(&schema_mint_pda.to_bytes()) {
         return Err(AttestationServiceError::InvalidMint.into());
@@ -94,11 +89,7 @@ pub fn process_create_tokenized_attestation(
         378, // Size before Token extensions after InitializeMint2
         &TOKEN_2022_PROGRAM_ID,
         attestation_mint_info,
-        [
-            Seed::from(ATTESTATION_MINT_SEED),
-            Seed::from(attestation_info.key()),
-            Seed::from(&[attestation_mint_bump]),
-        ],
+        [Seed::from(ATTESTATION_MINT_SEED), Seed::from(attestation_info.key()), Seed::from(&[attestation_mint_bump])],
         // Sufficient rent needs to be allocated or instruction fails with
         // "Lamport balance below rent-exempt threshold" or "InsufficientFundsForRent".
         Some(args.mint_account_space.into()),
@@ -113,10 +104,7 @@ pub fn process_create_tokenized_attestation(
     .invoke()?;
 
     // Initialize NonTransferable extension
-    InitializeNonTransferableMint {
-        mint: attestation_mint_info,
-    }
-    .invoke()?;
+    InitializeNonTransferableMint { mint: attestation_mint_info }.invoke()?;
 
     // Initialize MetadataPointer extension
     InitializeMetadataPointer {
@@ -127,18 +115,11 @@ pub fn process_create_tokenized_attestation(
     .invoke()?;
 
     // Initialize Permanent Delegate extension
-    InitializePermanentDelegate {
-        mint: attestation_mint_info,
-        delegate: *sas_pda_info.key(),
-    }
-    .invoke()?;
+    InitializePermanentDelegate { mint: attestation_mint_info, delegate: *sas_pda_info.key() }.invoke()?;
 
     // Initialize Mint Close extension
-    InitializeMintCloseAuthority {
-        mint: attestation_mint_info,
-        close_authority: Some(*sas_pda_info.key()),
-    }
-    .invoke()?;
+    InitializeMintCloseAuthority { mint: attestation_mint_info, close_authority: Some(*sas_pda_info.key()) }
+        .invoke()?;
 
     // Initialize Mint on created account
     InitializeMint2 {
@@ -211,10 +192,7 @@ pub fn process_create_tokenized_attestation(
         amount: 1,
         decimals: 0,
     }
-    .invoke_signed(
-        &[Signer::from(&sas_pda_seeds)],
-        TokenProgramVariant::Token2022,
-    )?;
+    .invoke_signed(&[Signer::from(&sas_pda_seeds)], TokenProgramVariant::Token2022)?;
 
     Ok(())
 }
@@ -226,7 +204,7 @@ struct CreateTokenizedAttestationArgs<'a> {
     mint_account_space: u16,
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CreateTokenizedAttestationArgs, ProgramError> {
+fn process_instruction_data(data: &[u8]) -> Result<CreateTokenizedAttestationArgs<'_>, ProgramError> {
     let mut offset: usize = 32; // Skip Nonce
 
     require_len!(data, offset + 4);
@@ -261,10 +239,5 @@ fn process_instruction_data(data: &[u8]) -> Result<CreateTokenizedAttestationArg
     require_len!(data, offset + 2);
     let mint_account_space = u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap());
 
-    Ok(CreateTokenizedAttestationArgs {
-        name,
-        uri,
-        symbol,
-        mint_account_space,
-    })
+    Ok(CreateTokenizedAttestationArgs { name, uri, symbol, mint_account_space })
 }

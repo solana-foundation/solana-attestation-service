@@ -11,18 +11,15 @@ use solana_attestation_service_client::{
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
-    clock::Clock, program_option::COption, program_pack::Pack, pubkey::Pubkey, signature::Keypair,
-    signer::Signer, system_program, transaction::Transaction,
+    clock::Clock, program_option::COption, program_pack::Pack, pubkey::Pubkey, signature::Keypair, signer::Signer,
+    system_program, transaction::Transaction,
 };
-use spl_associated_token_account::{
-    get_associated_token_address_with_program_id, ID as ATA_PROGRAM_ID,
-};
+use spl_associated_token_account::{get_associated_token_address_with_program_id, ID as ATA_PROGRAM_ID};
 use spl_token_2022::{
     extension::{
-        group_member_pointer::GroupMemberPointer, group_pointer::GroupPointer,
-        metadata_pointer::MetadataPointer, mint_close_authority::MintCloseAuthority,
-        non_transferable::NonTransferable, permanent_delegate::PermanentDelegate,
-        BaseStateWithExtensions, ExtensionType, StateWithExtensions,
+        group_member_pointer::GroupMemberPointer, group_pointer::GroupPointer, metadata_pointer::MetadataPointer,
+        mint_close_authority::MintCloseAuthority, non_transferable::NonTransferable,
+        permanent_delegate::PermanentDelegate, BaseStateWithExtensions, ExtensionType, StateWithExtensions,
     },
     state::{Account, Mint},
     ID as TOKEN_2022_PROGRAM_ID,
@@ -59,11 +56,7 @@ async fn setup() -> TestFixtures {
     let authority = Keypair::new();
     let credential_name = "test";
     let (credential_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority.pubkey().to_bytes(),
-            credential_name.as_bytes(),
-        ],
+        &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
 
@@ -82,12 +75,7 @@ async fn setup() -> TestFixtures {
     let schema_data = TestData::get_serialized_representation();
     let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"schema",
-            &credential_pda.to_bytes(),
-            schema_name.as_bytes(),
-            &[1],
-        ],
+        &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
     let create_schema_ix = CreateSchemaBuilder::new()
@@ -108,25 +96,15 @@ async fn setup() -> TestFixtures {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     let (sas_pda, _bump) = Pubkey::find_program_address(&[b"sas"], &SOLANA_ATTESTATION_SERVICE_ID);
-    let (schema_mint_pda, _bump) = Pubkey::find_program_address(
-        &[b"schemaMint", &schema_pda.to_bytes()],
-        &SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let (schema_mint_pda, _bump) =
+        Pubkey::find_program_address(&[b"schemaMint", &schema_pda.to_bytes()], &SOLANA_ATTESTATION_SERVICE_ID);
 
     let nonce = Pubkey::new_unique();
     let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential_pda.to_bytes(),
-            &schema_pda.to_bytes(),
-            &nonce.to_bytes(),
-        ],
+        &[b"attestation", &credential_pda.to_bytes(), &schema_pda.to_bytes(), &nonce.to_bytes()],
         &SOLANA_ATTESTATION_SERVICE_ID,
     )
     .0;
@@ -136,20 +114,12 @@ async fn setup() -> TestFixtures {
     );
 
     let recipient = Pubkey::new_unique();
-    let recipient_token_account = get_associated_token_address_with_program_id(
-        &recipient,
-        &attestation_mint_pda,
-        &TOKEN_2022_PROGRAM_ID,
-    );
+    let recipient_token_account =
+        get_associated_token_address_with_program_id(&recipient, &attestation_mint_pda, &TOKEN_2022_PROGRAM_ID);
 
-    let attestation_data = TestData {
-        name: "attest".to_string(),
-        location: 11,
-    };
+    let attestation_data = TestData { name: "attest".to_string(), location: 11 };
     let mut serialized_attestation_data = Vec::new();
-    attestation_data
-        .serialize(&mut serialized_attestation_data)
-        .unwrap();
+    attestation_data.serialize(&mut serialized_attestation_data).unwrap();
 
     TestFixtures {
         ctx,
@@ -202,23 +172,13 @@ async fn tokenize_schema_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
-    let mint_account = ctx
-        .banks_client
-        .get_account(schema_mint_pda)
-        .await
-        .unwrap()
-        .unwrap();
+    let mint_account = ctx.banks_client.get_account(schema_mint_pda).await.unwrap().unwrap();
 
-    let expected_acc_size = ExtensionType::try_calculate_account_len::<Mint>(&[
-        ExtensionType::GroupPointer,
-        ExtensionType::TokenGroup,
-    ])
-    .unwrap();
+    let expected_acc_size =
+        ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::GroupPointer, ExtensionType::TokenGroup])
+            .unwrap();
     assert_eq!(mint_account.data.len(), expected_acc_size);
     assert_eq!(mint_account.owner, TOKEN_2022_PROGRAM_ID);
 
@@ -276,10 +236,7 @@ async fn create_tokenized_attestation_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     let clock: Clock = ctx.banks_client.get_sysvar().await.unwrap();
     let expiry: i64 = clock.unix_timestamp + 60;
@@ -316,18 +273,10 @@ async fn create_tokenized_attestation_success() {
         ctx.last_blockhash,
     );
 
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     // Assert attestation
-    let attestation_account = ctx
-        .banks_client
-        .get_account(attestation_pda)
-        .await
-        .unwrap()
-        .unwrap();
+    let attestation_account = ctx.banks_client.get_account(attestation_pda).await.unwrap().unwrap();
     let attestation = Attestation::try_from_slice(&attestation_account.data).unwrap();
     assert_eq!(attestation.data, serialized_attestation_data);
     assert_eq!(attestation.credential, credential);
@@ -337,19 +286,9 @@ async fn create_tokenized_attestation_success() {
     assert_eq!(attestation.nonce, nonce);
     assert_eq!(attestation.token_account, recipient_token_account);
 
-    let attestation_mint_account = ctx
-        .banks_client
-        .get_account(attestation_mint_pda)
-        .await
-        .unwrap()
-        .unwrap();
+    let attestation_mint_account = ctx.banks_client.get_account(attestation_mint_pda).await.unwrap().unwrap();
 
-    let expected_lamports = ctx
-        .banks_client
-        .get_rent()
-        .await
-        .unwrap()
-        .minimum_balance(mint_account_space.into());
+    let expected_lamports = ctx.banks_client.get_rent().await.unwrap().minimum_balance(mint_account_space.into());
     assert_eq!(attestation_mint_account.lamports, expected_lamports);
     assert!(attestation_mint_account.data.len() <= mint_account_space.into());
 
@@ -391,9 +330,7 @@ async fn create_tokenized_attestation_success() {
     assert_eq!(metadata_pointer.metadata_address.0, attestation_mint_pda);
 
     // Verify the TokenMetadata extension.
-    let token_metadata = &mint_state
-        .get_variable_len_extension::<TokenMetadata>()
-        .unwrap();
+    let token_metadata = &mint_state.get_variable_len_extension::<TokenMetadata>().unwrap();
     assert_eq!(token_metadata.update_authority.0, sas_pda);
     assert_eq!(token_metadata.mint, attestation_mint_pda);
     assert_eq!(token_metadata.name, name);
@@ -401,23 +338,14 @@ async fn create_tokenized_attestation_success() {
     assert_eq!(token_metadata.symbol, symbol);
     assert_eq!(token_metadata.additional_metadata.len(), 2);
     assert_eq!(token_metadata.additional_metadata[0].0, "attestation");
-    assert_eq!(
-        token_metadata.additional_metadata[0].1,
-        attestation_pda.to_string()
-    );
+    assert_eq!(token_metadata.additional_metadata[0].1, attestation_pda.to_string());
     assert_eq!(token_metadata.additional_metadata[1].0, "schema");
     assert_eq!(token_metadata.additional_metadata[1].1, schema.to_string());
 
-    let recipient_token_account_data = ctx
-        .banks_client
-        .get_account(recipient_token_account)
-        .await
-        .unwrap()
-        .unwrap();
+    let recipient_token_account_data = ctx.banks_client.get_account(recipient_token_account).await.unwrap().unwrap();
 
     // Verify that recipient has 1 attestation token.
-    let token_account =
-        Account::unpack(&recipient_token_account_data.data[..Account::LEN]).unwrap();
+    let token_account = Account::unpack(&recipient_token_account_data.data[..Account::LEN]).unwrap();
     assert_eq!(token_account.mint, attestation_mint_pda);
     assert_eq!(token_account.amount, 1);
 }
@@ -485,13 +413,9 @@ async fn close_tokenized_attestation_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
-    let (event_auth_pda, _bump) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let (event_auth_pda, _bump) = Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
 
     let close_attestation_ix = CloseTokenizedAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -500,9 +424,7 @@ async fn close_tokenized_attestation_success() {
         .attestation(attestation_pda)
         .event_authority(event_auth_pda)
         .system_program(system_program::ID)
-        .attestation_program(
-            solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
-        )
+        .attestation_program(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID)
         .attestation_mint(attestation_mint_pda)
         .sas_pda(sas_pda)
         .attestation_token_account(recipient_token_account)
@@ -514,37 +436,20 @@ async fn close_tokenized_attestation_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
-    let recipient_token_account_data = ctx
-        .banks_client
-        .get_account(recipient_token_account)
-        .await
-        .unwrap()
-        .unwrap();
+    let recipient_token_account_data = ctx.banks_client.get_account(recipient_token_account).await.unwrap().unwrap();
 
     // Check that attestation account is closed.
-    let attestation_account = ctx
-        .banks_client
-        .get_account(attestation_pda)
-        .await
-        .expect("get_account");
+    let attestation_account = ctx.banks_client.get_account(attestation_pda).await.expect("get_account");
     assert!(attestation_account.is_none());
 
     // Check that mint account is closed.
-    let mint_account = ctx
-        .banks_client
-        .get_account(attestation_mint_pda)
-        .await
-        .expect("get_account");
+    let mint_account = ctx.banks_client.get_account(attestation_mint_pda).await.expect("get_account");
     assert!(mint_account.is_none());
 
     // Verify that recipient has 0 attestation token.
-    let token_account =
-        Account::unpack(&recipient_token_account_data.data[..Account::LEN]).unwrap();
+    let token_account = Account::unpack(&recipient_token_account_data.data[..Account::LEN]).unwrap();
     assert_eq!(token_account.mint, attestation_mint_pda);
     assert_eq!(token_account.amount, 0);
 }
@@ -612,13 +517,9 @@ async fn update_tokenized_attestation_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
-    let (event_auth_pda, _bump) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let (event_auth_pda, _bump) = Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
 
     let close_attestation_ix = CloseTokenizedAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -627,9 +528,7 @@ async fn update_tokenized_attestation_success() {
         .attestation(attestation_pda)
         .event_authority(event_auth_pda)
         .system_program(system_program::ID)
-        .attestation_program(
-            solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
-        )
+        .attestation_program(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID)
         .attestation_mint(attestation_mint_pda)
         .sas_pda(sas_pda)
         .attestation_token_account(recipient_token_account)
@@ -641,10 +540,7 @@ async fn update_tokenized_attestation_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     let create_attestation_ix = CreateTokenizedAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -675,17 +571,9 @@ async fn update_tokenized_attestation_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
-    let attestation_mint_account = ctx
-        .banks_client
-        .get_account(attestation_mint_pda)
-        .await
-        .unwrap()
-        .unwrap();
+    let attestation_mint_account = ctx.banks_client.get_account(attestation_mint_pda).await.unwrap().unwrap();
     let mint_state = StateWithExtensions::<Mint>::unpack(&attestation_mint_account.data).unwrap();
     assert!(mint_state.base.is_initialized);
     assert_eq!(mint_state.base.decimals, 0);
@@ -723,9 +611,7 @@ async fn update_tokenized_attestation_success() {
     assert_eq!(metadata_pointer.metadata_address.0, attestation_mint_pda);
 
     // Verify the TokenMetadata extension.
-    let token_metadata = &mint_state
-        .get_variable_len_extension::<TokenMetadata>()
-        .unwrap();
+    let token_metadata = &mint_state.get_variable_len_extension::<TokenMetadata>().unwrap();
     assert_eq!(token_metadata.update_authority.0, sas_pda);
     assert_eq!(token_metadata.mint, attestation_mint_pda);
     assert_eq!(token_metadata.name, name);
@@ -733,23 +619,14 @@ async fn update_tokenized_attestation_success() {
     assert_eq!(token_metadata.symbol, symbol);
     assert_eq!(token_metadata.additional_metadata.len(), 2);
     assert_eq!(token_metadata.additional_metadata[0].0, "attestation");
-    assert_eq!(
-        token_metadata.additional_metadata[0].1,
-        attestation_pda.to_string()
-    );
+    assert_eq!(token_metadata.additional_metadata[0].1, attestation_pda.to_string());
     assert_eq!(token_metadata.additional_metadata[1].0, "schema");
     assert_eq!(token_metadata.additional_metadata[1].1, schema.to_string());
 
-    let recipient_token_account_data = ctx
-        .banks_client
-        .get_account(recipient_token_account)
-        .await
-        .unwrap()
-        .unwrap();
+    let recipient_token_account_data = ctx.banks_client.get_account(recipient_token_account).await.unwrap().unwrap();
 
     // Verify that recipient has 1 attestation token.
-    let token_account =
-        Account::unpack(&recipient_token_account_data.data[..Account::LEN]).unwrap();
+    let token_account = Account::unpack(&recipient_token_account_data.data[..Account::LEN]).unwrap();
     assert_eq!(token_account.mint, attestation_mint_pda);
     assert_eq!(token_account.amount, 1);
 }

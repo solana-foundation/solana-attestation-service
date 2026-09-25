@@ -173,8 +173,7 @@ impl Schema {
         let layout = data[offset..offset + layout_len].to_vec();
         offset += layout_len;
 
-        let field_names_byte_len =
-            u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+        let field_names_byte_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
         offset += 4;
         let field_names: Vec<u8> = data[offset..offset + field_names_byte_len].to_vec();
         offset += field_names_byte_len;
@@ -184,14 +183,6 @@ impl Schema {
 
         let version = data[offset];
 
-        Ok(Self {
-            credential,
-            name,
-            description,
-            layout,
-            field_names,
-            is_paused,
-            version,
-        })
+        Ok(Self { credential, name, description, layout, field_names, is_paused, version })
     }
 }

@@ -1,6 +1,4 @@
-use pinocchio::{
-    account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult,
-};
+use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey, ProgramResult};
 use pinocchio_log::log;
 
 use crate::{
@@ -56,10 +54,7 @@ struct ChangeSchemaStatusArgs {
 
 fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaStatusArgs, ProgramError> {
     require_len!(data, 1);
-    let is_paused = data
-        .first()
-        .ok_or(ProgramError::InvalidInstructionData)?
-        .eq(&1);
+    let is_paused = data.first().ok_or(ProgramError::InvalidInstructionData)?.eq(&1);
 
     Ok(ChangeSchemaStatusArgs { is_paused })
 }

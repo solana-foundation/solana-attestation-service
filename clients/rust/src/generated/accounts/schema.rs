@@ -13,10 +13,7 @@ use solana_program::pubkey::Pubkey;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Schema {
     pub discriminator: u8,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
+    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
     pub credential: Pubkey,
     pub name: Vec<u8>,
     pub description: Vec<u8>,
@@ -37,9 +34,7 @@ impl Schema {
 impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Schema {
     type Error = std::io::Error;
 
-    fn try_from(
-        account_info: &solana_program::account_info::AccountInfo<'a>,
-    ) -> Result<Self, Self::Error> {
+    fn try_from(account_info: &solana_program::account_info::AccountInfo<'a>) -> Result<Self, Self::Error> {
         let mut data: &[u8] = &(*account_info.data).borrow();
         Self::deserialize(&mut data)
     }
@@ -65,16 +60,11 @@ pub fn fetch_all_schema(
     let mut decoded_accounts: Vec<crate::shared::DecodedAccount<Schema>> = Vec::new();
     for i in 0..addresses.len() {
         let address = addresses[i];
-        let account = accounts[i].as_ref().ok_or(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            format!("Account not found: {}", address),
-        ))?;
+        let account = accounts[i]
+            .as_ref()
+            .ok_or(std::io::Error::new(std::io::ErrorKind::Other, format!("Account not found: {}", address)))?;
         let data = Schema::from_bytes(&account.data)?;
-        decoded_accounts.push(crate::shared::DecodedAccount {
-            address,
-            account: account.clone(),
-            data,
-        });
+        decoded_accounts.push(crate::shared::DecodedAccount { address, account: account.clone(), data });
     }
     Ok(decoded_accounts)
 }
@@ -101,13 +91,11 @@ pub fn fetch_all_maybe_schema(
         let address = addresses[i];
         if let Some(account) = accounts[i].as_ref() {
             let data = Schema::from_bytes(&account.data)?;
-            decoded_accounts.push(crate::shared::MaybeAccount::Exists(
-                crate::shared::DecodedAccount {
-                    address,
-                    account: account.clone(),
-                    data,
-                },
-            ));
+            decoded_accounts.push(crate::shared::MaybeAccount::Exists(crate::shared::DecodedAccount {
+                address,
+                account: account.clone(),
+                data,
+            }));
         } else {
             decoded_accounts.push(crate::shared::MaybeAccount::NotFound(address));
         }
