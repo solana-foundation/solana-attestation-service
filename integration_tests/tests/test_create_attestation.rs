@@ -4,7 +4,6 @@ use solana_attestation_service_client::{
     accounts::Attestation,
     instructions::{ChangeSchemaStatusBuilder, CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
-use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
     clock::Clock,
@@ -18,7 +17,7 @@ use solana_sdk::{
 
 mod helpers;
 
-#[derive(BorshSerialize, SchemaStructSerialize)]
+#[derive(BorshSerialize)]
 struct TestData {
     name: String,
     location: u8,
@@ -53,7 +52,7 @@ async fn setup() -> TestFixtures {
     // Create Schema
     let schema_name = "test_data";
     let description = "schema for test data";
-    let schema_data = TestData::get_serialized_representation();
+    let schema_data = vec![12, 0];
     let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],

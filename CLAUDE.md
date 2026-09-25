@@ -51,12 +51,6 @@ deployment will not reproduce any prior deployment's build hash.
 **`declare_id!` in `program/src/lib.rs` is parsed by `sed`** in the `program-id`
 recipe. Keep it a single literal line.
 
-**`cereal_macro` only handles scalar fields.** The derive matches on the last
-path segment of each field type, which is `Vec` for every vector, so all
-thirteen `Vec<...>` arms are unreachable and such a field fails to compile
-with "Unsupported type in struct". Only the integration tests and one `core`
-unit test use the macro; nothing shipped depends on it.
-
 **ESLint does not cover everything.** `examples/`, `scripts/`, and the
 TypeScript tests are in the ignore list; changes there are unlinted.
 

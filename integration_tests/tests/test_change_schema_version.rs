@@ -4,7 +4,6 @@ use solana_attestation_service_client::{
     accounts::Schema,
     instructions::{ChangeSchemaVersionBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
-use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
     instruction::InstructionError,
@@ -15,19 +14,6 @@ use solana_sdk::{
     transaction::{Transaction, TransactionError},
 };
 mod helpers;
-
-#[derive(SchemaStructSerialize)]
-struct TestData {
-    _name: String,
-    _location: u8,
-}
-
-#[derive(SchemaStructSerialize)]
-struct TestData2 {
-    _name: String,
-    _location: u8,
-    _phone: u64,
-}
 
 struct TestFixtures {
     ctx: ProgramTestContext,
@@ -68,7 +54,7 @@ async fn setup() -> TestFixtures {
     // Create Schema
     let schema_name = "test_data";
     let description = "schema for test data";
-    let schema_layout = TestData::get_serialized_representation();
+    let schema_layout = vec![12, 0];
     let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
@@ -119,7 +105,7 @@ async fn change_schema_version_success() {
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[2]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
-    let schema_layout2 = TestData2::get_serialized_representation();
+    let schema_layout2 = vec![12, 0, 3];
     let field_names2 = vec!["name".into(), "location".into(), "phone".into()];
 
     let change_schema_version_ix = ChangeSchemaVersionBuilder::new()
@@ -196,7 +182,7 @@ async fn change_schema_version_fail_incorrect_credential() {
         &[b"schema", &credential_pda_2.to_bytes(), schema_name.as_bytes(), &[2]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
-    let schema_layout2 = TestData2::get_serialized_representation();
+    let schema_layout2 = vec![12, 0, 3];
     let field_names2 = vec!["name".into(), "location".into(), "phone".into()];
 
     let change_schema_version_ix = ChangeSchemaVersionBuilder::new()

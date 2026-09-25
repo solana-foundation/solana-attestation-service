@@ -74,8 +74,6 @@ solana-attestation-service/
 │   │   ├── entrypoint.rs    # Discriminator routing
 │   │   ├── events.rs        # Event definitions
 │   │   └── constants.rs     # Seeds and program constants
-├── core/                    # Shared schema types and validation
-├── cereal_macro/            # SchemaStructSerialize derive macro
 ├── idl/                     # Shank-generated IDL (committed)
 ├── clients/
 │   ├── typescript/          # sas-lib SDK + tests
