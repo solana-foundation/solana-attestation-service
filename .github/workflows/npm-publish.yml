@@ -33,6 +33,8 @@ jobs:
       - name: Install TypeScript client dependencies
         working-directory: clients/typescript
         run: pnpm install
+      - name: Generate clients
+        run: pnpm run generate-clients
       - name: Build client
         working-directory: clients/typescript
         run: pnpm build

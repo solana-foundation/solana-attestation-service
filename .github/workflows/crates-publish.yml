@@ -19,11 +19,17 @@ jobs:
         uses: pnpm/action-setup@v2
         with:
           version: 9.10.0
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install shank
+        run: cargo install shank-cli --version 0.4.9 --locked
+      - name: Generate IDL and clients
+        run: pnpm run generate-idl && pnpm run generate-clients
       - name: Build check
         working-directory: clients/rust
         run: cargo build
       - name: Publish Rust crate
         working-directory: clients/rust
-        run: cargo publish --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --locked --allow-dirty --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

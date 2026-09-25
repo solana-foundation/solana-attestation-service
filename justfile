@@ -54,7 +54,7 @@ build: build-program build-client
 
 # Compile Solana program to .so
 build-program:
-    cargo-build-sbf
+    cd {{program_dir}} && cargo-build-sbf
     @echo "✓ Program built"
 
 # Generate IDL from Rust source (requires the shank CLI)
@@ -83,7 +83,7 @@ check-generated: generate-clients
     echo "✓ IDL and generated clients are up-to-date"
 
 # Build TypeScript client
-build-client:
+build-client: generate-clients
     cd {{ts_client_dir}} && pnpm run build
     @echo "✓ TypeScript client built"
 
@@ -103,13 +103,13 @@ unit-test:
     cargo test -p solana-attestation-service -p solana-attestation-service-core --lib
 
 # Run Rust integration tests against the built program
-integration-test *args: build-program
+integration-test *args: build-program generate-clients
     #!/usr/bin/env bash
     set -euo pipefail
     SBF_OUT_DIR={{sbf_out_dir}} cargo test -p tests-solana-attestation-service "$@"
 
 # Run TypeScript client tests
-test-client:
+test-client: generate-clients
     cd {{ts_client_dir}} && pnpm run test
 
 # ============================================
@@ -150,7 +150,7 @@ fmt:
     @echo "✓ Code formatted"
 
 # Lint with auto-fix
-lint:
+lint: generate-clients
     @echo "Linting Rust..."
     @cargo clippy --workspace --exclude solana-attestation-service-client --all-targets --no-deps --fix -- -D warnings
     @echo "Linting TypeScript..."
@@ -158,7 +158,7 @@ lint:
     @echo "✓ Code linted"
 
 # Check linting without fixing
-lint-check:
+lint-check: generate-clients
     @echo "Checking Rust lint..."
     @cargo clippy --workspace --exclude solana-attestation-service-client --all-targets --no-deps -- -D warnings
     @echo "Checking TypeScript lint..."
