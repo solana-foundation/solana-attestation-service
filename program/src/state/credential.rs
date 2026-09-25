@@ -1,9 +1,9 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
+use codama::CodamaAccount;
 use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
 use pinocchio_log::log;
-use shank::ShankAccount;
 
 use crate::error::AttestationServiceError;
 
@@ -11,13 +11,15 @@ use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, D
 
 // PDA ["credential", authority, name]
 /// Tracks the authorized signers of for schemas and their attestations.
-#[derive(Clone, Debug, PartialEq, ShankAccount)]
+#[derive(Clone, Debug, PartialEq, CodamaAccount)]
 #[repr(C)]
 pub struct Credential {
     /// Admin of this credential
     pub authority: Pubkey,
     /// UTF-8 encoded Name of this credential
     /// Includes 4 bytes for length of name
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub name: Vec<u8>,
     /// List of signers that are allowed to "attest"
     pub authorized_signers: Vec<Pubkey>,

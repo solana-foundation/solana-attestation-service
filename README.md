@@ -15,7 +15,7 @@ Lifecycle changes are emitted as events through a self-CPI rather than `sol_log`
 This repository contains:
 
 - A Rust Solana program built with [Pinocchio](https://github.com/anza-xyz/pinocchio)
-- IDL generation via [Shank](https://github.com/metaplex-foundation/shank) and client generation via [Codama](https://github.com/codama-idl/codama)
+- IDL and client generation via [Codama](https://github.com/codama-idl/codama)
 - A TypeScript client (`sas-lib`) in `clients/typescript`
 - A Rust client (`solana-attestation-service-client`) in `clients/rust`
 - Worked examples in `examples/`
@@ -70,11 +70,11 @@ solana-attestation-service/
 │   │   ├── processor/       # Instruction handlers
 │   │   │   └── shared/      # Account checks, PDA and data utilities
 │   │   ├── state/           # Credential, Schema, Attestation accounts
-│   │   ├── instructions.rs  # Shank instruction definitions (IDL source)
+│   │   ├── instructions.rs  # Codama instruction definitions (IDL source)
 │   │   ├── entrypoint.rs    # Discriminator routing
 │   │   ├── events.rs        # Event definitions
 │   │   └── constants.rs     # Seeds and program constants
-├── idl/                     # Shank-generated IDL (committed)
+├── idl/                     # Codama-generated IDL (committed)
 ├── clients/
 │   ├── typescript/          # sas-lib SDK + tests
 │   └── rust/                # solana-attestation-service-client
@@ -98,7 +98,7 @@ just test
 
 ### Prerequisites
 
-`just setup` checks for `pnpm`, `cargo`, and `cargo-build-sbf`. Generating the IDL additionally needs the Shank CLI.
+`just setup` checks for `pnpm`, `cargo`, and `cargo-build-sbf`.
 
 | Tool       | Install                                                                                                |
 | ---------- | ------------------------------------------------------------------------------------------------------ |
@@ -106,7 +106,6 @@ just test
 | Solana CLI | `sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"`                                        |
 | pnpm       | `curl -fsSL https://get.pnpm.io/install.sh \| sh -`                                                    |
 | Just       | `curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh \| bash -s -- --to ~/.local/bin` |
-| Shank CLI  | `cargo install shank-cli`                                                                              |
 
 Rust is pinned in `rust-toolchain.toml`, Node.js in `.nvmrc`, and pnpm in the `packageManager` field of `package.json`.
 
@@ -116,13 +115,13 @@ Rust is pinned in `rust-toolchain.toml`, Node.js in `.nvmrc`, and pnpm in the `p
 
 ### Build
 
-| Recipe                  | Description                                                |
-| ----------------------- | ---------------------------------------------------------- |
-| `just build`            | Program `.so` plus the TypeScript client                   |
-| `just build-program`    | Compile the SBF program                                    |
-| `just generate-idl`     | Regenerate `idl/solana_attestation_service.json` via Shank |
-| `just generate-clients` | Regenerate both clients from the IDL via Codama            |
-| `just build-client`     | Build `clients/typescript` into `dist/`                    |
+| Recipe                  | Description                                                 |
+| ----------------------- | ----------------------------------------------------------- |
+| `just build`            | Program `.so` plus the TypeScript client                    |
+| `just build-program`    | Compile the SBF program                                     |
+| `just generate-idl`     | Regenerate `idl/solana_attestation_service.json` via Codama |
+| `just generate-clients` | Regenerate both clients from the IDL via Codama             |
+| `just build-client`     | Build `clients/typescript` into `dist/`                     |
 
 Generated client sources under `clients/*/src/generated/` are not committed. They are produced from the IDL by `just generate-clients` and bundled into the published packages. The IDL itself is committed, and `just check-generated` fails if either has drifted from the program source.
 

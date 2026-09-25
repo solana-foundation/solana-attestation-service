@@ -1,8 +1,8 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
+use codama::CodamaAccount;
 use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
-use shank::ShankAccount;
 
 use crate::error::AttestationServiceError;
 
@@ -12,7 +12,7 @@ use super::{
 };
 
 // PDA ["attestation", credential, schema, nonce]
-#[derive(Clone, Debug, PartialEq, ShankAccount)]
+#[derive(Clone, Debug, PartialEq, CodamaAccount)]
 #[repr(C)]
 pub struct Attestation {
     /// A pubkey that may either be randomly generated OR associated with a User's wallet
@@ -22,6 +22,8 @@ pub struct Attestation {
     /// Reference to the Schema this Attestation adheres to
     pub schema: Pubkey,
     /// Data that was verified and matches the Schema
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub data: Vec<u8>,
     /// The pubkey of the signer. Must be one of the `authorized_signer`s at time of attestation
     pub signer: Pubkey,

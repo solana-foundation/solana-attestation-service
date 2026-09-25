@@ -1,9 +1,9 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
+use codama::CodamaAccount;
 use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
 use pinocchio_log::log;
-use shank::ShankAccount;
 
 use crate::error::AttestationServiceError;
 
@@ -86,19 +86,27 @@ impl From<SchemaDataTypes> for u8 {
 }
 
 // PDA ["schema", credential, name, version]
-#[derive(Clone, Debug, PartialEq, ShankAccount)]
+#[derive(Clone, Debug, PartialEq, CodamaAccount)]
 #[repr(C)]
 pub struct Schema {
     /// The Credential that manages this Schema
     pub credential: Pubkey,
     /// Name of Schema, in UTF8-encoded byte string.
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub name: Vec<u8>,
     /// Description of what schema does, in UTF8-encoded byte string.
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub description: Vec<u8>,
     /// The schema layout where data will be encoded with, in array of SchemaDataTypes.
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub layout: Vec<u8>,
     /// Field names of schema stored as serialized array of Strings.
     /// First 4 bytes are number of bytes in array.
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub field_names: Vec<u8>,
     /// Whether or not this schema is still valid
     pub is_paused: bool,

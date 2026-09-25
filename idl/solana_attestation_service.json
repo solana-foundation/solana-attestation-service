@@ -1,796 +1,1607 @@
 {
-  "version": "2.0.0",
-  "name": "solana_attestation_service",
-  "instructions": [
-    {
-      "name": "CreateCredential",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
+  "additionalPrograms": [],
+  "kind": "rootNode",
+  "program": {
+    "accounts": [
+      {
+        "data": {
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "name": "nonce",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "credential",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "schema",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "data",
+              "type": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "kind": "bytesTypeNode"
+                }
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "signer",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "expiry",
+              "type": {
+                "endian": "le",
+                "format": "i64",
+                "kind": "numberTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "tokenAccount",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              }
+            }
+          ],
+          "kind": "structTypeNode"
         },
-        {
-          "name": "credential",
-          "isMut": true,
-          "isSigner": false
+        "kind": "accountNode",
+        "name": "attestation"
+      },
+      {
+        "data": {
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "name": "authority",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "name",
+              "type": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "kind": "bytesTypeNode"
+                }
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "authorizedSigners",
+              "type": {
+                "count": {
+                  "kind": "prefixedCountNode",
+                  "prefix": {
+                    "endian": "le",
+                    "format": "u32",
+                    "kind": "numberTypeNode"
+                  }
+                },
+                "item": {
+                  "kind": "publicKeyTypeNode"
+                },
+                "kind": "arrayTypeNode"
+              }
+            }
+          ],
+          "kind": "structTypeNode"
         },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
+        "kind": "accountNode",
+        "name": "credential"
+      },
+      {
+        "data": {
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "name": "credential",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "name",
+              "type": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "kind": "bytesTypeNode"
+                }
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "description",
+              "type": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "kind": "bytesTypeNode"
+                }
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "layout",
+              "type": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "kind": "bytesTypeNode"
+                }
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "fieldNames",
+              "type": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "kind": "bytesTypeNode"
+                }
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "isPaused",
+              "type": {
+                "kind": "booleanTypeNode",
+                "size": {
+                  "endian": "le",
+                  "format": "u8",
+                  "kind": "numberTypeNode"
+                }
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "version",
+              "type": {
+                "endian": "le",
+                "format": "u8",
+                "kind": "numberTypeNode"
+              }
+            }
+          ],
+          "kind": "structTypeNode"
         },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
+        "kind": "accountNode",
+        "name": "schema"
+      }
+    ],
+    "constants": [],
+    "definedTypes": [
+      {
+        "kind": "definedTypeNode",
+        "name": "closeAttestationEvent",
+        "type": {
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "name": "discriminator",
+              "type": {
+                "endian": "le",
+                "format": "u8",
+                "kind": "numberTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "schema",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "attestationData",
+              "type": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "kind": "bytesTypeNode"
+                }
+              }
+            }
+          ],
+          "kind": "structTypeNode"
         }
-      ],
-      "args": [
-        {
-          "name": "name",
-          "type": "string"
-        },
-        {
-          "name": "signers",
-          "type": {
-            "vec": "publicKey"
+      }
+    ],
+    "errors": [
+      {
+        "code": 0,
+        "kind": "errorNode",
+        "message": "Incorrect Credential account",
+        "name": "invalidCredential"
+      },
+      {
+        "code": 1,
+        "kind": "errorNode",
+        "message": "Incorrect Schema account",
+        "name": "invalidSchema"
+      },
+      {
+        "code": 2,
+        "kind": "errorNode",
+        "message": "Incorrect Attestation account",
+        "name": "invalidAttestation"
+      },
+      {
+        "code": 3,
+        "kind": "errorNode",
+        "message": "Authority was not found in Credential authorized_signatures",
+        "name": "invalidAuthority"
+      },
+      {
+        "code": 4,
+        "kind": "errorNode",
+        "message": "Incorrect Schema data type",
+        "name": "invalidSchemaDataType"
+      },
+      {
+        "code": 5,
+        "kind": "errorNode",
+        "message": "The signer is not one of the Credential's authorized signers",
+        "name": "signerNotAuthorized"
+      },
+      {
+        "code": 6,
+        "kind": "errorNode",
+        "message": "Attestation data does not conform to the Schema",
+        "name": "invalidAttestationData"
+      },
+      {
+        "code": 7,
+        "kind": "errorNode",
+        "message": "Incorrect Event Authority",
+        "name": "invalidEventAuthority"
+      },
+      {
+        "code": 8,
+        "kind": "errorNode",
+        "message": "Incorrect Mint",
+        "name": "invalidMint"
+      },
+      {
+        "code": 9,
+        "kind": "errorNode",
+        "message": "Incorrect Program Signer",
+        "name": "invalidProgramSigner"
+      },
+      {
+        "code": 10,
+        "kind": "errorNode",
+        "message": "Incorrect Token Account",
+        "name": "invalidTokenAccount"
+      },
+      {
+        "code": 11,
+        "kind": "errorNode",
+        "message": "Schema is paused",
+        "name": "schemaPaused"
+      }
+    ],
+    "events": [],
+    "instructions": [
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
           }
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 0
-      }
-    },
-    {
-      "name": "CreateSchema",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "credential",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        },
-        {
-          "name": "schema",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "name",
-          "type": "string"
-        },
-        {
-          "name": "description",
-          "type": "string"
-        },
-        {
-          "name": "layout",
-          "type": "bytes"
-        },
-        {
-          "name": "fieldNames",
-          "type": {
-            "vec": "string"
-          }
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 1
-      }
-    },
-    {
-      "name": "ChangeSchemaStatus",
-      "accounts": [
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "credential",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        },
-        {
-          "name": "schema",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "isPaused",
-          "type": "bool"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 2
-      }
-    },
-    {
-      "name": "ChangeAuthorizedSigners",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "credential",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "signers",
-          "type": {
-            "vec": "publicKey"
-          }
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 3
-      }
-    },
-    {
-      "name": "ChangeSchemaDescription",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "credential",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        },
-        {
-          "name": "schema",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "description",
-          "type": "string"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 4
-      }
-    },
-    {
-      "name": "ChangeSchemaVersion",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "credential",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        },
-        {
-          "name": "existingSchema",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "newSchema",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "layout",
-          "type": "bytes"
-        },
-        {
-          "name": "fieldNames",
-          "type": {
-            "vec": "string"
-          }
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 5
-      }
-    },
-    {
-      "name": "CreateAttestation",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Authorized signer of the Schema's Credential"
-          ]
-        },
-        {
-          "name": "credential",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        },
-        {
-          "name": "schema",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Schema the Attestation is associated with"
-          ]
-        },
-        {
-          "name": "attestation",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "nonce",
-          "type": "publicKey"
-        },
-        {
-          "name": "data",
-          "type": "bytes"
-        },
-        {
-          "name": "expiry",
-          "type": "i64"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 6
-      }
-    },
-    {
-      "name": "CloseAttestation",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Authorized signer of the Schema's Credential"
-          ]
-        },
-        {
-          "name": "credential",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "attestation",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "eventAuthority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "attestationProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 7
-      }
-    },
-    {
-      "name": "TokenizeSchema",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "credential",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        },
-        {
-          "name": "schema",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Mint of Schema Token"
-          ]
-        },
-        {
-          "name": "sasPda",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Program derived address used as program signer authority"
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "maxSize",
-          "type": "u64"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 9
-      }
-    },
-    {
-      "name": "CreateTokenizedAttestation",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Authorized signer of the Schema's Credential"
-          ]
-        },
-        {
-          "name": "credential",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Credential the Schema is associated with"
-          ]
-        },
-        {
-          "name": "schema",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Schema the Attestation is associated with"
-          ]
-        },
-        {
-          "name": "attestation",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "schemaMint",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Mint of Schema Token"
-          ]
-        },
-        {
-          "name": "attestationMint",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Mint of Attestation Token"
-          ]
-        },
-        {
-          "name": "sasPda",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Program derived address used as program signer authority"
-          ]
-        },
-        {
-          "name": "recipientTokenAccount",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Associated token account of Recipient for Attestation Token"
-          ]
-        },
-        {
-          "name": "recipient",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Wallet to receive Attestation Token"
-          ]
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "nonce",
-          "type": "publicKey"
-        },
-        {
-          "name": "data",
-          "type": "bytes"
-        },
-        {
-          "name": "expiry",
-          "type": "i64"
-        },
-        {
-          "name": "name",
-          "type": "string"
-        },
-        {
-          "name": "uri",
-          "type": "string"
-        },
-        {
-          "name": "symbol",
-          "type": "string"
-        },
-        {
-          "name": "mintAccountSpace",
-          "type": "u16"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 10
-      }
-    },
-    {
-      "name": "CloseTokenizedAttestation",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Authorized signer of the Schema's Credential"
-          ]
-        },
-        {
-          "name": "credential",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "attestation",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "eventAuthority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "attestationProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "attestationMint",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Mint of Attestation Token"
-          ]
-        },
-        {
-          "name": "sasPda",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Program derived address used as program signer authority"
-          ]
-        },
-        {
-          "name": "attestationTokenAccount",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Associated token account of the related Attestation Token"
-          ]
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 11
-      }
-    },
-    {
-      "name": "EmitEvent",
-      "accounts": [
-        {
-          "name": "eventAuthority",
-          "isMut": false,
-          "isSigner": true
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 228
-      }
-    }
-  ],
-  "accounts": [
-    {
-      "name": "Attestation",
-      "type": {
-        "kind": "struct",
-        "fields": [
+        ],
+        "arguments": [
           {
-            "name": "nonce",
-            "type": "publicKey"
-          },
-          {
-            "name": "credential",
-            "type": "publicKey"
-          },
-          {
-            "name": "schema",
-            "type": "publicKey"
-          },
-          {
-            "name": "data",
-            "type": "bytes"
-          },
-          {
-            "name": "signer",
-            "type": "publicKey"
-          },
-          {
-            "name": "expiry",
-            "type": "i64"
-          },
-          {
-            "name": "tokenAccount",
-            "type": "publicKey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Credential",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "authority",
-            "type": "publicKey"
-          },
-          {
-            "name": "name",
-            "type": "bytes"
-          },
-          {
-            "name": "authorizedSigners",
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 0
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
             "type": {
-              "vec": "publicKey"
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "name",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "encoding": "utf8",
+                "kind": "stringTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "signers",
+            "type": {
+              "count": {
+                "kind": "prefixedCountNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                }
+              },
+              "item": {
+                "kind": "publicKeyTypeNode"
+              },
+              "kind": "arrayTypeNode"
             }
           }
-        ]
-      }
-    },
-    {
-      "name": "Schema",
-      "type": {
-        "kind": "struct",
-        "fields": [
+        ],
+        "discriminators": [
           {
-            "name": "credential",
-            "type": "publicKey"
-          },
-          {
-            "name": "name",
-            "type": "bytes"
-          },
-          {
-            "name": "description",
-            "type": "bytes"
-          },
-          {
-            "name": "layout",
-            "type": "bytes"
-          },
-          {
-            "name": "fieldNames",
-            "type": "bytes"
-          },
-          {
-            "name": "isPaused",
-            "type": "bool"
-          },
-          {
-            "name": "version",
-            "type": "u8"
-          }
-        ]
-      }
-    }
-  ],
-  "types": [
-    {
-      "name": "CloseAttestationEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
+            "kind": "fieldDiscriminatorNode",
             "name": "discriminator",
-            "type": "u8"
-          },
-          {
-            "name": "schema",
-            "type": "publicKey"
-          },
-          {
-            "name": "attestationData",
-            "type": "bytes"
+            "offset": 0
           }
-        ]
+        ],
+        "kind": "instructionNode",
+        "name": "createCredential"
+      },
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "schema"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 1
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "name",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "encoding": "utf8",
+                "kind": "stringTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "description",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "encoding": "utf8",
+                "kind": "stringTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "layout",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "kind": "bytesTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "fieldNames",
+            "type": {
+              "count": {
+                "kind": "prefixedCountNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                }
+              },
+              "item": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "encoding": "utf8",
+                  "kind": "stringTypeNode"
+                }
+              },
+              "kind": "arrayTypeNode"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "createSchema"
+      },
+      {
+        "accounts": [
+          {
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "schema"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 2
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "isPaused",
+            "type": {
+              "kind": "booleanTypeNode",
+              "size": {
+                "endian": "le",
+                "format": "u8",
+                "kind": "numberTypeNode"
+              }
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "changeSchemaStatus"
+      },
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 3
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "signers",
+            "type": {
+              "count": {
+                "kind": "prefixedCountNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                }
+              },
+              "item": {
+                "kind": "publicKeyTypeNode"
+              },
+              "kind": "arrayTypeNode"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "changeAuthorizedSigners"
+      },
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "schema"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 4
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "description",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "encoding": "utf8",
+                "kind": "stringTypeNode"
+              }
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "changeSchemaDescription"
+      },
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "existingSchema"
+          },
+          {
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "newSchema"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 5
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "layout",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "kind": "bytesTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "fieldNames",
+            "type": {
+              "count": {
+                "kind": "prefixedCountNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                }
+              },
+              "item": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "encoding": "utf8",
+                  "kind": "stringTypeNode"
+                }
+              },
+              "kind": "arrayTypeNode"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "changeSchemaVersion"
+      },
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "docs": [
+              "Authorized signer of the Schema's Credential"
+            ],
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "docs": [
+              "Schema the Attestation is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "schema"
+          },
+          {
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "attestation"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 6
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "nonce",
+            "type": {
+              "kind": "publicKeyTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "data",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "kind": "bytesTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "expiry",
+            "type": {
+              "endian": "le",
+              "format": "i64",
+              "kind": "numberTypeNode"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "createAttestation"
+      },
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "docs": [
+              "Authorized signer of the Schema's Credential"
+            ],
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "attestation"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "eventAuthority"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "attestationProgram"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 7
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "closeAttestation"
+      },
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "schema"
+          },
+          {
+            "docs": [
+              "Mint of Schema Token"
+            ],
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "mint"
+          },
+          {
+            "docs": [
+              "Program derived address used as program signer authority"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "sasPda"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "tokenProgram"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 9
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "maxSize",
+            "type": {
+              "endian": "le",
+              "format": "u64",
+              "kind": "numberTypeNode"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "tokenizeSchema"
+      },
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "docs": [
+              "Authorized signer of the Schema's Credential"
+            ],
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "docs": [
+              "Credential the Schema is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "docs": [
+              "Schema the Attestation is associated with"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "schema"
+          },
+          {
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "attestation"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
+          },
+          {
+            "docs": [
+              "Mint of Schema Token"
+            ],
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "schemaMint"
+          },
+          {
+            "docs": [
+              "Mint of Attestation Token"
+            ],
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "attestationMint"
+          },
+          {
+            "docs": [
+              "Program derived address used as program signer authority"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "sasPda"
+          },
+          {
+            "docs": [
+              "Associated token account of Recipient for Attestation Token"
+            ],
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "recipientTokenAccount"
+          },
+          {
+            "docs": [
+              "Wallet to receive Attestation Token"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "recipient"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "tokenProgram"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "associatedTokenProgram"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 10
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "nonce",
+            "type": {
+              "kind": "publicKeyTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "data",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "kind": "bytesTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "expiry",
+            "type": {
+              "endian": "le",
+              "format": "i64",
+              "kind": "numberTypeNode"
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "name",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "encoding": "utf8",
+                "kind": "stringTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "uri",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "encoding": "utf8",
+                "kind": "stringTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "symbol",
+            "type": {
+              "kind": "sizePrefixTypeNode",
+              "prefix": {
+                "endian": "le",
+                "format": "u32",
+                "kind": "numberTypeNode"
+              },
+              "type": {
+                "encoding": "utf8",
+                "kind": "stringTypeNode"
+              }
+            }
+          },
+          {
+            "kind": "instructionArgumentNode",
+            "name": "mintAccountSpace",
+            "type": {
+              "endian": "le",
+              "format": "u16",
+              "kind": "numberTypeNode"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "createTokenizedAttestation"
+      },
+      {
+        "accounts": [
+          {
+            "defaultValue": {
+              "kind": "payerValueNode"
+            },
+            "isSigner": true,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "payer"
+          },
+          {
+            "docs": [
+              "Authorized signer of the Schema's Credential"
+            ],
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "authority"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "credential"
+          },
+          {
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "attestation"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "eventAuthority"
+          },
+          {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "11111111111111111111111111111111"
+            },
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "systemProgram"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "attestationProgram"
+          },
+          {
+            "docs": [
+              "Mint of Attestation Token"
+            ],
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "attestationMint"
+          },
+          {
+            "docs": [
+              "Program derived address used as program signer authority"
+            ],
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "sasPda"
+          },
+          {
+            "docs": [
+              "Associated token account of the related Attestation Token"
+            ],
+            "isSigner": false,
+            "isWritable": true,
+            "kind": "instructionAccountNode",
+            "name": "attestationTokenAccount"
+          },
+          {
+            "isSigner": false,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "tokenProgram"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 11
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "closeTokenizedAttestation"
+      },
+      {
+        "accounts": [
+          {
+            "isSigner": true,
+            "isWritable": false,
+            "kind": "instructionAccountNode",
+            "name": "eventAuthority"
+          }
+        ],
+        "arguments": [
+          {
+            "defaultValue": {
+              "kind": "numberValueNode",
+              "number": 228
+            },
+            "defaultValueStrategy": "omitted",
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ],
+        "kind": "instructionNode",
+        "name": "emitEvent"
       }
-    }
-  ],
-  "metadata": {
-    "origin": "shank",
-    "address": "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG"
-  }
+    ],
+    "kind": "programNode",
+    "name": "solana_attestation_service",
+    "pdas": [],
+    "publicKey": "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG",
+    "version": "2.0.0"
+  },
+  "standard": "codama",
+  "version": "1.6.0"
 }

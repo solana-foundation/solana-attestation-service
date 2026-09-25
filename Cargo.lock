@@ -723,6 +723,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo_toml"
+version = "0.20.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88da5a13c620b4ca0078845707ea9c3faf11edbc3ffd8497d11d686211cd1ac0"
+dependencies = [
+ "serde",
+ "toml 0.8.20",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -794,6 +804,162 @@ checksum = "773f3b9af64447d2ce9850330c473515014aa235e6a783b02db81ff39e4a3dad"
 dependencies = [
  "crypto-common",
  "inout",
+]
+
+[[package]]
+name = "codama"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0191d57413d0a82285d33bc71ebbddbb495b72b3e216af4834e5efcc651830e"
+dependencies = [
+ "codama-errors",
+ "codama-korok-visitors",
+ "codama-koroks",
+ "codama-macros",
+ "codama-nodes",
+ "codama-plugin-core",
+ "codama-stores",
+ "proc-macro2",
+]
+
+[[package]]
+name = "codama-attributes"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "67b93979fa9db9766ba6ac2ad3128628909ee074bd29185664498aa357bc4a55"
+dependencies = [
+ "codama-errors",
+ "codama-nodes",
+ "codama-syn-helpers",
+ "derive_more",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "codama-errors"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "060a139175819c58b9349333971ef1b4a80f39b9b72b4c8638e4d6bbdbfa6234"
+dependencies = [
+ "cargo_toml",
+ "proc-macro2",
+ "serde_json",
+ "syn 2.0.98",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "codama-korok-visitors"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d171e17f9174613ce3f84ecfb7b40564a2ad16094d9ca7b2e3bc3c1dbda0164"
+dependencies = [
+ "cargo_toml",
+ "codama-attributes",
+ "codama-errors",
+ "codama-koroks",
+ "codama-nodes",
+ "codama-syn-helpers",
+ "serde_json",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "codama-koroks"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75619362bad3e2e46939105a1f4407943db7bdc9faf9cf1135c5bab230c21928"
+dependencies = [
+ "codama-attributes",
+ "codama-errors",
+ "codama-nodes",
+ "codama-stores",
+ "codama-syn-helpers",
+ "derive_more",
+ "proc-macro2",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "codama-macros"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03de0af01d1f9616286fe4cf895e42c9d575b81fb087ee3762b0a77d6bd17df5"
+dependencies = [
+ "codama-attributes",
+ "codama-errors",
+ "codama-koroks",
+ "codama-stores",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "codama-nodes"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4884201611ffef4c7c063448904d602c9b99c6b0b024f23e19a012b3120b4aa2"
+dependencies = [
+ "codama-errors",
+ "codama-nodes-derive",
+ "derive_more",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "codama-nodes-derive"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c70799d43b0ad8332e240245bd46d85d0bdfcd8083f3a3a70e810057b77ad78"
+dependencies = [
+ "codama-errors",
+ "codama-syn-helpers",
+ "derive_more",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "codama-plugin-core"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b51494e6d4636933487d71869becebe73180ef0e0e04c48d3579544a95edbad"
+dependencies = [
+ "codama-attributes",
+ "codama-errors",
+ "codama-korok-visitors",
+ "codama-koroks",
+ "codama-nodes",
+]
+
+[[package]]
+name = "codama-stores"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e46f92479739e27da926bf86aeae25a195ea3630a07d10d325a626d7fcc2cd0"
+dependencies = [
+ "cargo_toml",
+ "codama-errors",
+ "proc-macro2",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "codama-syn-helpers"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c5992337746ff67d1797a24c9a83278ffdad4e9ae06a6f8e28728bfe7634b25"
+dependencies = [
+ "codama-errors",
+ "derive_more",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
 ]
 
 [[package]]
@@ -1116,6 +1282,26 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "derive_more"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a9b99b9cbbe49445b21764dc0625032a89b145a2642e67603e1c936f5458d05"
+dependencies = [
+ "derive_more-impl",
+]
+
+[[package]]
+name = "derive_more-impl"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb7330aeadfbe296029522e6c40f315320aba36fc43a5b3632f3795348f3bd22"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
 ]
 
 [[package]]
@@ -2933,7 +3119,7 @@ version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d6ea3c4595b96363c13943497db34af4460fb474a95c43f4446ad341b8c9785"
 dependencies = [
- "toml",
+ "toml 0.5.11",
 ]
 
 [[package]]
@@ -3586,6 +3772,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_spanned"
+version = "0.6.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf41e0cfaf7226dca15e8197172c295a782857fcb97fad1808a166870dee75a3"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_urlencoded"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3669,52 +3864,6 @@ checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
 dependencies = [
  "digest 0.10.7",
  "keccak",
-]
-
-[[package]]
-name = "shank"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23d894855493d4ce613b25550fe1ed1c62d0af5486b984579ba55e3f8c9631d5"
-dependencies = [
- "shank_macro",
-]
-
-[[package]]
-name = "shank_macro"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9bf2645f8eebde043da69200195058e7b59806705104f908a31d05ca82844ce"
-dependencies = [
- "proc-macro2",
- "quote",
- "shank_macro_impl",
- "shank_render",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "shank_macro_impl"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93d0593f48acb0a722906416b1f6b8926f6571eb9af16d566a7c65427f269f50"
-dependencies = [
- "anyhow",
- "proc-macro2",
- "quote",
- "serde",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "shank_render"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "121175ba61809189f888dc5822ebfd30fa0d91e1e1f61d25a4d40b0847b3075e"
-dependencies = [
- "proc-macro2",
- "quote",
- "shank_macro_impl",
 ]
 
 [[package]]
@@ -3951,6 +4100,7 @@ name = "solana-attestation-service"
 version = "2.0.0"
 dependencies = [
  "bs58 0.4.0",
+ "codama",
  "const-crypto",
  "pinocchio",
  "pinocchio-associated-token-account",
@@ -3958,7 +4108,7 @@ dependencies = [
  "pinocchio-pubkey",
  "pinocchio-system",
  "pinocchio-token",
- "shank",
+ "serde_json",
  "solana-program",
 ]
 
@@ -3967,7 +4117,10 @@ name = "solana-attestation-service-client"
 version = "2.0.0"
 dependencies = [
  "borsh 1.5.7",
+ "num-derive",
+ "num-traits",
  "solana-program",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -7800,10 +7953,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml"
+version = "0.8.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd87a5cdd6ffab733b2f74bc4fd7ee5fff6634124999ac278c35fc78c6120148"
+dependencies = [
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_edit",
+]
+
+[[package]]
 name = "toml_datetime"
 version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0dd7358ecb8fc2f8d014bf86f6f638ce72ba252a2c3a2572f2a795f1d23efb41"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "toml_edit"
@@ -7812,6 +7980,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17b4795ff5edd201c7cd6dca065ae59972ce77d1b80fa0a84d94950ece7d1474"
 dependencies = [
  "indexmap",
+ "serde",
+ "serde_spanned",
  "toml_datetime",
  "winnow",
 ]

@@ -2,111 +2,130 @@ extern crate alloc;
 
 use alloc::string::String;
 use alloc::vec::Vec;
+use codama::CodamaInstructions;
 use pinocchio::pubkey::Pubkey;
-use shank::ShankInstruction;
 
 /// Instructions for the Solana Attestation Service. This
 /// is currently not used in the program business logic, but
 /// we include it for IDL generation.
 #[repr(C, u8)]
-#[derive(Clone, Debug, PartialEq, ShankInstruction)]
+#[derive(Clone, Debug, PartialEq, CodamaInstructions)]
 pub enum AttestationServiceInstruction {
     /// Creates the Credential PDA account for an Issuer.
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, writable, name = "credential")]
-    #[account(2, signer, name = "authority")]
-    #[account(3, name = "system_program")]
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "credential", writable))]
+    #[codama(account(name = "authority", signer))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
     CreateCredential { name: String, signers: Vec<Pubkey> } = 0,
 
     /// Create a Schema for a Credential that can eventually be attested to.
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, signer, name = "authority")]
-    #[account(2, name = "credential", desc = "Credential the Schema is associated with")]
-    #[account(3, writable, name = "schema")]
-    #[account(4, name = "system_program")]
-    CreateSchema { name: String, description: String, layout: Vec<u8>, field_names: Vec<String> } = 1,
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "authority", signer))]
+    #[codama(account(name = "credential", docs = "Credential the Schema is associated with"))]
+    #[codama(account(name = "schema", writable))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
+    CreateSchema {
+        name: String,
+        description: String,
+        #[codama(type = bytes)]
+        #[codama(size_prefix = number(u32))]
+        layout: Vec<u8>,
+        field_names: Vec<String>,
+    } = 1,
 
     /// Sets Schema is_paused status
-    #[account(0, signer, name = "authority")]
-    #[account(1, name = "credential", desc = "Credential the Schema is associated with")]
-    #[account(2, writable, name = "schema", desc = "Credential the Schema is associated with")]
+    #[codama(account(name = "authority", signer))]
+    #[codama(account(name = "credential", docs = "Credential the Schema is associated with"))]
+    #[codama(account(name = "schema", writable, docs = "Credential the Schema is associated with"))]
     ChangeSchemaStatus { is_paused: bool } = 2,
 
     /// Sets Credential authorized_signers
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, signer, name = "authority")]
-    #[account(2, writable, name = "credential", desc = "Credential the Schema is associated with")]
-    #[account(3, name = "system_program")]
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "authority", signer))]
+    #[codama(account(name = "credential", writable, docs = "Credential the Schema is associated with"))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
     ChangeAuthorizedSigners { signers: Vec<Pubkey> } = 3,
 
     /// Change description on a Schema
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, signer, name = "authority")]
-    #[account(2, name = "credential", desc = "Credential the Schema is associated with")]
-    #[account(3, writable, name = "schema", desc = "Credential the Schema is associated with")]
-    #[account(4, name = "system_program")]
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "authority", signer))]
+    #[codama(account(name = "credential", docs = "Credential the Schema is associated with"))]
+    #[codama(account(name = "schema", writable, docs = "Credential the Schema is associated with"))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
     ChangeSchemaDescription { description: String } = 4,
 
     /// Change Schema version
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, signer, name = "authority")]
-    #[account(2, name = "credential", desc = "Credential the Schema is associated with")]
-    #[account(3, name = "existing_schema")]
-    #[account(4, writable, name = "new_schema")]
-    #[account(5, name = "system_program")]
-    ChangeSchemaVersion { layout: Vec<u8>, field_names: Vec<String> } = 5,
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "authority", signer))]
+    #[codama(account(name = "credential", docs = "Credential the Schema is associated with"))]
+    #[codama(account(name = "existing_schema"))]
+    #[codama(account(name = "new_schema", writable))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
+    ChangeSchemaVersion {
+        #[codama(type = bytes)]
+        #[codama(size_prefix = number(u32))]
+        layout: Vec<u8>,
+        field_names: Vec<String>,
+    } = 5,
 
     /// Create an Attestation for a Schema by an authorized signer.
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, signer, name = "authority", desc = "Authorized signer of the Schema's Credential")]
-    #[account(2, name = "credential", desc = "Credential the Schema is associated with")]
-    #[account(3, name = "schema", desc = "Schema the Attestation is associated with")]
-    #[account(4, writable, name = "attestation")]
-    #[account(5, name = "system_program")]
-    CreateAttestation { nonce: Pubkey, data: Vec<u8>, expiry: i64 } = 6,
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "authority", signer, docs = "Authorized signer of the Schema's Credential"))]
+    #[codama(account(name = "credential", docs = "Credential the Schema is associated with"))]
+    #[codama(account(name = "schema", docs = "Schema the Attestation is associated with"))]
+    #[codama(account(name = "attestation", writable))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
+    CreateAttestation {
+        nonce: Pubkey,
+        #[codama(type = bytes)]
+        #[codama(size_prefix = number(u32))]
+        data: Vec<u8>,
+        expiry: i64,
+    } = 6,
 
     /// Close an Attestation account.
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, signer, name = "authority", desc = "Authorized signer of the Schema's Credential")]
-    #[account(2, name = "credential")]
-    #[account(3, writable, name = "attestation")]
-    #[account(4, name = "event_authority")]
-    #[account(5, name = "system_program")]
-    #[account(6, name = "attestation_program")]
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "authority", signer, docs = "Authorized signer of the Schema's Credential"))]
+    #[codama(account(name = "credential"))]
+    #[codama(account(name = "attestation", writable))]
+    #[codama(account(name = "event_authority"))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
+    #[codama(account(name = "attestation_program"))]
     CloseAttestation {} = 7,
 
     /// Enable tokenization for a Schema
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, signer, name = "authority")]
-    #[account(2, name = "credential", desc = "Credential the Schema is associated with")]
-    #[account(3, name = "schema")]
-    #[account(4, writable, name = "mint", desc = "Mint of Schema Token")]
-    #[account(5, name = "sas_pda", desc = "Program derived address used as program signer authority")]
-    #[account(6, name = "system_program")]
-    #[account(7, name = "token_program")]
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "authority", signer))]
+    #[codama(account(name = "credential", docs = "Credential the Schema is associated with"))]
+    #[codama(account(name = "schema"))]
+    #[codama(account(name = "mint", writable, docs = "Mint of Schema Token"))]
+    #[codama(account(name = "sas_pda", docs = "Program derived address used as program signer authority"))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
+    #[codama(account(name = "token_program"))]
     TokenizeSchema { max_size: u64 } = 9,
 
     /// Create attestation with token.
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, signer, name = "authority", desc = "Authorized signer of the Schema's Credential")]
-    #[account(2, name = "credential", desc = "Credential the Schema is associated with")]
-    #[account(3, name = "schema", desc = "Schema the Attestation is associated with")]
-    #[account(4, writable, name = "attestation")]
-    #[account(5, name = "system_program")]
-    #[account(6, writable, name = "schema_mint", desc = "Mint of Schema Token")]
-    #[account(7, writable, name = "attestation_mint", desc = "Mint of Attestation Token")]
-    #[account(8, name = "sas_pda", desc = "Program derived address used as program signer authority")]
-    #[account(
-        9,
-        writable,
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "authority", signer, docs = "Authorized signer of the Schema's Credential"))]
+    #[codama(account(name = "credential", docs = "Credential the Schema is associated with"))]
+    #[codama(account(name = "schema", docs = "Schema the Attestation is associated with"))]
+    #[codama(account(name = "attestation", writable))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
+    #[codama(account(name = "schema_mint", writable, docs = "Mint of Schema Token"))]
+    #[codama(account(name = "attestation_mint", writable, docs = "Mint of Attestation Token"))]
+    #[codama(account(name = "sas_pda", docs = "Program derived address used as program signer authority"))]
+    #[codama(account(
         name = "recipient_token_account",
-        desc = "Associated token account of Recipient for Attestation Token"
-    )]
-    #[account(10, name = "recipient", desc = "Wallet to receive Attestation Token")]
-    #[account(11, name = "token_program")]
-    #[account(12, name = "associated_token_program")]
+        writable,
+        docs = "Associated token account of Recipient for Attestation Token"
+    ))]
+    #[codama(account(name = "recipient", docs = "Wallet to receive Attestation Token"))]
+    #[codama(account(name = "token_program"))]
+    #[codama(account(name = "associated_token_program"))]
     CreateTokenizedAttestation {
         nonce: Pubkey,
+        #[codama(type = bytes)]
+        #[codama(size_prefix = number(u32))]
         data: Vec<u8>,
         expiry: i64,
         name: String,
@@ -116,25 +135,24 @@ pub enum AttestationServiceInstruction {
     } = 10,
 
     /// Close an Attestation and Attestation token.
-    #[account(0, writable, signer, name = "payer")]
-    #[account(1, signer, name = "authority", desc = "Authorized signer of the Schema's Credential")]
-    #[account(2, name = "credential")]
-    #[account(3, writable, name = "attestation")]
-    #[account(4, name = "event_authority")]
-    #[account(5, name = "system_program")]
-    #[account(6, name = "attestation_program")]
-    #[account(7, writable, name = "attestation_mint", desc = "Mint of Attestation Token")]
-    #[account(8, name = "sas_pda", desc = "Program derived address used as program signer authority")]
-    #[account(
-        9,
-        writable,
+    #[codama(account(name = "payer", signer, writable, default_value = payer))]
+    #[codama(account(name = "authority", signer, docs = "Authorized signer of the Schema's Credential"))]
+    #[codama(account(name = "credential"))]
+    #[codama(account(name = "attestation", writable))]
+    #[codama(account(name = "event_authority"))]
+    #[codama(account(name = "system_program", default_value = program("system")))]
+    #[codama(account(name = "attestation_program"))]
+    #[codama(account(name = "attestation_mint", writable, docs = "Mint of Attestation Token"))]
+    #[codama(account(name = "sas_pda", docs = "Program derived address used as program signer authority"))]
+    #[codama(account(
         name = "attestation_token_account",
-        desc = "Associated token account of the related Attestation Token"
-    )]
-    #[account(10, name = "token_program")]
+        writable,
+        docs = "Associated token account of the related Attestation Token"
+    ))]
+    #[codama(account(name = "token_program"))]
     CloseTokenizedAttestation {} = 11,
 
     /// Invoked via CPI from SAS Program to log event via instruction data.
-    #[account(0, signer, name = "event_authority")]
+    #[codama(account(name = "event_authority", signer))]
     EmitEvent {} = 228,
 }

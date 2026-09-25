@@ -15,7 +15,7 @@ Do not report security vulnerabilities in public issues. Follow the [security po
 
 ## Development setup
 
-Toolchain versions are checked into the repository: Rust in `rust-toolchain.toml` (installed automatically by rustup), Node.js in `.nvmrc` (`nvm use` or `fnm use`), and pnpm in the `packageManager` field of `package.json`. Generating the IDL also needs the Shank CLI (`cargo install shank-cli`). Do not update language runtimes, the Solana CLI, or package-manager versions as an incidental part of another change.
+Toolchain versions are checked into the repository: Rust in `rust-toolchain.toml` (installed automatically by rustup), Node.js in `.nvmrc` (`nvm use` or `fnm use`), and pnpm in the `packageManager` field of `package.json`. Do not update language runtimes, the Solana CLI, or package-manager versions as an incidental part of another change.
 
 ```sh
 just setup          # install dependencies and configure git hooks
@@ -56,7 +56,7 @@ Reviewers are assigned from [CODEOWNERS](.github/CODEOWNERS). Changes to the pro
 
 You may use AI-assisted tools, but you should review the generated code, understand its behavior, and run the same checks expected of any other contribution.
 
-If you are building with AI on Solana, check out the [Solana Dev Skill](https://github.com/solana-foundation/solana-dev-skill) or the [Solana MCP](https://mcp.solana.com/) to aid in your work. This repository ships a [CLAUDE.md](./CLAUDE.md) and [AGENTS.md](./AGENTS.md) with the repo-specific gotchas an agent needs: the non-Anchor wire format, the Shank-to-Codama generation pipeline, the event CPI discriminator. Read it before letting an agent loose here.
+If you are building with AI on Solana, check out the [Solana Dev Skill](https://github.com/solana-foundation/solana-dev-skill) or the [Solana MCP](https://mcp.solana.com/) to aid in your work. This repository ships a [CLAUDE.md](./CLAUDE.md) and [AGENTS.md](./AGENTS.md) with the repo-specific gotchas an agent needs: the non-Anchor wire format, the Codama generation pipeline, the event CPI discriminator. Read it before letting an agent loose here.
 
 Ensure that the generated code adheres to the project's coding standards and best practices. Maintainers can close PRs if they appear to be low-effort AI slop. In particular, audit your changes for the following AI code smells that increase maintenance burden:
 
