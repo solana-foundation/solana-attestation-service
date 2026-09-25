@@ -1,0 +1,153 @@
+name: Publish Rust Client
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish-to-crates:
+        description: 'Publish to crates.io'
+        required: true
+        default: true
+        type: boolean
+      create-github-release:
+        description: 'Create GitHub release'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: rust-client-publish
+  cancel-in-progress: false
+
+jobs:
+  guard-allowed-branch:
+    name: Guard allowed source branch for release publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Guard allowed source branch for release publish
+        run: |
+          case "${{ github.ref }}" in
+            refs/heads/master|refs/heads/release/*) ;;
+            *)
+              echo "::error::Publish Rust Client must be run from master or a release/* branch. Current ref: ${{ github.ref }}"
+              exit 1
+              ;;
+          esac
+
+  test:
+    name: Run release tests
+    needs: guard-allowed-branch
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
+  publish:
+    name: Publish solana-attestation-service-client crate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [guard-allowed-branch, test]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - uses: ./.github/actions/setup
+        with:
+          install-solana: 'false'
+          install-shank: 'true'
+          rust-cache-key: 'publish-rust'
+
+      - name: Generate IDL and clients
+        run: just generate-clients
+
+      - name: Build Rust client crate
+        working-directory: clients/rust
+        run: cargo build
+
+      - name: Publish Rust client crate
+        id: cargo_publish
+        uses: solana-foundation/github-actions/cargo-publish@4dcdecb13d956467088835b1c644b38e0ee1d5d9
+        with:
+          package: solana-attestation-service-client
+          working-directory: clients/rust
+          allow-dirty: 'true'
+          check-version-available: ${{ inputs.publish-to-crates }}
+          dry-run: ${{ !inputs.publish-to-crates }}
+          skip-existing: 'true'
+
+      - name: Check if prerelease
+        id: prerelease
+        run: |
+          if [[ "${{ steps.cargo_publish.outputs.version }}" == *"-"* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create and push tag
+        if: ${{ inputs.publish-to-crates || inputs.create-github-release }}
+        run: |
+          TAG="rust-client-v${{ steps.cargo_publish.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping"
+          else
+            git tag "$TAG"
+            echo "Created tag $TAG"
+          fi
+          git push origin "$TAG" 2>/dev/null || echo "Tag already pushed"
+
+      - name: Create GitHub Release
+        if: ${{ inputs.create-github-release }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const version = `${{ steps.cargo_publish.outputs.version }}`;
+            const tagName = `rust-client-v${version}`;
+
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tagName,
+              });
+              console.log(`Release ${tagName} already exists, skipping`);
+              return;
+            } catch (e) {
+              if (e.status !== 404) throw e;
+            }
+
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tagName,
+              name: `Rust Client v${version}`,
+              body: `Release of solana-attestation-service-client v${version}\n\n**crates.io:** https://crates.io/crates/solana-attestation-service-client/${version}`,
+              draft: false,
+              prerelease: '${{ steps.prerelease.outputs.is_prerelease }}' === 'true',
+            });
+
+      - name: Publish summary
+        run: |
+          VERSION="${{ steps.cargo_publish.outputs.version }}"
+          echo "## solana-attestation-service-client" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag**: \`rust-client-v${VERSION}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.cargo_publish.outputs.published }}" == "true" ]; then
+            echo "Published to crates.io: https://crates.io/crates/solana-attestation-service-client/${VERSION}" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.cargo_publish.outputs.already-published }}" == "true" ]; then
+            echo "Skipped crates.io publish; version already exists" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Skipped crates.io publish" >> $GITHUB_STEP_SUMMARY
+          fi
