@@ -22,7 +22,6 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          install-shank: 'true'
           rust-cache-key: 'idl-check'
 
       - name: Check generated files

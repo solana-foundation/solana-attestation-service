@@ -44,7 +44,6 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          install-shank: 'true'
           rust-cache-key: 'rust-integration-test'
           solana-version: ${{ env.SOLANA_VERSION }}
 
@@ -62,7 +61,6 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          install-shank: 'true'
           rust-cache-key: 'typescript-test'
 
       - name: Run TypeScript client tests

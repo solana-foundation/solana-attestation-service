@@ -1,5 +1,4 @@
 const codama = require('codama');
-const anchorIdl = require('@codama/nodes-from-anchor');
 const path = require('path');
 const renderers = require('@codama/renderers');
 const { renderVisitor: renderJavaScriptVisitor } = require('@codama/renderers-js');
@@ -43,7 +42,7 @@ function preserveConfigFiles() {
     };
 }
 
-const sasCodama = codama.createFromRoot(anchorIdl.rootNodeFromAnchor(sasIdl));
+const sasCodama = codama.createFromJson(JSON.stringify(sasIdl));
 sasCodama.update(
     codama.bottomUpTransformerVisitor([
         // add 1 byte discriminator

@@ -8,9 +8,13 @@ crate-type = ["cdylib", "lib"]
 
 [features]
 no-entrypoint = []
-idl = []
+
+[build-dependencies]
+codama = { workspace = true }
+serde_json = { workspace = true }
 
 [dependencies]
+codama = { workspace = true }
 const-crypto = { workspace = true }
 pinocchio = { workspace = true }
 pinocchio-log = { workspace = true }
@@ -18,7 +22,6 @@ pinocchio-pubkey = { workspace = true }
 pinocchio-system = { workspace = true }
 pinocchio-token = { workspace = true }
 pinocchio-associated-token-account = { workspace = true }
-shank = { workspace = true }
 solana-program = { workspace = true }
 bs58 = { workspace = true }
 

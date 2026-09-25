@@ -1,8 +1,9 @@
 # CLAUDE.md
 
 Solana program (Pinocchio) for on-chain attestations: credentials, schemas,
-attestations, and optional Token-2022 soulbound tokenization. Shank generates
-the IDL, Codama generates the Rust and TypeScript clients.
+attestations, and optional Token-2022 soulbound tokenization. Codama derive
+macros describe the program, `program/build.rs` writes the IDL, and Codama
+renderers generate the Rust and TypeScript clients.
 Build/test recipes: `just --list`. Program overview and instruction list:
 [`README.md`](./README.md).
 
@@ -19,10 +20,20 @@ up. Anything assuming Anchor's 8-byte layout will mis-decode instructions.
 the runtime's limit, which silently drops attestation lifecycle data. Emit
 through the event authority PDA.
 
-**Shank embeds the workspace version in the IDL.** Bumping `version` in the
-root `Cargo.toml` changes `idl/solana_attestation_service.json`, so a version
-bump is not complete until `just generate-clients` has run and the IDL diff is
-committed. `just check-generated` catches it, and CI fails on it.
+**The IDL is written by a build script, not a CLI.** `program/build.rs` emits
+`idl/solana_attestation_service.json` only when `GENERATE_IDL` is set, which
+`pnpm run generate-idl` does; an ordinary `cargo build` leaves the file alone.
+The IDL embeds the workspace version, so bumping `version` in the root
+`Cargo.toml` is not complete until `just generate-clients` has run and the IDL
+diff is committed. `just check-generated` catches it, and CI fails on it.
+
+**Codama reads the source, so annotations are the contract.** Account lists,
+argument types, PDA defaults and error messages all come from `#[codama(...)]`
+attributes on `program/src/instructions.rs`, `state/`, `events.rs` and
+`error.rs`. `Vec<u8>` fields carry `type = bytes` plus `size_prefix` because
+the bare mapping renders an array of numbers rather than a byte string, and
+`payer` / `system_program` accounts carry explicit `default_value`s. Two
+directives cannot share one attribute; write them as separate lines.
 
 **Generated client sources are gitignored.** `clients/*/src/generated/` is
 produced by `just generate-clients`. Never hand-edit it, and never commit it.
@@ -48,8 +59,10 @@ never add an advisory that reaches the program or the published client.
 on, so arithmetic that used to wrap now aborts the instruction, and the next
 deployment will not reproduce any prior deployment's build hash.
 
-**`declare_id!` in `program/src/lib.rs` is parsed by `sed`** in the `program-id`
-recipe. Keep it a single literal line.
+**`declare_id!` in `program/src/lib.rs` is parsed twice by text.** The
+`program-id` recipe seds it, and Codama only recognizes the unqualified macro
+call, which is why it is imported rather than called through
+`pinocchio_pubkey::`. Keep it a single literal line.
 
 **ESLint does not cover everything.** `examples/`, `scripts/`, and the
 TypeScript tests are in the ignore list; changes there are unlinted.

@@ -57,8 +57,8 @@ build-program:
     cd {{program_dir}} && cargo-build-sbf
     @echo "✓ Program built"
 
-# Generate IDL from Rust source (requires the shank CLI)
-generate-idl: check-shank
+# Generate IDL from Rust source via the Codama build script
+generate-idl:
     pnpm run generate-idl
     @echo "✓ IDL generated"
 
@@ -86,10 +86,6 @@ check-generated: generate-clients
 build-client: generate-clients
     cd {{ts_client_dir}} && pnpm run build
     @echo "✓ TypeScript client built"
-
-[private]
-check-shank:
-    @command -v shank >/dev/null 2>&1 || { echo "Error: shank not installed. Run: cargo install shank-cli"; exit 1; }
 
 # ============================================
 # Test recipes

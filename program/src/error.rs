@@ -1,31 +1,32 @@
+use codama::CodamaErrors;
 use pinocchio::program_error::ProgramError;
 
 /// Errors that may be returned by the Attestation Service program.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, CodamaErrors)]
 pub enum AttestationServiceError {
-    // 0 Incorrect Credential account
+    #[codama(error("Incorrect Credential account"))]
     InvalidCredential,
-    // 1 Incorrect Schema account
+    #[codama(error("Incorrect Schema account"))]
     InvalidSchema,
-    // 2 Incorrect Attestation account
+    #[codama(error("Incorrect Attestation account"))]
     InvalidAttestation,
-    // 3 Authority was not found in Credential authorized_signatures
+    #[codama(error("Authority was not found in Credential authorized_signatures"))]
     InvalidAuthority,
-    // 4 Incorrect Schema data type
+    #[codama(error("Incorrect Schema data type"))]
     InvalidSchemaDataType,
-    // 5 The signer is not one of the Credential's authorized signers
+    #[codama(error("The signer is not one of the Credential's authorized signers"))]
     SignerNotAuthorized,
-    // 6 Attestation data des not conform to the Schema
+    #[codama(error("Attestation data does not conform to the Schema"))]
     InvalidAttestationData,
-    // 7 Incorrect Event Authority
+    #[codama(error("Incorrect Event Authority"))]
     InvalidEventAuthority,
-    // 8 Incorrect Mint
+    #[codama(error("Incorrect Mint"))]
     InvalidMint,
-    // 9 Incorrect Program Signer
+    #[codama(error("Incorrect Program Signer"))]
     InvalidProgramSigner,
-    // 10 Incorrect Token Account
+    #[codama(error("Incorrect Token Account"))]
     InvalidTokenAccount,
-    // 11 Schema is paused
+    #[codama(error("Schema is paused"))]
     SchemaPaused,
 }
 
