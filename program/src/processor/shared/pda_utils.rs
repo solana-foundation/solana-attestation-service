@@ -31,31 +31,12 @@ pub fn create_pda_account<const N: usize>(
         // then allocate the required space and set the owner to the current program
         let required_lamports = required_lamports.saturating_sub(new_pda_account.lamports());
         if required_lamports > 0 {
-            Transfer {
-                from: payer,
-                to: new_pda_account,
-                lamports: required_lamports,
-            }
-            .invoke()?;
+            Transfer { from: payer, to: new_pda_account, lamports: required_lamports }.invoke()?;
         }
-        Allocate {
-            account: new_pda_account,
-            space: space as u64,
-        }
-        .invoke_signed(&signers)?;
-        Assign {
-            account: new_pda_account,
-            owner,
-        }
-        .invoke_signed(&signers)
+        Allocate { account: new_pda_account, space: space as u64 }.invoke_signed(&signers)?;
+        Assign { account: new_pda_account, owner }.invoke_signed(&signers)
     } else {
-        CreateAccount {
-            from: payer,
-            to: new_pda_account,
-            lamports: required_lamports,
-            space: space as u64,
-            owner,
-        }
-        .invoke_signed(&signers)
+        CreateAccount { from: payer, to: new_pda_account, lamports: required_lamports, space: space as u64, owner }
+            .invoke_signed(&signers)
     }
 }

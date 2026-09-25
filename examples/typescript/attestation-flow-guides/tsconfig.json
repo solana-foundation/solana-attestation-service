@@ -1,20 +1,20 @@
 {
-  "compilerOptions": {
-    "target": "es2020",
-    "module": "nodenext",
-    "lib": ["es2020"],
-    "declaration": true,
-    "outDir": "./dist",
+    "compilerOptions": {
+        "target": "es2020",
+        "module": "nodenext",
+        "lib": ["es2020"],
+        "declaration": true,
+        "outDir": "./dist",
+        "rootDir": "./",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "nodenext"
+    },
     "rootDir": "./",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "moduleResolution": "nodenext"
-  },
-  "rootDir": "./", 
-  "outDir": "./dist",
-  "include": ["./src"],
-  "exclude": ["node_modules", "dist"]
+    "outDir": "./dist",
+    "include": ["./src"],
+    "exclude": ["node_modules", "dist"]
 }

@@ -1,0 +1,146 @@
+name: Publish TypeScript Client
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Dry run (unchecked will publish to npm, push git tag, and create GitHub release)'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: ts-client-publish
+  cancel-in-progress: false
+
+jobs:
+  guard-allowed-branch:
+    name: Guard allowed source branch for release publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Guard allowed source branch for release publish
+        run: |
+          case "${{ github.ref }}" in
+            refs/heads/master|refs/heads/release/*) ;;
+            *)
+              echo "::error::Publish TypeScript Client must be run from master or a release/* branch. Current ref: ${{ github.ref }}"
+              exit 1
+              ;;
+          esac
+
+  test:
+    name: Run release tests
+    needs: guard-allowed-branch
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
+  publish:
+    name: Publish sas-lib package
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [guard-allowed-branch, test]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - uses: ./.github/actions/setup
+        with:
+          install-solana: 'false'
+          install-shank: 'true'
+          rust-cache-key: 'publish-typescript'
+
+      - name: Build TypeScript client
+        run: just build-client
+
+      - name: Publish TypeScript client
+        id: npm_publish
+        uses: solana-foundation/github-actions/npm-publish@4dcdecb13d956467088835b1c644b38e0ee1d5d9
+        with:
+          package: sas-lib
+          package-directory: clients/typescript
+          check-version-available: ${{ !inputs.dry-run }}
+          dry-run: ${{ inputs.dry-run }}
+          skip-existing: 'true'
+
+      - name: Create and push tag
+        if: ${{ !inputs.dry-run }}
+        run: |
+          TAG="ts-client-v${{ steps.npm_publish.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping"
+          else
+            git tag "$TAG"
+            echo "Created tag $TAG"
+          fi
+          git push origin "$TAG" 2>/dev/null || echo "Tag already pushed"
+
+      - name: Create GitHub Release
+        if: ${{ !inputs.dry-run }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const version = `${{ steps.npm_publish.outputs.version }}`;
+            const tagName = `ts-client-v${version}`;
+
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tagName,
+              });
+              console.log(`Release ${tagName} already exists, skipping`);
+              return;
+            } catch (e) {
+              if (e.status !== 404) throw e;
+            }
+
+            const body = [
+              `## sas-lib v${version}`,
+              '',
+              '### Installation',
+              '',
+              '```bash',
+              'pnpm add sas-lib',
+              '```',
+              '',
+              `https://www.npmjs.com/package/sas-lib/v/${version}`,
+            ].join('\n');
+
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tagName,
+              name: `TypeScript Client v${version}`,
+              body,
+              draft: false,
+              prerelease: '${{ steps.npm_publish.outputs.tag }}' === 'beta',
+            });
+
+      - name: Publish summary
+        run: |
+          VERSION="${{ steps.npm_publish.outputs.version }}"
+          NPM_TAG="${{ steps.npm_publish.outputs.tag }}"
+          echo "## sas-lib" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**npm tag**: \`${NPM_TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.dry-run }}" == "true" ]; then
+            echo "Dry run: OIDC auth validated, no package uploaded, no tag, no release" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Published to npm: https://www.npmjs.com/package/sas-lib/v/${VERSION}" >> $GITHUB_STEP_SUMMARY
+            echo "**Tag**: \`ts-client-v${VERSION}\`" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -8,9 +8,7 @@ use solana_attestation_service_client::types::CloseAttestationEvent;
 use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_program_test::ProgramTestContext;
 use solana_sdk::clock::Clock;
-use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
-};
+use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction};
 
 mod helpers;
 
@@ -36,11 +34,7 @@ async fn setup() -> TestFixtures {
     let authority = Keypair::new();
     let credential_name = "test";
     let (credential_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority.pubkey().to_bytes(),
-            credential_name.as_bytes(),
-        ],
+        &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &SOLANA_ATTESTATION_SERVICE_ID,
     );
 
@@ -59,12 +53,7 @@ async fn setup() -> TestFixtures {
     let schema_data = TestData::get_serialized_representation();
     let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"schema",
-            &credential_pda.to_bytes(),
-            schema_name.as_bytes(),
-            &[1],
-        ],
+        &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
         &SOLANA_ATTESTATION_SERVICE_ID,
     );
     let create_schema_ix = CreateSchemaBuilder::new()
@@ -85,47 +74,24 @@ async fn setup() -> TestFixtures {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
-    TestFixtures {
-        ctx,
-        credential: credential_pda,
-        schema: schema_pda,
-        authority,
-    }
+    TestFixtures { ctx, credential: credential_pda, schema: schema_pda, authority }
 }
 
 #[tokio::test]
 async fn close_attestation_success() {
-    let TestFixtures {
-        ctx,
-        credential,
-        schema,
-        authority,
-    } = setup().await;
+    let TestFixtures { ctx, credential, schema, authority } = setup().await;
 
     // Create Attestation
-    let attestation_data = TestData {
-        name: "attest".to_string(),
-        location: 11,
-    };
+    let attestation_data = TestData { name: "attest".to_string(), location: 11 };
     let clock: Clock = ctx.banks_client.get_sysvar().await.unwrap();
     let expiry: i64 = clock.unix_timestamp + 60;
     let mut serialized_attestation_data = Vec::new();
-    attestation_data
-        .serialize(&mut serialized_attestation_data)
-        .unwrap();
+    attestation_data.serialize(&mut serialized_attestation_data).unwrap();
     let nonce = Pubkey::new_unique();
     let attestation_pda = Pubkey::find_program_address(
-        &[
-            b"attestation",
-            &credential.to_bytes(),
-            &schema.to_bytes(),
-            &nonce.to_bytes(),
-        ],
+        &[b"attestation", &credential.to_bytes(), &schema.to_bytes(), &nonce.to_bytes()],
         &SOLANA_ATTESTATION_SERVICE_ID,
     )
     .0;
@@ -147,29 +113,15 @@ async fn close_attestation_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(create_tx)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(create_tx).await.unwrap();
 
-    let (event_auth_pda, _bump) =
-        Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
+    let (event_auth_pda, _bump) = Pubkey::find_program_address(&[b"__event_authority"], &SOLANA_ATTESTATION_SERVICE_ID);
 
-    let initial_payer_lamports = ctx
-        .banks_client
-        .get_account(ctx.payer.pubkey())
-        .await
-        .unwrap()
-        .map(|acc| acc.lamports)
-        .unwrap_or(0);
+    let initial_payer_lamports =
+        ctx.banks_client.get_account(ctx.payer.pubkey()).await.unwrap().map(|acc| acc.lamports).unwrap_or(0);
 
-    let pda_lamports = ctx
-        .banks_client
-        .get_account(attestation_pda)
-        .await
-        .unwrap()
-        .map(|acc| acc.lamports)
-        .unwrap_or(0);
+    let pda_lamports =
+        ctx.banks_client.get_account(attestation_pda).await.unwrap().map(|acc| acc.lamports).unwrap_or(0);
 
     let close_attestation_ix = CloseAttestationBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -178,9 +130,7 @@ async fn close_attestation_success() {
         .attestation(attestation_pda)
         .event_authority(event_auth_pda)
         .system_program(system_program::ID)
-        .attestation_program(
-            solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
-        )
+        .attestation_program(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID)
         .instruction();
     let close_tx = Transaction::new_signed_with_payer(
         &[close_attestation_ix],
@@ -190,24 +140,14 @@ async fn close_attestation_success() {
     );
 
     // Simulate transaction to check if event is emitted correctly.
-    let simulate_res = ctx
-        .banks_client
-        .simulate_transaction(close_tx.clone())
-        .await
-        .unwrap();
-    let inner_ixs = simulate_res
-        .simulation_details
-        .unwrap()
-        .inner_instructions
-        .unwrap();
+    let simulate_res = ctx.banks_client.simulate_transaction(close_tx.clone()).await.unwrap();
+    let inner_ixs = simulate_res.simulation_details.unwrap().inner_instructions.unwrap();
 
     // Look through transaction instructions to find CloseAttestationEvent in emit_event ix data args.
     let mut event_found = false;
     for inner_instr_group in inner_ixs {
         for inner_instr in inner_instr_group {
-            let program_id = inner_instr
-                .instruction
-                .program_id(&close_tx.message.account_keys);
+            let program_id = inner_instr.instruction.program_id(&close_tx.message.account_keys);
 
             if program_id.eq(&SOLANA_ATTESTATION_SERVICE_ID) {
                 let data = inner_instr.instruction.data;
@@ -228,29 +168,14 @@ async fn close_attestation_success() {
     assert!(event_found);
 
     // Send close attestation transaction.
-    ctx.banks_client
-        .process_transaction(close_tx)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(close_tx).await.unwrap();
 
     // Check that attestation account is closed.
-    let attestation_account = ctx
-        .banks_client
-        .get_account(attestation_pda)
-        .await
-        .expect("get_account");
+    let attestation_account = ctx.banks_client.get_account(attestation_pda).await.expect("get_account");
     assert!(attestation_account.is_none());
 
     // Check that lamports are tranferred back to payer (minus 10000 for tx fees).
-    let post_payer_lamports = ctx
-        .banks_client
-        .get_account(ctx.payer.pubkey())
-        .await
-        .unwrap()
-        .map(|acc| acc.lamports)
-        .unwrap_or(0);
-    assert_eq!(
-        initial_payer_lamports + pda_lamports - 10_000,
-        post_payer_lamports,
-    )
+    let post_payer_lamports =
+        ctx.banks_client.get_account(ctx.payer.pubkey()).await.unwrap().map(|acc| acc.lamports).unwrap_or(0);
+    assert_eq!(initial_payer_lamports + pda_lamports - 10_000, post_payer_lamports,)
 }

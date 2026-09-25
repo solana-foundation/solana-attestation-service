@@ -1,0 +1,27 @@
+# Advisories below are all reachable only through the test-only dependency
+# tree pulled in by solana-program-test. Neither the on-chain program nor the
+# published Rust client depends on an affected version. They are ignored so a
+# newly published advisory that does affect shipped code still fails CI.
+# Re-audit this list whenever solana-program-test is upgraded.
+[advisories]
+ignore = [
+    "RUSTSEC-2022-0093",
+    "RUSTSEC-2024-0344",
+    "RUSTSEC-2025-0009",
+    "RUSTSEC-2025-0022",
+    "RUSTSEC-2025-0024",
+    "RUSTSEC-2025-0055",
+    "RUSTSEC-2026-0007",
+    "RUSTSEC-2026-0009",
+    "RUSTSEC-2026-0037",
+    "RUSTSEC-2026-0049",
+    "RUSTSEC-2026-0067",
+    "RUSTSEC-2026-0068",
+    "RUSTSEC-2026-0098",
+    "RUSTSEC-2026-0099",
+    "RUSTSEC-2026-0104",
+    "RUSTSEC-2026-0185",
+    "RUSTSEC-2026-0204",
+    "RUSTSEC-2026-0258",
+    "RUSTSEC-2026-0285",
+]

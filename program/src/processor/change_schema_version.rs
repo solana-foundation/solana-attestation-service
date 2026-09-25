@@ -12,8 +12,7 @@ use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
     processor::{
-        create_pda_account, verify_owner_mutability, verify_signer, verify_system_account,
-        verify_system_program,
+        create_pda_account, verify_owner_mutability, verify_signer, verify_system_account, verify_system_program,
     },
     require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
@@ -26,8 +25,7 @@ pub fn process_change_schema_version(
     instruction_data: &[u8],
 ) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
-    let [payer_info, authority_info, credential_info, existing_schema_info, new_schema_info, system_program] =
-        accounts
+    let [payer_info, authority_info, credential_info, existing_schema_info, new_schema_info, system_program] = accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
@@ -100,15 +98,7 @@ pub fn process_change_schema_version(
         Seed::from(version),
         Seed::from(&bump_seed),
     ];
-    create_pda_account(
-        payer_info,
-        &rent,
-        space,
-        program_id,
-        new_schema_info,
-        signer_seeds,
-        None,
-    )?;
+    create_pda_account(payer_info, &rent, space, program_id, new_schema_info, signer_seeds, None)?;
 
     let schema = Schema {
         credential: *credential_info.key(),
@@ -135,7 +125,7 @@ struct ChangeSchemaVersionArgs<'a> {
     field_names_bytes: &'a [u8],
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaVersionArgs, ProgramError> {
+fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaVersionArgs<'_>, ProgramError> {
     let mut offset: usize = 0;
 
     require_len!(data, 4);
@@ -163,9 +153,5 @@ fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaVersionArgs, Prog
     require_len!(data, offset + byte_len);
     let field_names_bytes = &data[offset..offset + byte_len];
 
-    Ok(ChangeSchemaVersionArgs {
-        layout,
-        field_names_count,
-        field_names_bytes,
-    })
+    Ok(ChangeSchemaVersionArgs { layout, field_names_count, field_names_bytes })
 }
