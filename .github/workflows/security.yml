@@ -26,7 +26,7 @@ jobs:
           install-just: 'false'
           install-pnpm: 'false'
           rust-cache-key: 'cargo-audit'
-      - uses: taiki-e/install-action@b8cecb83565409bcc297b2df6e77f030b2a468d5 # v2.82.0
+      - uses: taiki-e/install-action@4cef1412cce204788f482e778a0b9187f9626a29 # v2.87.21
         with:
           tool: cargo-audit
       - run: cargo audit
