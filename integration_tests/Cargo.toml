@@ -5,21 +5,21 @@ edition = { workspace = true }
 
 [dependencies]
 borsh = { workspace = true }
-litesvm = "0.12.0"
+litesvm = { workspace = true }
 solana-attestation-service-client = { workspace = true }
-solana-clock = "3.0"
-solana-instruction-error = "2.0"
-solana-keypair = "3.1"
-solana-program-option = "3.0"
-solana-program-pack = "3.0"
-solana-pubkey = "4.0"
-solana-sdk-ids = "3.1"
-solana-signer = "3.0"
-solana-transaction = "3.0"
-solana-transaction-error = "3.0"
-spl-token-2022-interface = "3.1.2"
-spl-token-group-interface = "0.7.2"
-spl-token-metadata-interface = "1.0.1"
+solana-clock = { workspace = true }
+solana-instruction-error = { workspace = true }
+solana-keypair = { workspace = true }
+solana-program-option = { workspace = true }
+solana-program-pack = { workspace = true }
+solana-pubkey = { workspace = true }
+solana-sdk-ids = { workspace = true }
+solana-signer = { workspace = true }
+solana-transaction = { workspace = true }
+solana-transaction-error = { workspace = true }
+spl-token-2022-interface = { workspace = true }
+spl-token-group-interface = { workspace = true }
+spl-token-metadata-interface = { workspace = true }
 
 [lints]
 workspace = true
