@@ -2,7 +2,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use codama::CodamaAccount;
-use pinocchio::{error::ProgramError, Address as Pubkey};
+use pinocchio::{error::ProgramError, Address};
 use pinocchio_log::log;
 
 use crate::error::AttestationServiceError;
@@ -93,7 +93,7 @@ impl From<SchemaDataTypes> for u8 {
 #[repr(C)]
 pub struct Schema {
     /// The Credential that manages this Schema
-    pub credential: Pubkey,
+    pub credential: Address,
     /// Name of Schema, in UTF8-encoded byte string.
     #[codama(type = bytes)]
     #[codama(size_prefix = number(u32))]
@@ -166,7 +166,7 @@ impl Schema {
         // Start offset after Discriminator
         let mut offset: usize = 1;
 
-        let credential: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let credential: Address = data[offset..offset + 32].try_into().unwrap();
         offset += 32;
 
         let name_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;

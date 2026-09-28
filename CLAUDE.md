@@ -35,9 +35,10 @@ from `#[codama(...)]` attributes on `program/src/instructions.rs`, `state/`,
 numbers rather than a byte string, and `payer` / `system_program` accounts
 carry explicit `default_value`s because nothing infers them. Two directives
 cannot share one attribute; write them as separate lines, and put them after
-the `derive`, since they are derive helper attributes. Codama matches a field
-type by the last segment of how it is written, so the `Address as Pubkey`
-alias resolves to a public key either way.
+the `derive`, since they are derive helper attributes. Codama only maps a
+field to a public key when its type is written as a bare `Address` (imported
+from `pinocchio`) or `solana_address::Address`; a `pinocchio::Address` path
+renders as an unknown defined type.
 
 **Four structs in `constants.rs` exist only to declare PDA seeds.** Codama
 attaches seeds to accounts, so `SchemaMint`, `AttestationMint`,
@@ -46,11 +47,10 @@ attaches seeds to accounts, so `SchemaMint`, `AttestationMint`,
 fields before rendering, which keeps the PDA helpers and skips decoders for an
 account that holds no data.
 
-**The renderer majors are pinned to the stack they target.**
-`@codama/renderers-rust` 3.x generates against the solana 3.x split crates and
-`@codama/renderers-js` 2.5 against `@solana/kit` 8, while this repo is on
-solana 2.x and kit 7. Both are pinned with `~`; widening either range breaks
-the clients until the underlying stack is upgraded.
+**The TypeScript renderer is pinned to the kit major.**
+`@codama/renderers-js` 2.5 generates against `@solana/kit` 8, while this repo
+is on kit 7, so it is pinned with `~2.4`; widening the range breaks the
+TypeScript client until kit is upgraded.
 
 **Only the TypeScript renderer understands events.** `scripts/generate-clients.ts`
 mirrors every event into a defined type for the Rust render, which is what keeps
@@ -61,10 +61,10 @@ type matches the wire format on its own.
 
 **The Rust render drops the account-to-PDA links.** A generated `find_pda` for
 a PDA with an unprefixed string seed, which `credential` and `schema` both
-have, is typed `RemainderStr` and drags in the `kaigan` crate. The links are
-stripped in `scripts/generate-clients.ts` before the Rust render to keep that
-dependency out of the published client; the PDA nodes stay, so the TypeScript
-client keeps its `find*Pda` and `fetch*FromSeeds` helpers.
+have, is typed `TrailingStr` and drags in the `spl-collections` crate. The
+links are stripped in `scripts/generate-clients.ts` before the Rust render to
+keep that dependency out of the published client; the PDA nodes stay, so the
+TypeScript client keeps its `find*Pda` and `fetch*FromSeeds` helpers.
 
 **Generated client sources are gitignored.** `clients/*/src/generated/` is
 produced by `just generate-clients`. Never hand-edit it, and never commit it.
@@ -81,10 +81,6 @@ has no builders for `InitializeTokenMetadata`, `UpdateField`, `InitializeGroup`
 or `InitializeMember`, so they live in `processor/shared/token_ext.rs`. Delete
 each one once upstream ships it; `test_tokenization.rs` re-parses the minted
 state with the SPL interface crates, so an encoding change fails there.
-
-**Shank only recognises a type named `Pubkey`.** Files that derive Shank
-traits import `pinocchio::Address as Pubkey`; renaming it to `Address` there
-changes the IDL.
 
 **litesvm is held at 0.12 by the toolchain pin.** litesvm 0.13 and later pull
 Agave 4.x, which uses standard library APIs newer than Rust 1.92. Bumping it

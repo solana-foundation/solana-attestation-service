@@ -1,11 +1,11 @@
 use borsh::BorshDeserialize;
 use helpers::program_test_context;
+use solana_address::Address;
 use solana_attestation_service_client::{
     accounts::Schema,
     instructions::{ChangeSchemaDescriptionBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
 use solana_keypair::Keypair;
-use solana_pubkey::Pubkey;
 use solana_sdk_ids::system_program;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
@@ -17,7 +17,7 @@ fn change_schema_description_success() {
     let mut ctx = program_test_context();
     let authority = Keypair::new();
     let credential_name = "test";
-    let (credential_pda, _bump) = Pubkey::find_program_address(
+    let (credential_pda, _bump) = Address::find_program_address(
         &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -44,7 +44,7 @@ fn change_schema_description_success() {
     let description = "first test";
     let schema_layout = vec![12, 0];
     let field_names = vec!["name".into(), "location".into()];
-    let (schema_pda, _bump) = Pubkey::find_program_address(
+    let (schema_pda, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );

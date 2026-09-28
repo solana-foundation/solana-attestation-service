@@ -1,5 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use helpers::{program_test_context, TestContext};
+use solana_address::Address;
 use solana_attestation_service_client::{
     accounts::Attestation,
     instructions::{ChangeSchemaStatusBuilder, CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
@@ -7,7 +8,6 @@ use solana_attestation_service_client::{
 use solana_clock::Clock;
 use solana_instruction_error::InstructionError;
 use solana_keypair::Keypair;
-use solana_pubkey::Pubkey;
 use solana_sdk_ids::system_program;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
@@ -23,8 +23,8 @@ struct TestData {
 
 struct TestFixtures {
     ctx: TestContext,
-    credential: Pubkey,
-    schema: Pubkey,
+    credential: Address,
+    schema: Address,
     authority: Keypair,
 }
 
@@ -33,7 +33,7 @@ fn setup() -> TestFixtures {
 
     let authority = Keypair::new();
     let credential_name = "test";
-    let (credential_pda, _bump) = Pubkey::find_program_address(
+    let (credential_pda, _bump) = Address::find_program_address(
         &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -52,7 +52,7 @@ fn setup() -> TestFixtures {
     let description = "schema for test data";
     let schema_data = vec![12, 0];
     let field_names = vec!["name".into(), "location".into()];
-    let (schema_pda, _bump) = Pubkey::find_program_address(
+    let (schema_pda, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -88,8 +88,8 @@ fn create_attestation_success() {
     let expiry: i64 = clock.unix_timestamp + 60;
     let mut serialized_attestation_data = Vec::new();
     attestation_data.serialize(&mut serialized_attestation_data).unwrap();
-    let nonce = Pubkey::new_unique();
-    let attestation_pda = Pubkey::find_program_address(
+    let nonce = Address::new_unique();
+    let attestation_pda = Address::find_program_address(
         &[b"attestation", &credential.to_bytes(), &schema.to_bytes(), &nonce.to_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     )
@@ -123,7 +123,7 @@ fn create_attestation_success() {
     assert_eq!(attestation.schema, schema);
     assert_eq!(attestation.signer, authority.pubkey());
     assert_eq!(attestation.nonce, nonce);
-    assert_eq!(attestation.token_account, Pubkey::default());
+    assert_eq!(attestation.token_account, Address::default());
 }
 
 #[test]
@@ -135,8 +135,8 @@ fn create_attestation_fail_bad_data() {
     let mut serialized_attestation_data = Vec::new();
     serialized_attestation_data.extend([1, 2, 3, 4, 5, 6, 7]);
     attestation_data.serialize(&mut serialized_attestation_data).unwrap();
-    let nonce = Pubkey::new_unique();
-    let attestation_pda = Pubkey::find_program_address(
+    let nonce = Address::new_unique();
+    let attestation_pda = Address::find_program_address(
         &[b"attestation", &credential.to_bytes(), &schema.to_bytes(), &nonce.to_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     )
@@ -186,8 +186,8 @@ fn create_attestation_fail_schema_paused() {
     let expiry: i64 = 1000;
     let mut serialized_attestation_data = Vec::new();
     attestation_data.serialize(&mut serialized_attestation_data).unwrap();
-    let nonce = Pubkey::new_unique();
-    let attestation_pda = Pubkey::find_program_address(
+    let nonce = Address::new_unique();
+    let attestation_pda = Address::find_program_address(
         &[b"attestation", &credential.to_bytes(), &schema.to_bytes(), &nonce.to_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     )

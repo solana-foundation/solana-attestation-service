@@ -32,31 +32,6 @@ const typescriptClientsDir = path.join(projectRoot, 'clients', 'typescript');
 
 const readIdl = () => createFromJson(fs.readFileSync(idlPath, 'utf-8'));
 
-// The renderer deletes and rewrites the TypeScript client folder, so files that
-// belong to the package rather than to the generated sources are copied aside.
-function preserveConfigFiles() {
-    const preserved = new Map<string, string>();
-
-    for (const filename of ['tsconfig.json', '.npmignore', 'pnpm-lock.yaml', 'Cargo.toml']) {
-        const filePath = path.join(typescriptClientsDir, filename);
-        const tempPath = `${filePath}.temp`;
-
-        if (fs.existsSync(filePath)) {
-            fs.copyFileSync(filePath, tempPath);
-            preserved.set(filePath, tempPath);
-        }
-    }
-
-    return {
-        restore: () => {
-            for (const [filePath, tempPath] of preserved) {
-                fs.copyFileSync(tempPath, filePath);
-                fs.unlinkSync(tempPath);
-            }
-        },
-    };
-}
-
 // Accounts are written with a one-byte discriminator that the Rust structs do not
 // carry as a field (see `program/src/state/discriminator.rs`), so the clients only
 // decode correctly once it is prepended.
@@ -102,16 +77,14 @@ function shapeAccounts(codama: Codama) {
     );
 }
 
-const configPreserver = preserveConfigFiles();
-
 // Two Rust-only adjustments. Events are mirrored into defined types because the
 // Rust renderer has no event support, which is what keeps
 // `types::CloseAttestationEvent` available to Rust callers; the event's one-byte
 // type discriminator is already a field of the struct, so the mirrored type matches
 // the wire format on its own. And the account-to-PDA links are dropped, because a
 // generated `find_pda` for a PDA with an unprefixed string seed pulls in the
-// `kaigan` crate for its `RemainderStr` type. The PDA nodes themselves stay, so
-// nothing is lost from the IDL.
+// `spl-collections` crate for its `TrailingStr` type. The PDA nodes themselves
+// stay, so nothing is lost from the IDL.
 const rustCodama = readIdl();
 shapeAccounts(rustCodama);
 rustCodama.update(
@@ -285,5 +258,3 @@ tsCodama.accept(
         },
     }),
 );
-
-configPreserver.restore();

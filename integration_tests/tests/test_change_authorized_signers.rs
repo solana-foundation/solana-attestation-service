@@ -1,11 +1,11 @@
 use borsh::BorshDeserialize;
 use helpers::program_test_context;
+use solana_address::Address;
 use solana_attestation_service_client::{
     accounts::Credential,
     instructions::{ChangeAuthorizedSignersBuilder, CreateCredentialBuilder},
 };
 use solana_keypair::Keypair;
-use solana_pubkey::Pubkey;
 use solana_sdk_ids::system_program;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
@@ -19,7 +19,7 @@ fn change_authorized_signers_success() {
     let authority = Keypair::new();
     let name = "test";
 
-    let (credential_pda, _bump) = Pubkey::find_program_address(
+    let (credential_pda, _bump) = Address::find_program_address(
         &[b"credential", &authority.pubkey().to_bytes(), name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );

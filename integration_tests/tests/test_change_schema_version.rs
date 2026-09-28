@@ -1,12 +1,12 @@
 use borsh::BorshDeserialize;
 use helpers::{program_test_context, TestContext};
+use solana_address::Address;
 use solana_attestation_service_client::{
     accounts::Schema,
     instructions::{ChangeSchemaVersionBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
 use solana_instruction_error::InstructionError;
 use solana_keypair::Keypair;
-use solana_pubkey::Pubkey;
 use solana_sdk_ids::system_program;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
@@ -16,8 +16,8 @@ mod helpers;
 
 struct TestFixtures {
     ctx: TestContext,
-    credential: Pubkey,
-    schema: Pubkey,
+    credential: Address,
+    schema: Address,
     authority: Keypair,
     schema_name: String,
     schema_description: String,
@@ -28,7 +28,7 @@ fn setup() -> TestFixtures {
 
     let authority = Keypair::new();
     let credential_name = "test";
-    let (credential_pda, _bump) = Pubkey::find_program_address(
+    let (credential_pda, _bump) = Address::find_program_address(
         &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -55,7 +55,7 @@ fn setup() -> TestFixtures {
     let description = "schema for test data";
     let schema_layout = vec![12, 0];
     let field_names = vec!["name".into(), "location".into()];
-    let (schema_pda, _bump) = Pubkey::find_program_address(
+    let (schema_pda, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -100,7 +100,7 @@ fn change_schema_version_success() {
     } = setup();
 
     // Update schema for version 2
-    let (schema_pda2, _bump) = Pubkey::find_program_address(
+    let (schema_pda2, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[2]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -153,7 +153,7 @@ fn change_schema_version_fail_incorrect_credential() {
     } = setup();
 
     let credential_name = "test-2";
-    let (credential_pda_2, _bump) = Pubkey::find_program_address(
+    let (credential_pda_2, _bump) = Address::find_program_address(
         &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -176,7 +176,7 @@ fn change_schema_version_fail_incorrect_credential() {
     ctx.svm.send_transaction(transaction).unwrap();
 
     // Update schema for version 2
-    let (schema_pda2, _bump) = Pubkey::find_program_address(
+    let (schema_pda2, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda_2.to_bytes(), schema_name.as_bytes(), &[2]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );

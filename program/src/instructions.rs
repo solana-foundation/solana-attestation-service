@@ -3,7 +3,7 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use codama::CodamaInstructions;
-use pinocchio::Address as Pubkey;
+use pinocchio::Address;
 
 /// Instructions for the Solana Attestation Service. This
 /// is currently not used in the program business logic, but
@@ -20,7 +20,7 @@ pub enum AttestationServiceInstruction {
     ))]
     #[codama(account(name = "authority", signer))]
     #[codama(account(name = "system_program", default_value = program("system")))]
-    CreateCredential { name: String, signers: Vec<Pubkey> } = 0,
+    CreateCredential { name: String, signers: Vec<Address> } = 0,
 
     /// Create a Schema for a Credential that can eventually be attested to.
     #[codama(account(name = "payer", signer, writable, default_value = payer))]
@@ -52,7 +52,7 @@ pub enum AttestationServiceInstruction {
     #[codama(account(name = "authority", signer))]
     #[codama(account(name = "credential", writable, docs = "Credential the Schema is associated with"))]
     #[codama(account(name = "system_program", default_value = program("system")))]
-    ChangeAuthorizedSigners { signers: Vec<Pubkey> } = 3,
+    ChangeAuthorizedSigners { signers: Vec<Address> } = 3,
 
     /// Change description on a Schema
     #[codama(account(name = "payer", signer, writable, default_value = payer))]
@@ -88,7 +88,7 @@ pub enum AttestationServiceInstruction {
     ))]
     #[codama(account(name = "system_program", default_value = program("system")))]
     CreateAttestation {
-        nonce: Pubkey,
+        nonce: Address,
         #[codama(type = bytes)]
         #[codama(size_prefix = number(u32))]
         data: Vec<u8>,
@@ -168,7 +168,7 @@ pub enum AttestationServiceInstruction {
     #[codama(account(name = "token_program", default_value = program("token-2022")))]
     #[codama(account(name = "associated_token_program", default_value = program("associated-token")))]
     CreateTokenizedAttestation {
-        nonce: Pubkey,
+        nonce: Address,
         #[codama(type = bytes)]
         #[codama(size_prefix = number(u32))]
         data: Vec<u8>,
