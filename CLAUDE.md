@@ -57,6 +57,13 @@ gets real event codecs under `events/`. The event's one-byte type discriminator
 is a struct field rather than a second Codama discriminator, so the mirrored
 type matches the wire format on its own.
 
+**The Rust render drops the account-to-PDA links.** A generated `find_pda` for
+a PDA with an unprefixed string seed, which `credential` and `schema` both
+have, is typed `RemainderStr` and drags in the `kaigan` crate. The links are
+stripped in `scripts/generate-clients.ts` before the Rust render to keep that
+dependency out of the published client; the PDA nodes stay, so the TypeScript
+client keeps its `find*Pda` and `fetch*FromSeeds` helpers.
+
 **Generated client sources are gitignored.** `clients/*/src/generated/` is
 produced by `just generate-clients`. Never hand-edit it, and never commit it.
 Because `cargo package` honors `.gitignore`, `clients/rust/Cargo.toml` carries

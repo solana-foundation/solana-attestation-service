@@ -104,14 +104,27 @@ function shapeAccounts(codama: Codama) {
 
 const configPreserver = preserveConfigFiles();
 
-// The Rust renderer has no event support, so events are mirrored into defined types
-// to keep `types::CloseAttestationEvent` available to Rust callers. The event's
-// one-byte type discriminator is already a field of the struct, so the mirrored type
-// matches the wire format on its own.
+// Two Rust-only adjustments. Events are mirrored into defined types because the
+// Rust renderer has no event support, which is what keeps
+// `types::CloseAttestationEvent` available to Rust callers; the event's one-byte
+// type discriminator is already a field of the struct, so the mirrored type matches
+// the wire format on its own. And the account-to-PDA links are dropped, because a
+// generated `find_pda` for a PDA with an unprefixed string seed pulls in the
+// `kaigan` crate for its `RemainderStr` type. The PDA nodes themselves stay, so
+// nothing is lost from the IDL.
 const rustCodama = readIdl();
 shapeAccounts(rustCodama);
 rustCodama.update(
     bottomUpTransformerVisitor([
+        {
+            select: '[accountNode]',
+            transform: node => {
+                assertIsNode(node, 'accountNode');
+                const { pda: _pda, ...rest } = node;
+
+                return rest;
+            },
+        },
         {
             select: '[programNode]',
             transform: node => ({

@@ -32,7 +32,6 @@ codegen-units = 1
 borsh = "1.5.5"
 codama = "0.9.3"
 const-crypto = "0.3.0"
-kaigan = "0.3"
 num-derive = "0.4"
 num-traits = "0.2"
 pinocchio = { version = "0.11.2", features = ["account-resize", "cpi"] }
