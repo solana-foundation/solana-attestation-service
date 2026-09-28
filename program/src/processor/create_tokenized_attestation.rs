@@ -142,9 +142,9 @@ pub fn process_create_tokenized_attestation(
         update_authority: sas_pda_info,
         mint: attestation_mint_info,
         mint_authority: sas_pda_info,
-        name: core::str::from_utf8(args.name).unwrap(),
-        symbol: core::str::from_utf8(args.symbol).unwrap(),
-        uri: core::str::from_utf8(args.uri).unwrap(),
+        name: args.name,
+        symbol: args.symbol,
+        uri: args.uri,
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 

@@ -57,77 +57,58 @@ impl AccountSerialize for Attestation {
     }
 }
 
-#[inline]
-fn get_size_of_vec(offset: usize, element_size: usize, data: &[u8]) -> usize {
-    let len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-    4 + len * element_size
+fn invalid_data() -> ProgramError {
+    AttestationServiceError::InvalidAttestationData.into()
+}
+
+fn read_len(data: &[u8], offset: usize) -> Result<usize, ProgramError> {
+    let end = offset.checked_add(4).ok_or_else(invalid_data)?;
+    let bytes = data.get(offset..end).ok_or_else(invalid_data)?;
+    Ok(u32::from_le_bytes(bytes.try_into().unwrap()) as usize)
+}
+
+fn vec_size(data: &[u8], offset: usize, element_size: usize) -> Result<usize, ProgramError> {
+    read_len(data, offset)?.checked_mul(element_size).and_then(|len| len.checked_add(4)).ok_or_else(invalid_data)
 }
 
 impl Attestation {
     /// Validate the data in the Attestation conforms to the Schema's
     /// layout.
-    pub fn validate_data(&self, layout: Vec<u8>) -> Result<(), ProgramError> {
-        // Iterate over the data and ensure there are no overflows.
-        // If we do not overflow and match with the end of the data,
-        // then we can assume the data is valid for the schema.
-        let mut data_offset = 0;
-        for data_type in layout {
-            let schema_data_type: SchemaDataTypes = data_type.into();
-            match schema_data_type {
-                // u8 -> u128
-                SchemaDataTypes::U8 => data_offset += 1,
-                SchemaDataTypes::U16 => data_offset += 2,
-                SchemaDataTypes::U32 => data_offset += 4,
-                SchemaDataTypes::U64 => data_offset += 8,
-                SchemaDataTypes::U128 => data_offset += 16,
-                // i8 -> i128
-                SchemaDataTypes::I8 => data_offset += 1,
-                SchemaDataTypes::I16 => data_offset += 2,
-                SchemaDataTypes::I32 => data_offset += 4,
-                SchemaDataTypes::I64 => data_offset += 8,
-                SchemaDataTypes::I128 => data_offset += 16,
-                // bool
-                SchemaDataTypes::Bool => data_offset += 1,
-                // char
-                SchemaDataTypes::Char => data_offset += 4,
-                // String
-                SchemaDataTypes::String => data_offset += get_size_of_vec(data_offset, 1, &self.data),
-                // Vec<u8> -> Vec<u128>
-                SchemaDataTypes::VecU8 => data_offset += get_size_of_vec(data_offset, 1, &self.data),
-                SchemaDataTypes::VecU16 => data_offset += get_size_of_vec(data_offset, 2, &self.data),
-                SchemaDataTypes::VecU32 => data_offset += get_size_of_vec(data_offset, 4, &self.data),
-                SchemaDataTypes::VecU64 => data_offset += get_size_of_vec(data_offset, 8, &self.data),
-                SchemaDataTypes::VecU128 => data_offset += get_size_of_vec(data_offset, 16, &self.data),
-                // Vec<i8> -> Vec<i128>
-                SchemaDataTypes::VecI8 => data_offset += get_size_of_vec(data_offset, 1, &self.data),
-                SchemaDataTypes::VecI16 => data_offset += get_size_of_vec(data_offset, 2, &self.data),
-                SchemaDataTypes::VecI32 => data_offset += get_size_of_vec(data_offset, 4, &self.data),
-                SchemaDataTypes::VecI64 => data_offset += get_size_of_vec(data_offset, 8, &self.data),
-                SchemaDataTypes::VecI128 => data_offset += get_size_of_vec(data_offset, 16, &self.data),
-                // Vec<bool>
-                SchemaDataTypes::VecBool => data_offset += get_size_of_vec(data_offset, 1, &self.data),
-                // Vec<char>
-                SchemaDataTypes::VecChar => data_offset += get_size_of_vec(data_offset, 4, &self.data),
-                // Vec<String>
-                SchemaDataTypes::VecString => {
-                    let len = u32::from_le_bytes(self.data[data_offset..data_offset + 4].try_into().unwrap()) as usize;
-                    data_offset += 4;
-                    // must iterate over the strings using their len
-                    for _ in 0..len {
-                        let string_len =
-                            u32::from_le_bytes(self.data[data_offset..data_offset + 4].try_into().unwrap()) as usize;
-                        data_offset += 4 + string_len;
-                    }
+    pub fn validate_data(&self, layout: &[u8]) -> Result<(), ProgramError> {
+        let data = self.data.as_slice();
+        let mut offset: usize = 0;
+        for &data_type in layout {
+            let size = match SchemaDataTypes::from(data_type) {
+                SchemaDataTypes::U8 | SchemaDataTypes::I8 | SchemaDataTypes::Bool => 1,
+                SchemaDataTypes::U16 | SchemaDataTypes::I16 => 2,
+                SchemaDataTypes::U32 | SchemaDataTypes::I32 | SchemaDataTypes::Char => 4,
+                SchemaDataTypes::U64 | SchemaDataTypes::I64 => 8,
+                SchemaDataTypes::U128 | SchemaDataTypes::I128 => 16,
+                SchemaDataTypes::String
+                | SchemaDataTypes::VecU8
+                | SchemaDataTypes::VecI8
+                | SchemaDataTypes::VecBool => vec_size(data, offset, 1)?,
+                SchemaDataTypes::VecU16 | SchemaDataTypes::VecI16 => vec_size(data, offset, 2)?,
+                SchemaDataTypes::VecU32 | SchemaDataTypes::VecI32 | SchemaDataTypes::VecChar => {
+                    vec_size(data, offset, 4)?
                 }
-            }
-
-            // Check data size at end of each iteration and error if offset exceeds the data length.
-            if data_offset > self.data.len() {
-                return Err(AttestationServiceError::InvalidAttestationData.into());
-            }
+                SchemaDataTypes::VecU64 | SchemaDataTypes::VecI64 => vec_size(data, offset, 8)?,
+                SchemaDataTypes::VecU128 | SchemaDataTypes::VecI128 => vec_size(data, offset, 16)?,
+                SchemaDataTypes::VecString => {
+                    let count = read_len(data, offset)?;
+                    let mut size: usize = 4;
+                    for _ in 0..count {
+                        let string_start = offset.checked_add(size).ok_or_else(invalid_data)?;
+                        let string_len = read_len(data, string_start)?;
+                        size = size.checked_add(4).and_then(|s| s.checked_add(string_len)).ok_or_else(invalid_data)?;
+                    }
+                    size
+                }
+            };
+            offset = offset.checked_add(size).filter(|&end| end <= data.len()).ok_or_else(invalid_data)?;
         }
-        if data_offset != self.data.len() {
-            return Err(AttestationServiceError::InvalidAttestationData.into());
+        if offset != data.len() {
+            return Err(invalid_data());
         }
         Ok(())
     }
@@ -189,7 +170,7 @@ mod tests {
         // u8
         let layout = alloc::vec![0];
         attestation.data = alloc::vec![10];
-        assert!(attestation.validate_data(layout).is_ok());
+        assert!(attestation.validate_data(&layout).is_ok());
 
         // u8, Vec<String>, u128
         let layout = alloc::vec![0, 25, 4];
@@ -200,18 +181,31 @@ mod tests {
         data.extend(strings.iter().flat_map(|s| to_serialized_vec(s.as_bytes())).collect::<Vec<_>>());
         data.extend(199u128.to_le_bytes());
         attestation.data = data;
-        assert!(attestation.validate_data(layout).is_ok());
+        assert!(attestation.validate_data(&layout).is_ok());
 
         // u8
         let layout = alloc::vec![0];
         attestation.data = Vec::new();
         // Should fail when attestion has no data
-        assert!(attestation.validate_data(layout).is_err());
+        assert!(attestation.validate_data(&layout).is_err());
 
         // u16
         let layout = alloc::vec![1];
         attestation.data = Vec::new();
         // Should fail when attestion has no data
-        assert!(attestation.validate_data(layout).is_err());
+        assert!(attestation.validate_data(&layout).is_err());
+
+        for layout in [alloc::vec![12], alloc::vec![25], alloc::vec![14]] {
+            attestation.data = alloc::vec![1, 0];
+            assert!(attestation.validate_data(&layout).is_err());
+        }
+
+        let layout = alloc::vec![25];
+        attestation.data = [2u32.to_le_bytes(), 0u32.to_le_bytes()].concat();
+        assert!(attestation.validate_data(&layout).is_err());
+
+        let layout = alloc::vec![15];
+        attestation.data = u32::MAX.to_le_bytes().to_vec();
+        assert!(attestation.validate_data(&layout).is_err());
     }
 }

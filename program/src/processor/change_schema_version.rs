@@ -54,7 +54,7 @@ pub fn process_change_schema_version(
 
     let name = &existing_schema.name;
     let description = existing_schema.description;
-    let version = &[existing_schema.version.checked_add(1).unwrap()];
+    let version = &[existing_schema.version.checked_add(1).ok_or(ProgramError::ArithmeticOverflow)?];
 
     let (schema_pda, schema_bump) = Address::find_program_address(
         &[SCHEMA_SEED, credential_info.address().as_ref(), name.as_ref(), version],
@@ -62,8 +62,7 @@ pub fn process_change_schema_version(
     );
 
     if new_schema_info.address().ne(&schema_pda) {
-        // PDA was invalid
-        return Err(AttestationServiceError::InvalidCredential.into());
+        return Err(AttestationServiceError::InvalidSchema.into());
     }
 
     // Account layout

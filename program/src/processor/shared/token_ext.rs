@@ -16,9 +16,9 @@ pub struct InitializeTokenMetadata<'a> {
     pub update_authority: &'a AccountView,
     pub mint: &'a AccountView,
     pub mint_authority: &'a AccountView,
-    pub name: &'a str,
-    pub symbol: &'a str,
-    pub uri: &'a str,
+    pub name: &'a [u8],
+    pub symbol: &'a [u8],
+    pub uri: &'a [u8],
 }
 
 impl InitializeTokenMetadata<'_> {
@@ -27,9 +27,9 @@ impl InitializeTokenMetadata<'_> {
     pub fn invoke_signed(&self, signers: &[Signer]) -> ProgramResult {
         let data: Vec<u8> = [
             Self::DISCRIMINATOR.as_slice(),
-            &to_serialized_vec(self.name.as_bytes()),
-            &to_serialized_vec(self.symbol.as_bytes()),
-            &to_serialized_vec(self.uri.as_bytes()),
+            &to_serialized_vec(self.name),
+            &to_serialized_vec(self.symbol),
+            &to_serialized_vec(self.uri),
         ]
         .concat();
 

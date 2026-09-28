@@ -160,6 +160,7 @@ lint: generate-clients
 lint-check: generate-clients
     @echo "Checking Rust lint..."
     @cargo clippy --workspace --exclude solana-attestation-service-client --all-targets --no-deps -- -D warnings
+    @cargo check -p solana-attestation-service-client --all-features
     @echo "Checking TypeScript lint..."
     @pnpm run lint
     @echo "✓ Lint check passed"

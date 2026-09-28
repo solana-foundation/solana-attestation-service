@@ -107,7 +107,7 @@ pub fn process_create_attestation(
     };
 
     // Validate the Attestation data matches the layout of the Schema
-    attestation.validate_data(schema.layout)?;
+    attestation.validate_data(&schema.layout)?;
 
     let mut attestation_data = attestation_info.try_borrow_mut()?;
     attestation_data.copy_from_slice(&attestation.to_bytes());

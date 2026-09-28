@@ -131,7 +131,8 @@ fn create_attestation_fail_bad_data() {
     let TestFixtures { mut ctx, credential, schema, authority } = setup();
     // Create Attestation
     let attestation_data = TestData { name: "attest".to_string(), location: 11 };
-    let expiry: i64 = 1000;
+    let clock: Clock = ctx.svm.get_sysvar();
+    let expiry: i64 = clock.unix_timestamp + 60;
     let mut serialized_attestation_data = Vec::new();
     serialized_attestation_data.extend([1, 2, 3, 4, 5, 6, 7]);
     attestation_data.serialize(&mut serialized_attestation_data).unwrap();
@@ -183,7 +184,8 @@ fn create_attestation_fail_schema_paused() {
 
     // Create Attestation
     let attestation_data = TestData { name: "attest".to_string(), location: 11 };
-    let expiry: i64 = 1000;
+    let clock: Clock = ctx.svm.get_sysvar();
+    let expiry: i64 = clock.unix_timestamp + 60;
     let mut serialized_attestation_data = Vec::new();
     attestation_data.serialize(&mut serialized_attestation_data).unwrap();
     let nonce = Address::new_unique();

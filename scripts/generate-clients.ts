@@ -115,8 +115,22 @@ rustCodama.accept(
     renderRustVisitor(rustClientsDir, {
         anchorTraits: false,
         deleteFolderBeforeRendering: true,
+        dependencyVersions: { serde: '^1.0', serde_with: '^3.0' },
         formatCode: true,
         generatedFolder: 'src/generated',
+        traitOptions: {
+            baseDefaults: [
+                'borsh::BorshSerialize',
+                'borsh::BorshDeserialize',
+                'serde::Serialize',
+                'serde::Deserialize',
+                'Clone',
+                'Debug',
+                'Eq',
+                'PartialEq',
+            ],
+            featureFlags: { serde: ['serde::Serialize', 'serde::Deserialize'] },
+        },
     }),
 );
 
