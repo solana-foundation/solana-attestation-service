@@ -3,13 +3,8 @@ name: Publish Rust Client
 on:
   workflow_dispatch:
     inputs:
-      publish-to-crates:
-        description: 'Publish to crates.io'
-        required: true
-        default: true
-        type: boolean
-      create-github-release:
-        description: 'Create GitHub release'
+      dry-run:
+        description: 'Dry run (unchecked will publish to crates.io, push git tag, and create GitHub release)'
         required: true
         default: true
         type: boolean
@@ -80,8 +75,8 @@ jobs:
           package: solana-attestation-service-client
           working-directory: clients/rust
           allow-dirty: 'true'
-          check-version-available: ${{ inputs.publish-to-crates }}
-          dry-run: ${{ !inputs.publish-to-crates }}
+          check-version-available: ${{ !inputs.dry-run }}
+          dry-run: ${{ inputs.dry-run }}
           skip-existing: 'true'
 
       - name: Check if prerelease
@@ -94,7 +89,7 @@ jobs:
           fi
 
       - name: Create and push tag
-        if: ${{ inputs.publish-to-crates || inputs.create-github-release }}
+        if: ${{ !inputs.dry-run }}
         run: |
           TAG="rust-client-v${{ steps.cargo_publish.outputs.version }}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -103,10 +98,14 @@ jobs:
             git tag "$TAG"
             echo "Created tag $TAG"
           fi
-          git push origin "$TAG" 2>/dev/null || echo "Tag already pushed"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already pushed"
+          else
+            git push origin "$TAG"
+          fi
 
       - name: Create GitHub Release
-        if: ${{ inputs.create-github-release }}
+        if: ${{ !inputs.dry-run }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

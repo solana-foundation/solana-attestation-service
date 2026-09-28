@@ -268,9 +268,9 @@ sasCodama.accept(
 // Everything below shapes the TypeScript client only, and so runs after the Rust
 // render. Two reasons it stays out of the Rust client: the Rust renderer discards
 // the size prefix wrapping a remainder-count array and emits `RemainderVec`, which
-// reads to the end of the buffer and so cannot represent an interior blob; and the
-// Rust caller's layouts come from `SchemaStructSerialize` as raw bytes, so typing
-// them as an enum would only add conversions. The Rust client keeps `Vec<u8>`.
+// reads to the end of the buffer and so cannot represent an interior blob; and Rust
+// callers pass layouts as raw type-identifier bytes, so typing them as an enum
+// would only add conversions. The Rust client keeps `Vec<u8>`.
 //
 // The Schema account stores `name`, `description`, `layout` and `field_names` as
 // opaque length-prefixed byte blobs (see `program/src/state/schema.rs`), but the

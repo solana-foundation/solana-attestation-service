@@ -57,8 +57,8 @@ jobs:
           marker="$MARKER:$(sha256sum <<<"$unsigned" | cut -c1-12) -->"
 
           if gh api "repos/$GH_REPO/pulls/$PR_NUMBER/reviews" --paginate \
-            | jq -e -r --arg marker "$marker" \
-              'any(.[]; .state == "CHANGES_REQUESTED" and (.body | startswith($marker)))' >/dev/null; then
+            | jq -e -s -r --arg marker "$marker" \
+              'any(.[][]; .state == "CHANGES_REQUESTED" and (.body | startswith($marker)))' >/dev/null; then
             echo "Changes already requested for these commits."
             exit 1
           fi
@@ -95,7 +95,7 @@ jobs:
             exit 1
           fi
 
-          if (( used_ai == 1 )) && ! grep -qiE 'Tool and extent:\s*\S' <<<"$body"; then
+          if (( used_ai == 1 )) && ! grep -qizE 'Tool and extent:[[:space:]]*[^[:space:]]' <<<"$body"; then
             echo "::error::State which AI tool was used and to what extent after 'Tool and extent:'."
             exit 1
           fi
@@ -141,7 +141,7 @@ jobs:
 
           patterns='co-authored-by:.*(claude|copilot|cursor|codex|chatgpt|openai|aider|devin|gemini|windsurf)'
           patterns+='|generated with .*claude code|claude\.ai/code|claude\.com/claude-code'
-          patterns+='|noreply@anthropic\.com|noreply@cursor\.com|made with cursor|cursor\.com'
+          patterns+='|noreply@anthropic\.com|noreply@cursor\.com|made with cursor'
 
           hits=$(grep -iE "$patterns" <<<"$text" || true)
           if [[ "$HEAD_REF" =~ ^(claude|codex|cursor|copilot)/ ]]; then

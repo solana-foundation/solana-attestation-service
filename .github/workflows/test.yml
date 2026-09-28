@@ -61,9 +61,12 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          install-solana: 'false'
           install-shank: 'true'
           rust-cache-key: 'typescript-test'
+          solana-version: ${{ env.SOLANA_VERSION }}
 
       - name: Run TypeScript client tests
         run: just test-client
+
+      - name: Run Surfpool tests
+        run: just test-surfpool

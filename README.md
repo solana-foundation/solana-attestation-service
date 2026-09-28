@@ -124,26 +124,27 @@ Rust is pinned in `rust-toolchain.toml`, Node.js in `.nvmrc`, and pnpm in the `p
 | `just generate-clients` | Regenerate both clients from the IDL via Codama            |
 | `just build-client`     | Build `clients/typescript` into `dist/`                    |
 
-Generated client sources under `clients/*/src/generated/` are not committed. They are produced from the IDL by `just generate-clients` and bundled into the published packages. The IDL itself is committed, and `just check-generated` fails if either has drifted from the program source.
+Generated client sources under `clients/*/src/generated/` are not committed. They are produced from the IDL by `just generate-clients` and bundled into the published packages. The IDL itself is committed, and `just check-generated` fails if it has drifted from the program source.
 
 ### Test
 
-| Recipe                  | Description                                    |
-| ----------------------- | ---------------------------------------------- |
-| `just test`             | Everything below                               |
-| `just unit-test`        | Rust unit tests                                |
-| `just integration-test` | Rust integration tests against the built `.so` |
-| `just test-client`      | TypeScript client tests                        |
+| Recipe                  | Description                                      |
+| ----------------------- | ------------------------------------------------ |
+| `just test`             | Everything below                                 |
+| `just unit-test`        | Rust unit tests                                  |
+| `just integration-test` | Rust integration tests against the built `.so`   |
+| `just test-client`      | TypeScript client tests                          |
+| `just test-surfpool`    | TypeScript tests against the program on Surfpool |
 
 ### Code quality
 
-| Recipe                     | Description                                      |
-| -------------------------- | ------------------------------------------------ |
-| `just check`               | `fmt-check` plus `lint-check`, run by pre-push   |
-| `just fmt` / `fmt-check`   | Format Rust and TypeScript, or check only        |
-| `just lint` / `lint-check` | Clippy and ESLint, with or without autofix       |
-| `just check-generated`     | Verify the IDL and generated clients are current |
-| `just clean`               | Remove build artifacts and dependencies          |
+| Recipe                     | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `just check`               | `fmt-check` plus `lint-check`, run by pre-push |
+| `just fmt` / `fmt-check`   | Format Rust and TypeScript, or check only      |
+| `just lint` / `lint-check` | Clippy and ESLint, with or without autofix     |
+| `just check-generated`     | Verify the committed IDL is current            |
+| `just clean`               | Remove build artifacts and dependencies        |
 
 ## Clients
 
@@ -173,15 +174,15 @@ End-to-end walkthroughs live in `examples/typescript/attestation-flow-guides` an
 
 ## CI
 
-| Workflow       | Description                                                 |
-| -------------- | ----------------------------------------------------------- |
-| **Build**      | Compile the program and both clients                        |
-| **Test**       | Rust unit, Rust integration, and TypeScript client tests    |
-| **Format**     | Rust and TypeScript formatting                              |
-| **Lint**       | Clippy and ESLint                                           |
-| **IDL Check**  | Fail on drift between the program, the IDL, and the clients |
-| **Security**   | `cargo audit` and `pnpm audit`                              |
-| **PR hygiene** | Commit signatures, AI disclosure, and AI tool attribution   |
+| Workflow       | Description                                                |
+| -------------- | ---------------------------------------------------------- |
+| **Build**      | Compile the program and the TypeScript client              |
+| **Test**       | Rust unit, Rust integration, TypeScript and Surfpool tests |
+| **Format**     | Rust and TypeScript formatting                             |
+| **Lint**       | Clippy and ESLint                                          |
+| **IDL Check**  | Fail on drift between the program and the committed IDL    |
+| **Security**   | `cargo audit` and `pnpm audit`                             |
+| **PR hygiene** | Commit signatures, AI disclosure, and AI tool attribution  |
 
 Publishing is manual. `Publish Rust Client` and `Publish TypeScript Client` are `workflow_dispatch` only, gated on a green test run and a branch guard, default to a dry run, and authenticate to the registries over OIDC.
 

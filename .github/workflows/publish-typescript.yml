@@ -84,7 +84,11 @@ jobs:
             git tag "$TAG"
             echo "Created tag $TAG"
           fi
-          git push origin "$TAG" 2>/dev/null || echo "Tag already pushed"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already pushed"
+          else
+            git push origin "$TAG"
+          fi
 
       - name: Create GitHub Release
         if: ${{ !inputs.dry-run }}

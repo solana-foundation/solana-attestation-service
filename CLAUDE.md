@@ -62,5 +62,7 @@ TypeScript tests are in the ignore list; changes there are unlinted.
 - Ownership, signer, writability, discriminator, and PDA derivation are all
   checked explicitly; there is no framework doing it.
 - Crate versions are inherited from the workspace, so one edit in the root
-  `Cargo.toml` moves the program and both clients together.
+  `Cargo.toml` moves the program and the Rust client together. The TypeScript
+  client's version lives in `clients/typescript/package.json` and must be
+  bumped separately.
 - Schema layouts are numeric type identifiers; the mapping is in `README.md`.

@@ -9,7 +9,6 @@ program_dir := "program"
 ts_client_dir := "clients/typescript"
 idl_file := "idl/solana_attestation_service.json"
 sbf_out_dir := justfile_directory() / "target/sbpf-solana-solana/release"
-generated_paths := "idl clients/typescript/src/generated clients/rust/src/generated"
 fmt_packages := "-p solana-attestation-service -p tests-solana-attestation-service"
 
 # List available recipes
@@ -67,20 +66,20 @@ generate-clients: generate-idl
     pnpm run generate-clients
     @echo "✓ Clients generated"
 
-# Check that committed IDL and generated clients are current
+# Regenerate the IDL and clients, then fail if the committed IDL changed
 check-generated: generate-clients
     #!/usr/bin/env bash
     set -euo pipefail
 
-    if ! git diff --quiet -- {{generated_paths}} || [[ -n "$(git ls-files --others --exclude-standard -- {{generated_paths}})" ]]; then
-        echo "Error: IDL or generated clients are out of date"
+    if ! git diff --quiet -- idl || [[ -n "$(git ls-files --others --exclude-standard -- idl)" ]]; then
+        echo "Error: IDL is out of date"
         echo "Run: just generate-clients"
-        git status --short -- {{generated_paths}}
-        git diff -- {{generated_paths}}
+        git status --short -- idl
+        git diff -- idl
         exit 1
     fi
 
-    echo "✓ IDL and generated clients are up-to-date"
+    echo "✓ IDL is up-to-date"
 
 # Build TypeScript client
 build-client: generate-clients
@@ -96,7 +95,7 @@ check-shank:
 # ============================================
 
 # Run all tests
-test *args: unit-test (integration-test args) test-client
+test *args: unit-test (integration-test args) test-client test-surfpool
 
 # Run Rust unit tests
 unit-test:
@@ -111,6 +110,10 @@ integration-test *args: build-program generate-clients
 # Run TypeScript client tests
 test-client: generate-clients
     cd {{ts_client_dir}} && pnpm run test
+
+# Run TypeScript tests against the built program on Surfpool
+test-surfpool: build-program generate-clients
+    cd {{ts_client_dir}} && pnpm run test:surfpool
 
 # ============================================
 # Clean recipes
