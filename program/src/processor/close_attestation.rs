@@ -14,9 +14,7 @@ use crate::{
     state::{Attestation, Credential},
 };
 
-use super::{
-    verify_current_program, verify_owner_mutability, verify_signer, verify_system_program,
-};
+use super::{verify_current_program, verify_owner_mutability, verify_signer, verify_system_program};
 
 #[inline(always)]
 pub fn process_close_attestation(
@@ -68,9 +66,7 @@ pub fn process_close_attestation(
 
     // Close account and transfer rent to payer.
     let payer_lamports = payer_info.lamports();
-    *payer_info.try_borrow_mut_lamports().unwrap() = payer_lamports
-        .checked_add(attestation_info.lamports())
-        .unwrap();
+    *payer_info.try_borrow_mut_lamports().unwrap() = payer_lamports.checked_add(attestation_info.lamports()).unwrap();
     *attestation_info.try_borrow_mut_lamports().unwrap() = 0;
     attestation_info.close()?;
 
@@ -92,10 +88,7 @@ pub fn process_close_attestation(
             data: event.to_bytes().as_slice(),
         },
         &[event_authority_info],
-        &[Signer::from(&[
-            Seed::from(EVENT_AUTHORITY_SEED),
-            Seed::from(&[event_authority_pda::BUMP]),
-        ])],
+        &[Signer::from(&[Seed::from(EVENT_AUTHORITY_SEED), Seed::from(&[event_authority_pda::BUMP])])],
     )?;
 
     Ok(())

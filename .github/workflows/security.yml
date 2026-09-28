@@ -1,0 +1,46 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  cargo-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          install-solana: 'false'
+          install-just: 'false'
+          install-pnpm: 'false'
+          rust-cache-key: 'cargo-audit'
+      - uses: taiki-e/install-action@b8cecb83565409bcc297b2df6e77f030b2a468d5 # v2.82.0
+        with:
+          tool: cargo-audit
+      - run: cargo audit
+
+  pnpm-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          install-rust: 'false'
+          enable-rust-cache: 'false'
+          install-solana: 'false'
+          install-just: 'false'
+          install-pnpm-dependencies: 'false'
+      - run: pnpm audit --ignore-unfixable

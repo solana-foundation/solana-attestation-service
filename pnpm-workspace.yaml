@@ -1,0 +1,6 @@
+packages:
+  - 'clients/*'
+
+allowBuilds:
+  '@parcel/watcher': false
+  unrs-resolver: true

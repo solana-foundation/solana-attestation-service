@@ -63,12 +63,7 @@ pub fn process_change_authorized_signers(
             let current_rent = credential_info.lamports();
             let rent_diff = min_rent.saturating_sub(current_rent);
             if rent_diff > 0 {
-                Transfer {
-                    from: payer_info,
-                    to: credential_info,
-                    lamports: rent_diff,
-                }
-                .invoke()?;
+                Transfer { from: payer_info, to: credential_info, lamports: rent_diff }.invoke()?;
             }
         }
     }

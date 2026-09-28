@@ -19,14 +19,9 @@ use crate::{
 use super::verify_owner_mutability;
 
 #[inline(always)]
-pub fn process_create_schema(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    instruction_data: &[u8],
-) -> ProgramResult {
+pub fn process_create_schema(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
-    let [payer_info, authority_info, credential_info, schema_info, system_program] = accounts
-    else {
+    let [payer_info, authority_info, credential_info, schema_info, system_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
@@ -85,15 +80,7 @@ pub fn process_create_schema(
         Seed::from(version),
         Seed::from(&bump_seed),
     ];
-    create_pda_account(
-        payer_info,
-        &rent,
-        space,
-        program_id,
-        schema_info,
-        signer_seeds,
-        None,
-    )?;
+    create_pda_account(payer_info, &rent, space, program_id, schema_info, signer_seeds, None)?;
 
     let schema = Schema {
         credential: *credential_info.key(),
@@ -122,7 +109,7 @@ struct CreateSchemaArgs<'a> {
     field_names_bytes: &'a [u8],
 }
 
-fn process_instruction_data(data: &[u8]) -> Result<CreateSchemaArgs, ProgramError> {
+fn process_instruction_data(data: &[u8]) -> Result<CreateSchemaArgs<'_>, ProgramError> {
     let mut offset: usize = 0;
 
     require_len!(data, 4);
@@ -166,11 +153,5 @@ fn process_instruction_data(data: &[u8]) -> Result<CreateSchemaArgs, ProgramErro
     require_len!(data, offset + byte_len);
     let field_names_bytes = &data[offset..offset + byte_len];
 
-    Ok(CreateSchemaArgs {
-        name,
-        description,
-        layout,
-        field_names_count,
-        field_names_bytes,
-    })
+    Ok(CreateSchemaArgs { name, description, layout, field_names_count, field_names_bytes })
 }

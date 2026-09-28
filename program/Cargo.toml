@@ -21,3 +21,6 @@ pinocchio-associated-token-account = { workspace = true }
 shank = { workspace = true }
 solana-program = { workspace = true }
 bs58 = { workspace = true }
+
+[lints]
+workspace = true

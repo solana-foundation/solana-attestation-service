@@ -1,10 +1,11 @@
 [package]
 name = "solana-attestation-service-client"
-version = "1.0.9"
+version = { workspace = true }
 edition = "2021"
 description = "Rust client for the Solana Attestation Service"
 license = "MIT"
 repository = "https://github.com/solana-foundation/solana-attestation-service"
+include = ["Cargo.toml", "src/**/*.rs"]
 
 [dependencies]
 borsh = { workspace = true }

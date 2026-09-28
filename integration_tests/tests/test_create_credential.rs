@@ -1,11 +1,7 @@
 use borsh::BorshDeserialize;
 use helpers::program_test_context;
-use solana_attestation_service_client::{
-    accounts::Credential, instructions::CreateCredentialBuilder,
-};
-use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
-};
+use solana_attestation_service_client::{accounts::Credential, instructions::CreateCredentialBuilder};
+use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction};
 
 mod helpers;
 
@@ -17,12 +13,8 @@ async fn create_credential_success() {
     let name = "test";
 
     let (credential_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority.pubkey().to_bytes(),
-            name.as_bytes(),
-        ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &[b"credential", &authority.pubkey().to_bytes(), name.as_bytes()],
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
 
     let ix = CreateCredentialBuilder::new()
@@ -40,18 +32,11 @@ async fn create_credential_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     // Assert credential account
-    let credential_account = ctx
-        .banks_client
-        .get_account(credential_pda)
-        .await
-        .expect("get_account")
-        .expect("account not none");
+    let credential_account =
+        ctx.banks_client.get_account(credential_pda).await.expect("get_account").expect("account not none");
 
     let credential = Credential::try_from_slice(&credential_account.data).unwrap();
     assert_eq!(credential.authority, authority.pubkey());

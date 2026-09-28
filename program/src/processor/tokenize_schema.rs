@@ -7,9 +7,7 @@ use pinocchio::{
     ProgramResult,
 };
 use pinocchio_token::{
-    extensions::{
-        group_pointer::Initialize as InitializeGroupPointer, token_group::InitializeGroup,
-    },
+    extensions::{group_pointer::Initialize as InitializeGroupPointer, token_group::InitializeGroup},
     instructions::{InitializeMint2, TokenProgramVariant},
     TOKEN_2022_PROGRAM_ID,
 };
@@ -60,10 +58,8 @@ pub fn process_tokenize_schema(
     }
 
     // Validate that mint to initialize matches expected PDA
-    let (mint_pda, mint_bump) = SolanaPubkey::find_program_address(
-        &[SCHEMA_MINT_SEED, schema_info.key()],
-        &SolanaPubkey::from(*program_id),
-    );
+    let (mint_pda, mint_bump) =
+        SolanaPubkey::find_program_address(&[SCHEMA_MINT_SEED, schema_info.key()], &SolanaPubkey::from(*program_id));
     if mint_info.key().ne(&mint_pda.to_bytes()) {
         return Err(AttestationServiceError::InvalidMint.into());
     }
@@ -80,11 +76,7 @@ pub fn process_tokenize_schema(
         234, // Size before Group Extension
         &TOKEN_2022_PROGRAM_ID,
         mint_info,
-        [
-            Seed::from(SCHEMA_MINT_SEED),
-            Seed::from(schema_info.key()),
-            Seed::from(&[mint_bump]),
-        ],
+        [Seed::from(SCHEMA_MINT_SEED), Seed::from(schema_info.key()), Seed::from(&[mint_bump])],
         Some(318), // Size after Group Extension
     )?;
 

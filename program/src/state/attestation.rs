@@ -52,7 +52,7 @@ impl AccountSerialize for Attestation {
 }
 
 #[inline]
-fn get_size_of_vec(offset: usize, element_size: usize, data: &Vec<u8>) -> usize {
+fn get_size_of_vec(offset: usize, element_size: usize, data: &[u8]) -> usize {
     let len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
     4 + len * element_size
 }
@@ -85,60 +85,31 @@ impl Attestation {
                 // char
                 SchemaDataTypes::Char => data_offset += 4,
                 // String
-                SchemaDataTypes::String => {
-                    data_offset += get_size_of_vec(data_offset, 1, &self.data)
-                }
+                SchemaDataTypes::String => data_offset += get_size_of_vec(data_offset, 1, &self.data),
                 // Vec<u8> -> Vec<u128>
-                SchemaDataTypes::VecU8 => {
-                    data_offset += get_size_of_vec(data_offset, 1, &self.data)
-                }
-                SchemaDataTypes::VecU16 => {
-                    data_offset += get_size_of_vec(data_offset, 2, &self.data)
-                }
-                SchemaDataTypes::VecU32 => {
-                    data_offset += get_size_of_vec(data_offset, 4, &self.data)
-                }
-                SchemaDataTypes::VecU64 => {
-                    data_offset += get_size_of_vec(data_offset, 8, &self.data)
-                }
-                SchemaDataTypes::VecU128 => {
-                    data_offset += get_size_of_vec(data_offset, 16, &self.data)
-                }
+                SchemaDataTypes::VecU8 => data_offset += get_size_of_vec(data_offset, 1, &self.data),
+                SchemaDataTypes::VecU16 => data_offset += get_size_of_vec(data_offset, 2, &self.data),
+                SchemaDataTypes::VecU32 => data_offset += get_size_of_vec(data_offset, 4, &self.data),
+                SchemaDataTypes::VecU64 => data_offset += get_size_of_vec(data_offset, 8, &self.data),
+                SchemaDataTypes::VecU128 => data_offset += get_size_of_vec(data_offset, 16, &self.data),
                 // Vec<i8> -> Vec<i128>
-                SchemaDataTypes::VecI8 => {
-                    data_offset += get_size_of_vec(data_offset, 1, &self.data)
-                }
-                SchemaDataTypes::VecI16 => {
-                    data_offset += get_size_of_vec(data_offset, 2, &self.data)
-                }
-                SchemaDataTypes::VecI32 => {
-                    data_offset += get_size_of_vec(data_offset, 4, &self.data)
-                }
-                SchemaDataTypes::VecI64 => {
-                    data_offset += get_size_of_vec(data_offset, 8, &self.data)
-                }
-                SchemaDataTypes::VecI128 => {
-                    data_offset += get_size_of_vec(data_offset, 16, &self.data)
-                }
+                SchemaDataTypes::VecI8 => data_offset += get_size_of_vec(data_offset, 1, &self.data),
+                SchemaDataTypes::VecI16 => data_offset += get_size_of_vec(data_offset, 2, &self.data),
+                SchemaDataTypes::VecI32 => data_offset += get_size_of_vec(data_offset, 4, &self.data),
+                SchemaDataTypes::VecI64 => data_offset += get_size_of_vec(data_offset, 8, &self.data),
+                SchemaDataTypes::VecI128 => data_offset += get_size_of_vec(data_offset, 16, &self.data),
                 // Vec<bool>
-                SchemaDataTypes::VecBool => {
-                    data_offset += get_size_of_vec(data_offset, 1, &self.data)
-                }
+                SchemaDataTypes::VecBool => data_offset += get_size_of_vec(data_offset, 1, &self.data),
                 // Vec<char>
-                SchemaDataTypes::VecChar => {
-                    data_offset += get_size_of_vec(data_offset, 4, &self.data)
-                }
+                SchemaDataTypes::VecChar => data_offset += get_size_of_vec(data_offset, 4, &self.data),
                 // Vec<String>
                 SchemaDataTypes::VecString => {
-                    let len = u32::from_le_bytes(
-                        self.data[data_offset..data_offset + 4].try_into().unwrap(),
-                    ) as usize;
+                    let len = u32::from_le_bytes(self.data[data_offset..data_offset + 4].try_into().unwrap()) as usize;
                     data_offset += 4;
                     // must iterate over the strings using their len
                     for _ in 0..len {
-                        let string_len = u32::from_le_bytes(
-                            self.data[data_offset..data_offset + 4].try_into().unwrap(),
-                        ) as usize;
+                        let string_len =
+                            u32::from_le_bytes(self.data[data_offset..data_offset + 4].try_into().unwrap()) as usize;
                         data_offset += 4 + string_len;
                     }
                 }
@@ -187,15 +158,7 @@ impl Attestation {
 
         let token_account: Pubkey = data[offset..offset + 32].try_into().unwrap();
 
-        Ok(Self {
-            nonce,
-            credential,
-            schema,
-            data: attestation_data,
-            signer,
-            expiry,
-            token_account,
-        })
+        Ok(Self { nonce, credential, schema, data: attestation_data, signer, expiry, token_account })
     }
 }
 
@@ -228,13 +191,7 @@ mod tests {
         data.extend([10]);
         let strings = alloc::vec!["test1", "test2"];
         data.extend((strings.len() as u32).to_le_bytes());
-        data.extend(
-            strings
-                .iter()
-                .map(|s| to_serialized_vec(s.as_bytes()))
-                .flatten()
-                .collect::<Vec<_>>(),
-        );
+        data.extend(strings.iter().flat_map(|s| to_serialized_vec(s.as_bytes())).collect::<Vec<_>>());
         data.extend(199u128.to_le_bytes());
         attestation.data = data;
         assert!(attestation.validate_data(layout).is_ok());

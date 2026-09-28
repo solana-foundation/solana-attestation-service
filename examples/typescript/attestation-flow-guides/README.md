@@ -2,10 +2,10 @@
 
 This repository contains the companion code for Solana Attestation Service (SAS) implementation guides to create, manage, verify, and close digital credentials on Solana. For more detailed explanations and step-by-step walkthroughs, see the comprehensive guides:
 
-| Title | File | Guide | Description |
-|-------|------|-------|-------------|
-| Standard Attestation Demo | `src/kit/sas-standard-kit-demo.ts` | [How to Build Digital Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/how-to-create-digital-credentials) | Basic credential and attestation workflow |
-| Tokenized Attestation Demo | `src/kit/sas-tokenized-kit-demo.ts` | [How to Create Tokenized Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/tokenized-attestations) | Create credentials as SPL tokens using Token-2022 |
+| Title                      | File                                | Guide                                                                                                                                           | Description                                       |
+| -------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Standard Attestation Demo  | `src/kit/sas-standard-kit-demo.ts`  | [How to Build Digital Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/how-to-create-digital-credentials) | Basic credential and attestation workflow         |
+| Tokenized Attestation Demo | `src/kit/sas-tokenized-kit-demo.ts` | [How to Create Tokenized Credentials using Solana Attestation Service](https://attest.solana.com/docs/guides/ts/tokenized-attestations)         | Create credentials as SPL tokens using Token-2022 |
 
 ## Requirements
 
@@ -38,6 +38,7 @@ pnpm kit:tokenized
 ```
 
 All of these scripts will automatically:
+
 - Create test wallets
 - Request devnet SOL airdrops
 - Execute the full attestation workflow
@@ -47,29 +48,32 @@ All of these scripts will automatically:
 For local development and testing:
 
 1. **Download the SAS program:**
-   ```bash
-   pnpm dump
-   ```
+
+    ```bash
+    pnpm dump
+    ```
 
 2. **Start local validator** (in a separate terminal):
-   ```bash
-   pnpm start-local
-   ```
+
+    ```bash
+    pnpm start-local
+    ```
 
 3. **Update configuration** in the demo files:
-   ```typescript
-   const CONFIG = {
-       HTTP_CONNECTION_URL: 'http://127.0.0.1:8899',
-       WSS_CONNECTION_URL: 'ws://127.0.0.1:8900',
-       // ... rest of config
-   };
-   ```
+
+    ```typescript
+    const CONFIG = {
+        HTTP_CONNECTION_URL: 'http://127.0.0.1:8899',
+        WSS_CONNECTION_URL: 'ws://127.0.0.1:8900',
+        // ... rest of config
+    };
+    ```
 
 4. **Run the demos:**
-   ```bash
-   # Run the standard attestation demo with Kit
-   pnpm kit:standard
+    ```bash
+    # Run the standard attestation demo with Kit
+    pnpm kit:standard
 
-   # Run the tokenized attestation demo with Kit
-   pnpm kit:tokenized
-   ```
+    # Run the tokenized attestation demo with Kit
+    pnpm kit:tokenized
+    ```

@@ -29,20 +29,20 @@ import {
     assertIsTransactionWithBlockhashLifetime,
     assertIsSendableTransaction,
     assertIsTransactionWithinSizeLimit,
-} from "@solana/kit";
-import { 
-    updateOrAppendSetComputeUnitLimitInstruction, 
+} from '@solana/kit';
+import {
+    updateOrAppendSetComputeUnitLimitInstruction,
     updateOrAppendSetComputeUnitPriceInstruction,
     MAX_COMPUTE_UNIT_LIMIT,
-    estimateComputeUnitLimitFactory
-} from "@solana-program/compute-budget";
+    estimateComputeUnitLimitFactory,
+} from '@solana-program/compute-budget';
 import {
     ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
     fetchMint,
     findAssociatedTokenPda,
     getMintSize,
-    TOKEN_2022_PROGRAM_ADDRESS
-} from "@solana-program/token-2022";
+    TOKEN_2022_PROGRAM_ADDRESS,
+} from '@solana-program/token-2022';
 import {
     getCreateCredentialInstruction,
     getCreateSchemaInstruction,
@@ -60,26 +60,26 @@ import {
     findAttestationMintPda,
     getCreateTokenizedAttestationInstruction,
     getCloseTokenizedAttestationInstructionAsync,
-} from "sas-lib";
+} from 'sas-lib';
 
 const CONFIG = {
     HTTP_CONNECTION_URL: 'https://api.devnet.solana.com', // 'http://127.0.0.1:8899',
-    WSS_CONNECTION_URL: 'wss://api.devnet.solana.com',  // 'ws://127.0.0.1:8900',
+    WSS_CONNECTION_URL: 'wss://api.devnet.solana.com', // 'ws://127.0.0.1:8900',
     CREDENTIAL_NAME: 'TEST-ORGANIZATION',
     SCHEMA_NAME: 'THE-BASICS',
     SCHEMA_LAYOUT: [SchemaDataType.String, SchemaDataType.U8, SchemaDataType.String],
-    SCHEMA_FIELDS: ["name", "age", "country"],
+    SCHEMA_FIELDS: ['name', 'age', 'country'],
     SCHEMA_VERSION: 1,
     SCHEMA_DESCRIPTION: 'Basic user information schema for testing',
     ATTESTATION_DATA: {
-        name: "test-user",
+        name: 'test-user',
         age: 100,
-        country: "usa",
+        country: 'usa',
     },
     ATTESTATION_EXPIRY_DAYS: 365,
-    TOKEN_NAME: "Test Identity",
-    TOKEN_METADATA: "https://example.com/metadata.json",
-    TOKEN_SYMBOL: "TESTID",
+    TOKEN_NAME: 'Test Identity',
+    TOKEN_METADATA: 'https://example.com/metadata.json',
+    TOKEN_SYMBOL: 'TESTID',
 };
 
 interface Client {
@@ -99,7 +99,7 @@ async function setupWallets(client: Client) {
         const airdropTx: Signature = await airdrop({
             commitment: 'processed',
             lamports: lamports(BigInt(1_000_000_000)),
-            recipientAddress: payer.address
+            recipientAddress: payer.address,
         });
 
         console.log(`    - Airdrop completed: ${airdropTx}`);
@@ -113,73 +113,67 @@ export const createDefaultTransaction = async (
     client: Client,
     feePayer: TransactionSigner,
     computeLimit: number = MAX_COMPUTE_UNIT_LIMIT,
-    feeMicroLamports: MicroLamports = 1n as MicroLamports
+    feeMicroLamports: MicroLamports = 1n as MicroLamports,
 ) => {
-    const { value: latestBlockhash } = await client.rpc
-        .getLatestBlockhash()
-        .send();
+    const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
     return pipe(
         createTransactionMessage({ version: 0 }),
-        (tx) => setTransactionMessageFeePayerSigner(feePayer, tx),
-        (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
-        (tx) => updateOrAppendSetComputeUnitPriceInstruction(feeMicroLamports, tx),
-        (tx) => updateOrAppendSetComputeUnitLimitInstruction(computeLimit, tx),
-
+        tx => setTransactionMessageFeePayerSigner(feePayer, tx),
+        tx => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+        tx => updateOrAppendSetComputeUnitPriceInstruction(feeMicroLamports, tx),
+        tx => updateOrAppendSetComputeUnitLimitInstruction(computeLimit, tx),
     );
 };
 export const signAndSendTransaction = async (
     client: Client,
-    transactionMessage: TransactionMessage &
-        TransactionMessageWithFeePayer &
-        TransactionMessageWithBlockhashLifetime,
-    commitment: Commitment = 'confirmed'
+    transactionMessage: TransactionMessage & TransactionMessageWithFeePayer & TransactionMessageWithBlockhashLifetime,
+    commitment: Commitment = 'confirmed',
 ) => {
-    const signedTransaction =
-        await signTransactionMessageWithSigners(transactionMessage);
+    const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
     const signature = getSignatureFromTransaction(signedTransaction);
 
     assertIsFullySignedTransaction(signedTransaction);
     assertIsTransactionWithinSizeLimit(signedTransaction);
     assertIsSendableTransaction(signedTransaction);
     assertIsTransactionWithBlockhashLifetime(signedTransaction);
-    
+
     await sendAndConfirmTransactionFactory(client)(signedTransaction, {
         commitment,
     });
     return signature;
 };
 
-
 async function sendAndConfirmInstructions(
     client: Client,
     payer: TransactionSigner,
     instructions: Instruction[],
-    description: string
+    description: string,
 ): Promise<Signature> {
     try {
-        const simulationTx = await pipe(
-            await createDefaultTransaction(client, payer),
-            (tx) => appendTransactionMessageInstructions(instructions, tx),
+        const simulationTx = await pipe(await createDefaultTransaction(client, payer), tx =>
+            appendTransactionMessageInstructions(instructions, tx),
         );
         const estimateCompute = estimateComputeUnitLimitFactory({ rpc: client.rpc });
         const computeUnitLimit = await estimateCompute(simulationTx);
         const signature = await pipe(
             await createDefaultTransaction(client, payer, computeUnitLimit),
-            (tx) => appendTransactionMessageInstructions(instructions, tx),
-            (tx) => signAndSendTransaction(client, tx)
+            tx => appendTransactionMessageInstructions(instructions, tx),
+            tx => signAndSendTransaction(client, tx),
         );
         console.log(`    - ${description} - Signature: ${signature}`);
 
         return signature;
     } catch (error) {
-        throw new Error(`Failed to ${description.toLowerCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+            `Failed to ${description.toLowerCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
     }
 }
 
 async function verifyAttestation({
     client,
     schemaPda,
-    userAddress
+    userAddress,
 }: {
     client: Client;
     schemaPda: Address;
@@ -194,7 +188,7 @@ async function verifyAttestation({
         const [attestationPda] = await findAttestationPda({
             credential: schema.data.credential,
             schema: schemaPda,
-            nonce: userAddress
+            nonce: userAddress,
         });
         const attestation = await fetchAttestation(client.rpc, attestationPda);
         const attestationData = deserializeAttestationData(schema.data, attestation.data.data as Uint8Array);
@@ -206,11 +200,10 @@ async function verifyAttestation({
     }
 }
 
-
 async function verifyTokenAttestation({
     client,
     schemaPda,
-    userAddress
+    userAddress,
 }: {
     client: Client;
     schemaPda: Address;
@@ -222,11 +215,11 @@ async function verifyTokenAttestation({
         const [attestationPda] = await findAttestationPda({
             credential: schema.data.credential,
             schema: schemaPda,
-            nonce: userAddress
+            nonce: userAddress,
         });
         const [attestationMint] = await findAttestationMintPda({
-            attestation: attestationPda
-        })
+            attestation: attestationPda,
+        });
         const mintAccount = await fetchMint(client.rpc, attestationMint);
         if (!mintAccount) return false;
         if (mintAccount.data.extensions.__option === 'None') {
@@ -236,7 +229,7 @@ async function verifyTokenAttestation({
 
         // Verify member of group
         const [schemaMint] = await findSchemaMintPda({
-            schema: schemaPda
+            schema: schemaPda,
         });
         const tokenGroupMember = foundExtensions.find(ext => ext.__kind === 'TokenGroupMember');
         if (!tokenGroupMember) return false;
@@ -250,34 +243,33 @@ async function verifyTokenAttestation({
         const attestationInMetadata = tokenMetadata.additionalMetadata.get('attestation');
         if (attestationInMetadata !== attestationPda) return false;
 
-        // Verify schema PDA matches  
+        // Verify schema PDA matches
         const schemaInMetadata = tokenMetadata.additionalMetadata.get('schema');
         if (schemaInMetadata !== schemaPda) return false;
 
         return true;
-
     } catch {
         return false;
     }
 }
 
 async function main() {
-    console.log("Starting Solana Attestation Service Demo\n");
+    console.log('Starting Solana Attestation Service Demo\n');
 
     const client: Client = {
         rpc: createSolanaRpc(CONFIG.HTTP_CONNECTION_URL),
-        rpcSubscriptions: createSolanaRpcSubscriptions(CONFIG.WSS_CONNECTION_URL)
+        rpcSubscriptions: createSolanaRpcSubscriptions(CONFIG.WSS_CONNECTION_URL),
     };
 
     // Step 1: Setup wallets and fund payer
-    console.log("1. Setting up wallets and funding payer...");
+    console.log('1. Setting up wallets and funding payer...');
     const { payer, authorizedSigner1, authorizedSigner2, issuer, testUser } = await setupWallets(client);
 
     // Step 2: Create Credential
-    console.log("\n2. Creating Credential...");
+    console.log('\n2. Creating Credential...');
     const [credentialPda] = await findCredentialPda({
         authority: issuer.address,
-        name: CONFIG.CREDENTIAL_NAME
+        name: CONFIG.CREDENTIAL_NAME,
     });
 
     const createCredentialInstruction = getCreateCredentialInstruction({
@@ -285,18 +277,18 @@ async function main() {
         credential: credentialPda,
         authority: issuer,
         name: CONFIG.CREDENTIAL_NAME,
-        signers: [authorizedSigner1.address]
+        signers: [authorizedSigner1.address],
     });
 
     await sendAndConfirmInstructions(client, payer, [createCredentialInstruction], 'Credential created');
     console.log(`    - Credential PDA: ${credentialPda}`);
 
     // Step 3: Create Schema
-    console.log("\n3.  Creating Schema...");
+    console.log('\n3.  Creating Schema...');
     const [schemaPda] = await findSchemaPda({
         credential: credentialPda,
         name: CONFIG.SCHEMA_NAME,
-        version: CONFIG.SCHEMA_VERSION
+        version: CONFIG.SCHEMA_VERSION,
     });
 
     const createSchemaInstruction = getCreateSchemaInstruction({
@@ -314,16 +306,16 @@ async function main() {
     console.log(`    - Schema PDA: ${schemaPda}`);
 
     // Step 4: Tokenize Schema
-    console.log("\n4. Tokenizing Schema...");
+    console.log('\n4. Tokenizing Schema...');
     const [schemaMint] = await findSchemaMintPda({
-        schema: schemaPda
+        schema: schemaPda,
     });
     const [sasPda] = await findSasAuthorityPda();
     const schemaMintAccountSpace = getMintSize([
         {
-            __kind: "GroupPointer",
+            __kind: 'GroupPointer',
             authority: sasPda,
-            groupAddress: schemaMint
+            groupAddress: schemaMint,
         },
     ]);
 
@@ -336,24 +328,24 @@ async function main() {
         sasPda,
         maxSize: schemaMintAccountSpace,
         tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
-    })
+    });
 
     await sendAndConfirmInstructions(client, payer, [createTokenizeSchemaInstruction], 'Schema tokenized');
     console.log(`    - Schema Mint: ${schemaMint}`);
 
     // Step 5: Create Tokenized Attestation
-    console.log("\n5. Creating Tokenized Attestation...");
+    console.log('\n5. Creating Tokenized Attestation...');
     const [attestationPda] = await findAttestationPda({
         credential: credentialPda,
         schema: schemaPda,
-        nonce: testUser.address
+        nonce: testUser.address,
     });
     const [attestationMint] = await findAttestationMintPda({
-        attestation: attestationPda
-    })
+        attestation: attestationPda,
+    });
 
     const schema = await fetchSchema(client.rpc, schemaPda);
-    const expiryTimestamp = Math.floor(Date.now() / 1000) + (CONFIG.ATTESTATION_EXPIRY_DAYS * 24 * 60 * 60);
+    const expiryTimestamp = Math.floor(Date.now() / 1000) + CONFIG.ATTESTATION_EXPIRY_DAYS * 24 * 60 * 60;
     const [recipientTokenAccount] = await findAssociatedTokenPda({
         mint: attestationMint,
         owner: testUser.address,
@@ -362,32 +354,32 @@ async function main() {
 
     const attestationMintAccountSpace = getMintSize([
         {
-            __kind: "GroupMemberPointer",
+            __kind: 'GroupMemberPointer',
             authority: sasPda,
             memberAddress: attestationMint,
         },
-        { __kind: "NonTransferable" },
+        { __kind: 'NonTransferable' },
         {
-            __kind: "MetadataPointer",
+            __kind: 'MetadataPointer',
             authority: sasPda,
             metadataAddress: attestationMint,
         },
-        { __kind: "PermanentDelegate", delegate: sasPda },
-        { __kind: "MintCloseAuthority", closeAuthority: sasPda },
+        { __kind: 'PermanentDelegate', delegate: sasPda },
+        { __kind: 'MintCloseAuthority', closeAuthority: sasPda },
         {
-            __kind: "TokenMetadata",
+            __kind: 'TokenMetadata',
             updateAuthority: sasPda,
             mint: attestationMint,
             name: CONFIG.TOKEN_NAME,
             symbol: CONFIG.TOKEN_SYMBOL,
             uri: CONFIG.TOKEN_METADATA,
             additionalMetadata: new Map([
-                ["attestation", attestationPda],
-                ["schema", schemaPda]
+                ['attestation', attestationPda],
+                ['schema', schemaPda],
             ]),
         },
         {
-            __kind: "TokenGroupMember",
+            __kind: 'TokenGroupMember',
             group: schemaMint,
             mint: attestationMint,
             memberNumber: 1,
@@ -416,41 +408,51 @@ async function main() {
         tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
     });
 
-    await sendAndConfirmInstructions(client, payer, [createTokenizedAttestationInstruction], 'Tokenized attestation created');
+    await sendAndConfirmInstructions(
+        client,
+        payer,
+        [createTokenizedAttestationInstruction],
+        'Tokenized attestation created',
+    );
     console.log(`    - Attestation PDA: ${attestationPda}`);
     console.log(`    - Attestation Mint: ${attestationMint}`);
 
     // Step 6: Verify Attestations
-    console.log("\n6. Verifying Attestations...");
+    console.log('\n6. Verifying Attestations...');
 
     const isUserVerified = await verifyAttestation({
         client,
         schemaPda,
-        userAddress: testUser.address
+        userAddress: testUser.address,
     });
     console.log(`    - Test User is ${isUserVerified ? 'verified' : 'not verified'}`);
 
     // Step 7: Verify Attestation Token
-    console.log("\n7. Verifying Attestation Token...");
+    console.log('\n7. Verifying Attestation Token...');
     const isTokenVerified = await verifyTokenAttestation({ client, schemaPda, userAddress: testUser.address });
     console.log(`    - Test User's token is ${isTokenVerified ? 'verified' : 'not verified'}`);
 
     // Step 8: Close Tokenized Attestation
-    console.log("\n8. Closing Tokenized Attestations...");
+    console.log('\n8. Closing Tokenized Attestations...');
     const closeTokenizedAttestationInstruction = await getCloseTokenizedAttestationInstructionAsync({
         payer,
         authority: authorizedSigner1,
         credential: credentialPda,
         attestation: attestationPda,
         attestationTokenAccount: recipientTokenAccount,
-        tokenProgram: TOKEN_2022_PROGRAM_ADDRESS
+        tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
     });
-    await sendAndConfirmInstructions(client, payer, [closeTokenizedAttestationInstruction], 'Tokenized Attestation closed');
+    await sendAndConfirmInstructions(
+        client,
+        payer,
+        [closeTokenizedAttestationInstruction],
+        'Tokenized Attestation closed',
+    );
 }
 
 main()
-    .then(() => console.log("\nSolana Attestation Service demo completed successfully!"))
-    .catch((error) => {
-        console.error("❌ Demo failed:", error);
+    .then(() => console.log('\nSolana Attestation Service demo completed successfully!'))
+    .catch(error => {
+        console.error('❌ Demo failed:', error);
         process.exit(1);
     });

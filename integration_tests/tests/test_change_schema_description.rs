@@ -4,18 +4,9 @@ use solana_attestation_service_client::{
     accounts::Schema,
     instructions::{ChangeSchemaDescriptionBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
-use solana_attestation_service_macros::SchemaStructSerialize;
-use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction,
-};
+use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction};
 
 mod helpers;
-
-#[derive(SchemaStructSerialize)]
-struct TestData {
-    _name: String,
-    _location: u8,
-}
 
 #[tokio::test]
 async fn change_schema_description_success() {
@@ -23,12 +14,8 @@ async fn change_schema_description_success() {
     let authority = Keypair::new();
     let credential_name = "test";
     let (credential_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"credential",
-            &authority.pubkey().to_bytes(),
-            credential_name.as_bytes(),
-        ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
 
     let create_credential_ix = CreateCredentialBuilder::new()
@@ -46,24 +33,16 @@ async fn change_schema_description_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     // Create Schema
     let schema_name = "test_data";
     let description = "first test";
-    let schema_layout = TestData::get_serialized_representation();
+    let schema_layout = vec![12, 0];
     let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
-        &[
-            b"schema",
-            &credential_pda.to_bytes(),
-            schema_name.as_bytes(),
-            &[1],
-        ],
-        &Pubkey::from(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID),
+        &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
+        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
     let create_schema_ix = CreateSchemaBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -82,10 +61,7 @@ async fn change_schema_description_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     let description = "new test new test new test";
     let change_ix = ChangeSchemaDescriptionBuilder::new()
@@ -102,18 +78,11 @@ async fn change_schema_description_success() {
         &[&ctx.payer, &authority],
         ctx.last_blockhash,
     );
-    ctx.banks_client
-        .process_transaction(transaction)
-        .await
-        .unwrap();
+    ctx.banks_client.process_transaction(transaction).await.unwrap();
 
     // Assert schema account
-    let schema_account = ctx
-        .banks_client
-        .get_account(schema_pda)
-        .await
-        .expect("get_account")
-        .expect("account not nonex");
+    let schema_account =
+        ctx.banks_client.get_account(schema_pda).await.expect("get_account").expect("account not nonex");
     let schema = Schema::try_from_slice(&schema_account.data).unwrap();
     assert_eq!(schema.credential, credential_pda);
     assert_eq!(schema.layout, schema_layout);
@@ -123,6 +92,6 @@ async fn change_schema_description_success() {
         borsh::to_vec(&field_names).unwrap()[4..]
     );
     assert_eq!(schema.description, description.as_bytes());
-    assert_eq!(schema.is_paused, false);
+    assert!(!schema.is_paused);
     assert_eq!(schema.name, schema_name.as_bytes());
 }
