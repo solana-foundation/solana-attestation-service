@@ -305,7 +305,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94893f1e0c6eeab764ade8dc4c0db24caf4fe7cbbaafc0eba0a9030f447b5185"
 dependencies = [
  "num-traits",
- "rand 0.8.5",
+ "rand 0.8.8",
 ]
 
 [[package]]
@@ -1630,7 +1630,7 @@ dependencies = [
  "parking_lot",
  "portable-atomic",
  "quanta",
- "rand 0.8.5",
+ "rand 0.8.8",
  "smallvec",
  "spinning_top",
 ]
@@ -2695,7 +2695,7 @@ dependencies = [
  "lazy_static",
  "percent-encoding",
  "pin-project",
- "rand 0.8.5",
+ "rand 0.8.8",
  "thiserror 1.0.69",
 ]
 
@@ -3036,7 +3036,7 @@ checksum = "a2fe5ef3495d7d2e377ff17b1a8ce2ee2ec2a18cde8b6ad6619d65d0701c135d"
 dependencies = [
  "bytes",
  "getrandom 0.2.15",
- "rand 0.8.5",
+ "rand 0.8.8",
  "ring",
  "rustc-hash",
  "rustls 0.23.23",
@@ -3087,9 +3087,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.8.5"
+version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34af8d1a0e25924bc5b7c43c079c942339d8f0a8b57c39049bef581b46327404"
+checksum = "e058c7de0b26af77780c769414d6257830bb240f3c38477dbc2c16e5f54d6d4c"
 dependencies = [
  "libc",
  "rand_chacha 0.3.1",
@@ -3870,7 +3870,7 @@ dependencies = [
  "modular-bitfield",
  "num_cpus",
  "num_enum",
- "rand 0.8.5",
+ "rand 0.8.8",
  "rayon",
  "seqlock",
  "serde",
@@ -4144,7 +4144,7 @@ dependencies = [
  "memmap2",
  "modular-bitfield",
  "num_enum",
- "rand 0.8.5",
+ "rand 0.8.8",
  "solana-clock",
  "solana-measure",
  "solana-pubkey",
@@ -4387,7 +4387,7 @@ dependencies = [
  "futures-util",
  "indexmap",
  "log",
- "rand 0.8.5",
+ "rand 0.8.8",
  "rayon",
  "solana-keypair",
  "solana-measure",
@@ -4980,7 +4980,7 @@ dependencies = [
  "itertools 0.12.1",
  "log",
  "nix",
- "rand 0.8.5",
+ "rand 0.8.8",
  "serde",
  "serde_derive",
  "socket2",
@@ -5068,7 +5068,7 @@ dependencies = [
  "libc",
  "log",
  "nix",
- "rand 0.8.5",
+ "rand 0.8.8",
  "rayon",
  "serde",
  "solana-hash",
@@ -5164,7 +5164,7 @@ dependencies = [
  "num-bigint 0.4.6",
  "num-derive",
  "num-traits",
- "rand 0.8.5",
+ "rand 0.8.8",
  "serde",
  "serde_bytes",
  "serde_derive",
@@ -5290,7 +5290,7 @@ dependencies = [
  "itertools 0.12.1",
  "log",
  "percentage",
- "rand 0.8.5",
+ "rand 0.8.8",
  "serde",
  "solana-account",
  "solana-clock",
@@ -5371,7 +5371,7 @@ dependencies = [
  "getrandom 0.2.15",
  "js-sys",
  "num-traits",
- "rand 0.8.5",
+ "rand 0.8.8",
  "serde",
  "serde_derive",
  "solana-atomic-u64",
@@ -5646,7 +5646,7 @@ dependencies = [
  "num_enum",
  "percentage",
  "qualifier_attr",
- "rand 0.8.5",
+ "rand 0.8.8",
  "rayon",
  "regex",
  "serde",
@@ -5734,7 +5734,7 @@ dependencies = [
  "hash32",
  "libc",
  "log",
- "rand 0.8.5",
+ "rand 0.8.8",
  "rustc-demangle",
  "thiserror 1.0.69",
  "winapi",
@@ -5989,7 +5989,7 @@ checksum = "47d251c8f3dc015f320b4161daac7f108156c837428e5a8cc61136d25beb11d6"
 dependencies = [
  "bs58 0.5.1",
  "ed25519-dalek",
- "rand 0.8.5",
+ "rand 0.8.8",
  "serde",
  "serde-big-array",
  "serde_derive",
@@ -6116,7 +6116,7 @@ dependencies = [
  "percentage",
  "quinn",
  "quinn-proto",
- "rand 0.8.5",
+ "rand 0.8.8",
  "rustls 0.23.23",
  "smallvec",
  "socket2",
@@ -6471,7 +6471,7 @@ dependencies = [
  "bincode",
  "lazy_static",
  "log",
- "rand 0.8.5",
+ "rand 0.8.8",
  "solana-packet",
  "solana-perf",
  "solana-short-vec",
@@ -6508,7 +6508,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72735ae2d80d5556400b8fbb552688b3ac1413cd6c29e85db83d24ffe825a7f9"
 dependencies = [
  "lazy_static",
- "rand 0.8.5",
+ "rand 0.8.8",
 ]
 
 [[package]]
@@ -6676,7 +6676,7 @@ dependencies = [
  "merlin",
  "num-derive",
  "num-traits",
- "rand 0.8.5",
+ "rand 0.8.8",
  "serde",
  "serde_derive",
  "serde_json",
@@ -6729,7 +6729,7 @@ dependencies = [
  "merlin",
  "num-derive",
  "num-traits",
- "rand 0.8.5",
+ "rand 0.8.8",
  "serde",
  "serde_derive",
  "serde_json",
@@ -7499,7 +7499,7 @@ dependencies = [
  "humantime",
  "opentelemetry",
  "pin-project",
- "rand 0.8.5",
+ "rand 0.8.8",
  "serde",
  "static_assertions",
  "tarpc-plugins",
@@ -7897,7 +7897,7 @@ dependencies = [
  "http",
  "httparse",
  "log",
- "rand 0.8.5",
+ "rand 0.8.8",
  "rustls 0.21.12",
  "sha1",
  "thiserror 1.0.69",
