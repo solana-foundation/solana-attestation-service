@@ -2,7 +2,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use codama::CodamaEvent;
-use pinocchio::Address as Pubkey;
+use pinocchio::Address;
 
 use crate::constants::EVENT_IX_TAG_LE;
 
@@ -17,7 +17,7 @@ pub struct CloseAttestationEvent {
     /// Unique u8 byte for event type.
     pub discriminator: u8,
     /// Reference to the Schema this Attestation adheres to
-    pub schema: Pubkey,
+    pub schema: Address,
     /// Data that was verified and matches the Schema
     #[codama(type = bytes)]
     #[codama(size_prefix = number(u32))]

@@ -2,7 +2,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use codama::CodamaAccount;
-use pinocchio::{error::ProgramError, Address as Pubkey};
+use pinocchio::{error::ProgramError, Address};
 use pinocchio_log::log;
 
 use crate::error::AttestationServiceError;
@@ -20,21 +20,21 @@ use super::{
 #[repr(C)]
 pub struct Attestation {
     /// A pubkey that may either be randomly generated OR associated with a User's wallet
-    pub nonce: Pubkey,
+    pub nonce: Address,
     /// Credential this attestation is related to
-    pub credential: Pubkey,
+    pub credential: Address,
     /// Reference to the Schema this Attestation adheres to
-    pub schema: Pubkey,
+    pub schema: Address,
     /// Data that was verified and matches the Schema
     #[codama(type = bytes)]
     #[codama(size_prefix = number(u32))]
     pub data: Vec<u8>,
     /// The pubkey of the signer. Must be one of the `authorized_signer`s at time of attestation
-    pub signer: Pubkey,
+    pub signer: Address,
     /// Designates when the credential is expired. 0 means never expired
     pub expiry: i64,
     /// The pubkey of Attestation token account if created. Otherwise set to default pubkey.
-    pub token_account: Pubkey,
+    pub token_account: Address,
 }
 
 impl Discriminator for Attestation {
@@ -142,13 +142,13 @@ impl Attestation {
         // Start offset after Discriminator
         let mut offset: usize = 1;
 
-        let nonce: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let nonce: Address = data[offset..offset + 32].try_into().unwrap();
         offset += 32;
 
-        let credential: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let credential: Address = data[offset..offset + 32].try_into().unwrap();
         offset += 32;
 
-        let schema: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let schema: Address = data[offset..offset + 32].try_into().unwrap();
         offset += 32;
 
         let data_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
@@ -156,13 +156,13 @@ impl Attestation {
         let attestation_data = data[offset..offset + data_len].to_vec();
         offset += data_len;
 
-        let signer: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let signer: Address = data[offset..offset + 32].try_into().unwrap();
         offset += 32;
 
         let expiry = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
         offset += 8;
 
-        let token_account: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let token_account: Address = data[offset..offset + 32].try_into().unwrap();
 
         Ok(Self { nonce, credential, schema, data: attestation_data, signer, expiry, token_account })
     }
@@ -177,13 +177,13 @@ mod tests {
     #[test]
     fn attestation_validate_data() {
         let mut attestation = Attestation {
-            nonce: Pubkey::default(),
-            credential: Pubkey::default(),
-            schema: Pubkey::default(),
+            nonce: Address::default(),
+            credential: Address::default(),
+            schema: Address::default(),
             data: Vec::new(),
-            signer: Pubkey::default(),
+            signer: Address::default(),
             expiry: 0,
-            token_account: Pubkey::default(),
+            token_account: Address::default(),
         };
 
         // u8

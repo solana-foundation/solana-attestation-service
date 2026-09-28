@@ -9,7 +9,7 @@ include = ["Cargo.toml", "src/**/*.rs"]
 
 [features]
 default = []
-fetch = ["dep:solana-account", "dep:solana-client"]
+fetch = ["dep:solana-account", "dep:solana-rpc-client"]
 serde = ["dep:serde", "dep:serde_with"]
 
 [dependencies]
@@ -20,9 +20,9 @@ serde = { workspace = true, optional = true }
 serde_with = { workspace = true, optional = true }
 solana-account = { workspace = true, optional = true }
 solana-account-info = { workspace = true }
-solana-client = { workspace = true, optional = true }
+solana-address = { workspace = true, features = ["borsh", "copy"] }
 solana-cpi = { workspace = true }
 solana-instruction = { workspace = true }
 solana-program-error = { workspace = true }
-solana-pubkey = { workspace = true, features = ["borsh", "curve25519"] }
+solana-rpc-client = { workspace = true, optional = true }
 thiserror = { workspace = true }

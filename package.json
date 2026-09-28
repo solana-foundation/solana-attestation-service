@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@codama/renderers-js": "~2.4.0",
-    "@codama/renderers-rust": "~2.0.2",
+    "@codama/renderers-rust": "~3.1.3",
     "@solana/kit": "^7.0.0",
     "codama": "^1.11.0"
   },
