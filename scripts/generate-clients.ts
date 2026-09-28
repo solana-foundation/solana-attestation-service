@@ -244,7 +244,7 @@ tsCodama.accept(
             solanaProgramClientCore: '@solana/kit/program-client-core',
         },
         dependencyVersions: {
-            '@solana/kit': '^7.0.0',
+            '@solana/kit': '^8.0.0',
         },
         formatCode: true,
         prettierOptions: {

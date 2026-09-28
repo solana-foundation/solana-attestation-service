@@ -14,7 +14,7 @@ _Promotes the `2.0.0-beta.1` prerelease to a stable release._
 
 ### Changed
 
-- **Breaking** — built on `@solana/kit` v7 and Codama `renderers-js` 2.x. ([#104])
+- **Breaking** — built on `@solana/kit` v8 and Codama `renderers-js` 2.x. ([#104], [#PR])
 
 ### Fixed
 

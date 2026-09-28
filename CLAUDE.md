@@ -48,9 +48,9 @@ fields before rendering, which keeps the PDA helpers and skips decoders for an
 account that holds no data.
 
 **The TypeScript renderer is pinned to the kit major.**
-`@codama/renderers-js` 2.5 generates against `@solana/kit` 8, while this repo
-is on kit 7, so it is pinned with `~2.4`; widening the range breaks the
-TypeScript client until kit is upgraded.
+`@codama/renderers-js` 2.5 generates against `@solana/kit` 8, so it is pinned
+with `~2.5`; a renderer minor that targets the next kit major breaks the
+TypeScript client until kit is upgraded with it.
 
 **Only the TypeScript renderer understands events.** `scripts/generate-clients.ts`
 mirrors every event into a defined type for the Rust render, which is what keeps
