@@ -1,16 +1,20 @@
-use solana_program_test::{ProgramTest, ProgramTestContext};
-use solana_sdk::rent::Rent;
+use litesvm::LiteSVM;
+use solana_keypair::Keypair;
+use solana_signer::Signer;
 
-/// Get ProgramTestContext with SAS program loaded.
-pub async fn program_test_context() -> ProgramTestContext {
-    let mut program_test = ProgramTest::default();
-    program_test.add_program(
-        "solana_attestation_service",
-        solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
-        None,
-    );
-    let ctx = program_test.start_with_context().await;
-    // SIMD-0194 layout with the Agave default rate: pinocchio reads the first field as lamports per byte.
-    ctx.set_sysvar(&Rent { lamports_per_byte_year: 6960, exemption_threshold: 1.0, ..Rent::default() });
-    ctx
+pub struct TestContext {
+    pub svm: LiteSVM,
+    pub payer: Keypair,
+}
+
+/// Get a LiteSVM instance with the SAS program loaded and a funded payer.
+pub fn program_test_context() -> TestContext {
+    let mut svm = LiteSVM::new();
+    let program_path =
+        std::path::Path::new(&std::env::var("SBF_OUT_DIR").expect("SBF_OUT_DIR")).join("solana_attestation_service.so");
+    svm.add_program_from_file(solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID, program_path)
+        .unwrap();
+    let payer = Keypair::new();
+    svm.airdrop(&payer.pubkey(), 100_000_000_000).unwrap();
+    TestContext { svm, payer }
 }

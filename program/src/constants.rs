@@ -1,3 +1,4 @@
+use codama::CodamaAccount;
 use const_crypto::ed25519;
 use pinocchio::Address;
 
@@ -8,6 +9,28 @@ pub const EVENT_AUTHORITY_SEED: &[u8] = b"__event_authority";
 pub const SAS_SEED: &[u8] = b"sas";
 pub const SCHEMA_MINT_SEED: &[u8] = b"schemaMint";
 pub const ATTESTATION_MINT_SEED: &[u8] = b"attestationMint";
+
+/// Mint of a tokenized Schema. Declared for PDA derivation in the IDL only.
+#[derive(CodamaAccount)]
+#[codama(seed(type = string(utf8), value = "schemaMint"))]
+#[codama(seed(name = "schema", type = public_key))]
+pub struct SchemaMint;
+
+/// Mint of a tokenized Attestation. Declared for PDA derivation in the IDL only.
+#[derive(CodamaAccount)]
+#[codama(seed(type = string(utf8), value = "attestationMint"))]
+#[codama(seed(name = "attestation", type = public_key))]
+pub struct AttestationMint;
+
+/// Event authority that signs the event self-CPI.
+#[derive(CodamaAccount)]
+#[codama(seed(type = string(utf8), value = "__event_authority"))]
+pub struct EventAuthority;
+
+/// Program signer authority for token operations.
+#[derive(CodamaAccount)]
+#[codama(seed(type = string(utf8), value = "sas"))]
+pub struct SasAuthority;
 
 // Anchor Compatitable Discriminator: Sha256(anchor:event)[..8]
 pub const EVENT_IX_TAG: u64 = 0x1d9acb512ea545e4;

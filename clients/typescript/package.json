@@ -14,19 +14,19 @@
     "test:surfpool": "mocha --require ts-node/register --timeout 120000 'test/surfpool/**/*.ts'"
   },
   "devDependencies": {
-    "@solana/kit": "^7.0.0",
-    "@solana/kit-plugin-rpc": "^0.16.0",
-    "@solana/kit-plugin-signer": "^0.13.0",
+    "@solana/kit": "^8.3.0",
+    "@solana/kit-plugin-rpc": "^0.18.0",
+    "@solana/kit-plugin-signer": "^0.18.0",
     "@solana/surfpool": "^1.5.0",
     "@types/chai": "^4.3.20",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^20.11.24",
-    "chai": "^4.4.1",
-    "mocha": "^11.7.5",
+    "@types/node": "^20.19.43",
+    "chai": "^4.5.0",
+    "mocha": "^12.0.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@solana/kit": "^7.0.0"
+    "@solana/kit": "^8.0.0"
   }
 }

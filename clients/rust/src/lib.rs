@@ -14,6 +14,7 @@ pub mod errors {
     pub use super::generated::errors::*;
 }
 
+#[cfg(feature = "fetch")]
 pub mod shared {
     pub use super::generated::shared::*;
 }

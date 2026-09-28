@@ -1,20 +1,24 @@
 use borsh::BorshDeserialize;
 use helpers::program_test_context;
+use solana_address::Address;
 use solana_attestation_service_client::{
     accounts::Schema,
     instructions::{CreateCredentialBuilder, CreateSchemaBuilder},
 };
-use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction};
+use solana_keypair::Keypair;
+use solana_sdk_ids::system_program;
+use solana_signer::Signer;
+use solana_transaction::Transaction;
 
 mod helpers;
 
-#[tokio::test]
-async fn create_schema_success() {
-    let ctx = program_test_context().await;
+#[test]
+fn create_schema_success() {
+    let mut ctx = program_test_context();
 
     let authority = Keypair::new();
     let credential_name = "test";
-    let (credential_pda, _bump) = Pubkey::find_program_address(
+    let (credential_pda, _bump) = Address::find_program_address(
         &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -32,16 +36,16 @@ async fn create_schema_success() {
         &[create_credential_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     // Create Schema
     let schema_name = "test_data";
     let description = "schema for test data";
     let schema_layout = vec![12, 0];
     let field_names = vec!["name".into(), "location".into()];
-    let (schema_pda, _bump) = Pubkey::find_program_address(
+    let (schema_pda, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -60,13 +64,12 @@ async fn create_schema_success() {
         &[create_schema_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     // Assert schema account
-    let schema_account =
-        ctx.banks_client.get_account(schema_pda).await.expect("get_account").expect("account not none");
+    let schema_account = ctx.svm.get_account(&schema_pda).expect("account not none");
     let schema = Schema::try_from_slice(&schema_account.data).unwrap();
     println!("**** raw: {:?}", &schema_account.data);
     println!("**** layout: {:?}", &schema.layout);

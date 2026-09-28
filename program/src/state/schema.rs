@@ -1,9 +1,9 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::{error::ProgramError, Address as Pubkey};
+use codama::CodamaAccount;
+use pinocchio::{error::ProgramError, Address};
 use pinocchio_log::log;
-use shank::ShankAccount;
 
 use crate::error::AttestationServiceError;
 
@@ -85,20 +85,31 @@ impl From<SchemaDataTypes> for u8 {
     }
 }
 
-// PDA ["schema", credential, name, version]
-#[derive(Clone, Debug, PartialEq, ShankAccount)]
+#[derive(Clone, Debug, PartialEq, CodamaAccount)]
+#[codama(seed(type = string(utf8), value = "schema"))]
+#[codama(seed(name = "credential", type = public_key))]
+#[codama(seed(name = "name", type = string(utf8)))]
+#[codama(seed(name = "version", type = number(u8)))]
 #[repr(C)]
 pub struct Schema {
     /// The Credential that manages this Schema
-    pub credential: Pubkey,
+    pub credential: Address,
     /// Name of Schema, in UTF8-encoded byte string.
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub name: Vec<u8>,
     /// Description of what schema does, in UTF8-encoded byte string.
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub description: Vec<u8>,
     /// The schema layout where data will be encoded with, in array of SchemaDataTypes.
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub layout: Vec<u8>,
     /// Field names of schema stored as serialized array of Strings.
     /// First 4 bytes are number of bytes in array.
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub field_names: Vec<u8>,
     /// Whether or not this schema is still valid
     pub is_paused: bool,
@@ -155,7 +166,7 @@ impl Schema {
         // Start offset after Discriminator
         let mut offset: usize = 1;
 
-        let credential: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let credential: Address = data[offset..offset + 32].try_into().unwrap();
         offset += 32;
 
         let name_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;

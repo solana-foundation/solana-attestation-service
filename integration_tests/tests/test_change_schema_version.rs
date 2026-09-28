@@ -1,35 +1,34 @@
 use borsh::BorshDeserialize;
-use helpers::program_test_context;
+use helpers::{program_test_context, TestContext};
+use solana_address::Address;
 use solana_attestation_service_client::{
     accounts::Schema,
     instructions::{ChangeSchemaVersionBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
-use solana_program_test::ProgramTestContext;
-use solana_sdk::{
-    instruction::InstructionError,
-    pubkey::Pubkey,
-    signature::Keypair,
-    signer::Signer,
-    system_program,
-    transaction::{Transaction, TransactionError},
-};
+use solana_instruction_error::InstructionError;
+use solana_keypair::Keypair;
+use solana_sdk_ids::system_program;
+use solana_signer::Signer;
+use solana_transaction::Transaction;
+use solana_transaction_error::TransactionError;
+
 mod helpers;
 
 struct TestFixtures {
-    ctx: ProgramTestContext,
-    credential: Pubkey,
-    schema: Pubkey,
+    ctx: TestContext,
+    credential: Address,
+    schema: Address,
     authority: Keypair,
     schema_name: String,
     schema_description: String,
 }
 
-async fn setup() -> TestFixtures {
-    let ctx = program_test_context().await;
+fn setup() -> TestFixtures {
+    let mut ctx = program_test_context();
 
     let authority = Keypair::new();
     let credential_name = "test";
-    let (credential_pda, _bump) = Pubkey::find_program_address(
+    let (credential_pda, _bump) = Address::find_program_address(
         &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -47,16 +46,16 @@ async fn setup() -> TestFixtures {
         &[create_credential_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     // Create Schema
     let schema_name = "test_data";
     let description = "schema for test data";
     let schema_layout = vec![12, 0];
     let field_names = vec!["name".into(), "location".into()];
-    let (schema_pda, _bump) = Pubkey::find_program_address(
+    let (schema_pda, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -75,9 +74,9 @@ async fn setup() -> TestFixtures {
         &[create_schema_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     TestFixtures {
         ctx,
@@ -89,19 +88,19 @@ async fn setup() -> TestFixtures {
     }
 }
 
-#[tokio::test]
-async fn change_schema_version_success() {
+#[test]
+fn change_schema_version_success() {
     let TestFixtures {
-        ctx,
+        mut ctx,
         credential: credential_pda,
         schema: schema_pda,
         authority,
         schema_name,
         schema_description,
-    } = setup().await;
+    } = setup();
 
     // Update schema for version 2
-    let (schema_pda2, _bump) = Pubkey::find_program_address(
+    let (schema_pda2, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[2]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -122,13 +121,12 @@ async fn change_schema_version_success() {
         &[change_schema_version_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     // Assert schema account
-    let schema_account =
-        ctx.banks_client.get_account(schema_pda2).await.expect("get_account").expect("account not none");
+    let schema_account = ctx.svm.get_account(&schema_pda2).expect("account not none");
     let schema = Schema::try_from_slice(&schema_account.data).unwrap();
     assert_eq!(schema.credential, credential_pda);
     assert_eq!(schema.layout, schema_layout2);
@@ -143,19 +141,19 @@ async fn change_schema_version_success() {
     assert_eq!(schema.name, schema_name.as_bytes());
 }
 
-#[tokio::test]
-async fn change_schema_version_fail_incorrect_credential() {
+#[test]
+fn change_schema_version_fail_incorrect_credential() {
     let TestFixtures {
-        ctx,
+        mut ctx,
         credential: _credential_pda,
         schema: schema_pda,
         authority,
         schema_name,
         schema_description: _,
-    } = setup().await;
+    } = setup();
 
     let credential_name = "test-2";
-    let (credential_pda_2, _bump) = Pubkey::find_program_address(
+    let (credential_pda_2, _bump) = Address::find_program_address(
         &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -173,12 +171,12 @@ async fn change_schema_version_fail_incorrect_credential() {
         &[create_credential_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     // Update schema for version 2
-    let (schema_pda2, _bump) = Pubkey::find_program_address(
+    let (schema_pda2, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda_2.to_bytes(), schema_name.as_bytes(), &[2]],
         &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
     );
@@ -199,8 +197,8 @@ async fn change_schema_version_fail_incorrect_credential() {
         &[change_schema_version_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    let tx_err = ctx.banks_client.process_transaction(transaction).await.expect_err("should error").unwrap();
+    let tx_err = ctx.svm.send_transaction(transaction).expect_err("should error").err;
     assert_eq!(tx_err, TransactionError::InstructionError(0, InstructionError::Custom(1)))
 }

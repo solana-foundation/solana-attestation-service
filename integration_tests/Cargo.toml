@@ -5,12 +5,19 @@ edition = { workspace = true }
 
 [dependencies]
 borsh = { workspace = true }
+litesvm = { workspace = true }
+solana-address = { workspace = true, features = ["atomic"] }
 solana-attestation-service-client = { workspace = true }
-solana-program-test = { workspace = true }
-solana-sdk = { workspace = true }
-spl-token-2022 = { workspace = true }
-tokio = { workspace = true }
-spl-associated-token-account = { workspace = true }
+solana-clock = { workspace = true }
+solana-instruction-error = { workspace = true }
+solana-keypair = { workspace = true }
+solana-program-option = { workspace = true }
+solana-program-pack = { workspace = true }
+solana-sdk-ids = { workspace = true }
+solana-signer = { workspace = true }
+solana-transaction = { workspace = true }
+solana-transaction-error = { workspace = true }
+spl-token-2022-interface = { workspace = true }
 spl-token-group-interface = { workspace = true }
 spl-token-metadata-interface = { workspace = true }
 

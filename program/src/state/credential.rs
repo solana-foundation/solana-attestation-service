@@ -1,26 +1,30 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::{error::ProgramError, Address as Pubkey};
+use codama::CodamaAccount;
+use pinocchio::{error::ProgramError, Address};
 use pinocchio_log::log;
-use shank::ShankAccount;
 
 use crate::error::AttestationServiceError;
 
 use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
-// PDA ["credential", authority, name]
 /// Tracks the authorized signers of for schemas and their attestations.
-#[derive(Clone, Debug, PartialEq, ShankAccount)]
+#[derive(Clone, Debug, PartialEq, CodamaAccount)]
+#[codama(seed(type = string(utf8), value = "credential"))]
+#[codama(seed(name = "authority", type = public_key))]
+#[codama(seed(name = "name", type = string(utf8)))]
 #[repr(C)]
 pub struct Credential {
     /// Admin of this credential
-    pub authority: Pubkey,
+    pub authority: Address,
     /// UTF-8 encoded Name of this credential
     /// Includes 4 bytes for length of name
+    #[codama(type = bytes)]
+    #[codama(size_prefix = number(u32))]
     pub name: Vec<u8>,
     /// List of signers that are allowed to "attest"
-    pub authorized_signers: Vec<Pubkey>,
+    pub authorized_signers: Vec<Address>,
 }
 
 impl Discriminator for Credential {
@@ -48,7 +52,7 @@ impl AccountSerialize for Credential {
 }
 
 impl Credential {
-    pub fn validate_authority(&self, authority: &Pubkey) -> Result<(), ProgramError> {
+    pub fn validate_authority(&self, authority: &Address) -> Result<(), ProgramError> {
         if self.authority.ne(authority) {
             log!("Authority Mismatch");
             return Err(ProgramError::InvalidAccountData);
@@ -57,7 +61,7 @@ impl Credential {
     }
 
     /// Validate the signer is one of the authorized signers.
-    pub fn validate_authorized_signer(&self, signer: &Pubkey) -> Result<(), ProgramError> {
+    pub fn validate_authorized_signer(&self, signer: &Address) -> Result<(), ProgramError> {
         if !self.authorized_signers.contains(signer) {
             return Err(AttestationServiceError::SignerNotAuthorized.into());
         }
@@ -74,7 +78,7 @@ impl Credential {
         // Start offset after Discriminator
         let mut offset: usize = 1;
 
-        let authority: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let authority: Address = data[offset..offset + 32].try_into().unwrap();
         offset += 32;
 
         let name_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
@@ -85,9 +89,9 @@ impl Credential {
         let signers_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
         offset += 4;
 
-        let mut authorized_signers: Vec<Pubkey> = Vec::new();
+        let mut authorized_signers: Vec<Address> = Vec::new();
         for _ in 0..signers_len {
-            let signer: Pubkey = data[offset..offset + 32].try_into().unwrap();
+            let signer: Address = data[offset..offset + 32].try_into().unwrap();
             authorized_signers.push(signer);
             offset += 32;
         }
