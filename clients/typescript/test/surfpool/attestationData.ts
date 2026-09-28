@@ -27,13 +27,11 @@ import {
     Schema,
     SchemaDataType,
     serializeAttestationData,
+    SOLANA_ATTESTATION_SERVICE_ERROR__INVALID_ATTESTATION_DATA,
     SOLANA_ATTESTATION_SERVICE_PROGRAM_ADDRESS,
 } from '../../src';
 
 const PROGRAM_SO_PATH = resolve(__dirname, '../../../../target/deploy/solana_attestation_service.so');
-
-/** `AttestationServiceError::InvalidAttestationData` in program/src/error.rs */
-const INVALID_ATTESTATION_DATA_ERROR_CODE = 6;
 
 /**
  * Transaction failures arrive wrapped in several layers of `SolanaError`, so
@@ -263,7 +261,7 @@ describe('Surfpool', () => {
         });
         const account = await fetchAttestation(client.rpc, attestation);
 
-        assert.deepEqual(deserializeAttestationData(onchainSchema, Uint8Array.from(account.data.data)), data);
+        assert.deepEqual(deserializeAttestationData(onchainSchema, account.data.data), data);
     });
 
     it('round trips every supported layout type through the program', async () => {
@@ -325,7 +323,7 @@ describe('Surfpool', () => {
         });
         const account = await fetchAttestation(client.rpc, attestation);
 
-        assert.deepEqual(deserializeAttestationData(onchainWideSchema, Uint8Array.from(account.data.data)), data);
+        assert.deepEqual(deserializeAttestationData(onchainWideSchema, account.data.data), data);
     });
 
     it('rejects data that does not match the Schema layout', async () => {
@@ -338,12 +336,18 @@ describe('Surfpool', () => {
         });
         const withTrailingByte = Uint8Array.from([...serialized, 0]);
 
-        try {
-            await createAttestation(client, authority, credential, schema, nonce, withTrailingByte);
-            assert.fail('Expected the program to reject the Attestation data');
-        } catch (error) {
-            assert.equal(findCustomProgramErrorCode(error), INVALID_ATTESTATION_DATA_ERROR_CODE);
-        }
+        const error: unknown = await createAttestation(
+            client,
+            authority,
+            credential,
+            schema,
+            nonce,
+            withTrailingByte,
+        ).then(
+            () => assert.fail('Expected the program to reject the Attestation data'),
+            (rejection: unknown) => rejection,
+        );
+        assert.equal(findCustomProgramErrorCode(error), SOLANA_ATTESTATION_SERVICE_ERROR__INVALID_ATTESTATION_DATA);
     });
 
     it('closes an Attestation', async () => {

@@ -2,25 +2,22 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_client::rpc_client::RpcClient;
-use solana_sdk::{
-    commitment_config::CommitmentConfig,
-    compute_budget::ComputeBudgetInstruction,
-    instruction::Instruction,
-    message::Message,
-    native_token::LAMPORTS_PER_SOL,
-    pubkey::Pubkey,
-    signature::{Keypair, Signature},
-    signer::Signer,
-    transaction::Transaction,
-};
-use solana_system_interface::program::ID as system_program;
+use solana_address::Address;
+use solana_commitment_config::CommitmentConfig;
+use solana_compute_budget_interface::ComputeBudgetInstruction;
+use solana_instruction::Instruction;
+use solana_keypair::Keypair;
+use solana_message::Message;
+use solana_native_token::LAMPORTS_PER_SOL;
+use solana_rpc_client::rpc_client::RpcClient;
+use solana_signer::Signer;
+use solana_transaction::Transaction;
 
 use solana_attestation_service_client::{
     accounts::Attestation,
     instructions::{
-        ChangeAuthorizedSignersBuilder, CloseAttestationBuilder, CreateAttestationBuilder,
-        CreateCredentialBuilder, CreateSchemaBuilder,
+        ChangeAuthorizedSignersBuilder, CloseAttestationBuilder, CreateAttestationBuilder, CreateCredentialBuilder,
+        CreateSchemaBuilder,
     },
     programs::SOLANA_ATTESTATION_SERVICE_ID,
 };
@@ -60,11 +57,7 @@ pub struct TestData {
 
 impl TestData {
     fn get_example_data() -> Self {
-        Self {
-            name: "test-user".to_string(),
-            age: 100,
-            country: "usa".to_string(),
-        }
+        Self { name: "test-user".to_string(), age: 100, country: "usa".to_string() }
     }
 }
 
@@ -94,70 +87,49 @@ struct SasDemo {
     wallets: Wallets,
 }
 
+fn now() -> i64 {
+    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64
+}
+
 impl SasDemo {
     fn new() -> Self {
         let config = Config::default();
-        let rpc_client =
-            RpcClient::new_with_commitment(config.rpc_url.clone(), CommitmentConfig::confirmed());
+        let rpc_client = RpcClient::new_with_commitment(config.rpc_url.clone(), CommitmentConfig::confirmed());
         let wallets = Wallets::new();
 
-        Self {
-            config,
-            rpc_client,
-            wallets,
-        }
+        Self { config, rpc_client, wallets }
     }
 
-    fn derive_credential_pda(&self) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
-            &[
-                b"credential",
-                &self.wallets.issuer.pubkey().to_bytes(),
-                self.config.credential_name.as_bytes(),
-            ],
+    fn derive_credential_pda(&self) -> (Address, u8) {
+        Address::find_program_address(
+            &[b"credential", self.wallets.issuer.pubkey().as_ref(), self.config.credential_name.as_bytes()],
             &SOLANA_ATTESTATION_SERVICE_ID,
         )
     }
 
-    fn derive_schema_pda(&self, credential_pda: &Pubkey) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
-            &[
-                b"schema",
-                &credential_pda.to_bytes(),
-                self.config.schema_name.as_bytes(),
-                &[self.config.schema_version],
-            ],
+    fn derive_schema_pda(&self, credential_pda: &Address) -> (Address, u8) {
+        Address::find_program_address(
+            &[b"schema", credential_pda.as_ref(), self.config.schema_name.as_bytes(), &[self.config.schema_version]],
             &SOLANA_ATTESTATION_SERVICE_ID,
         )
     }
 
-    fn derive_attestation_pda(
-        &self,
-        credential_pda: &Pubkey,
-        schema_pda: &Pubkey,
-        nonce: &Pubkey,
-    ) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
-            &[
-                b"attestation",
-                &credential_pda.to_bytes(),
-                &schema_pda.to_bytes(),
-                &nonce.to_bytes(),
-            ],
+    fn derive_attestation_pda(&self, credential_pda: &Address, schema_pda: &Address, nonce: &Address) -> (Address, u8) {
+        Address::find_program_address(
+            &[b"attestation", credential_pda.as_ref(), schema_pda.as_ref(), nonce.as_ref()],
             &SOLANA_ATTESTATION_SERVICE_ID,
         )
     }
 
-    async fn send_and_confirm_instruction(
+    fn send_and_confirm_instruction(
         &self,
         instruction: Instruction,
         signers: &[&Keypair],
         description: &str,
-    ) -> Result<Signature> {
-        // Simulate transaction to get compute units needed
+    ) -> Result<()> {
         let sim_message = Message::new(
             &[
-                ComputeBudgetInstruction::set_compute_unit_limit(1_400_000 as u32),
+                ComputeBudgetInstruction::set_compute_unit_limit(1_400_000),
                 ComputeBudgetInstruction::set_compute_unit_price(1),
                 instruction.clone(),
             ],
@@ -167,16 +139,11 @@ impl SasDemo {
         let mut all_signers = vec![&self.wallets.payer];
         all_signers.extend(signers);
 
-        let simulation = Transaction::new(
-            &all_signers,
-            sim_message,
-            self.rpc_client.get_latest_blockhash()?,
-        );
+        let simulation = Transaction::new(&all_signers, sim_message, self.rpc_client.get_latest_blockhash()?);
 
         let sim_result = self.rpc_client.simulate_transaction(&simulation)?;
         let compute = sim_result.value.units_consumed.unwrap_or(200_000);
 
-        // Create optimized transaction
         let message = Message::new(
             &[
                 ComputeBudgetInstruction::set_compute_unit_limit(compute as u32),
@@ -188,24 +155,18 @@ impl SasDemo {
 
         let recent_blockhash = self.rpc_client.get_latest_blockhash()?;
         let transaction = Transaction::new(&all_signers, message, recent_blockhash);
-        let signature = self
-            .rpc_client
-            .send_and_confirm_transaction_with_spinner(&transaction)?;
+        let signature = self.rpc_client.send_and_confirm_transaction_with_spinner(&transaction)?;
 
         println!("    - {} - Signature: {}", description, signature);
-        Ok(signature)
+        Ok(())
     }
 
-    async fn fund_payer(&self) -> Result<()> {
+    fn fund_payer(&self) -> Result<()> {
         println!("1. Funding payer wallet...");
 
-        // Request airdrop for payer
-        let airdrop_sig = self
-            .rpc_client
-            .request_airdrop(&self.wallets.payer.pubkey(), LAMPORTS_PER_SOL)?;
+        let airdrop_sig = self.rpc_client.request_airdrop(&self.wallets.payer.pubkey(), LAMPORTS_PER_SOL)?;
 
-        // Wait for airdrop confirmation
-        let _confirmed = self.rpc_client.confirm_transaction_with_spinner(
+        self.rpc_client.confirm_transaction_with_spinner(
             &airdrop_sig,
             &self.rpc_client.get_latest_blockhash()?,
             CommitmentConfig::confirmed(),
@@ -216,7 +177,7 @@ impl SasDemo {
         Ok(())
     }
 
-    async fn create_credential(&self) -> Result<Pubkey> {
+    fn create_credential(&self) -> Result<Address> {
         println!("\n2. Creating Credential...");
 
         let (credential_pda, _bump) = self.derive_credential_pda();
@@ -225,23 +186,17 @@ impl SasDemo {
             .payer(self.wallets.payer.pubkey())
             .credential(credential_pda)
             .authority(self.wallets.issuer.pubkey())
-            .system_program(system_program)
             .name(self.config.credential_name.clone())
             .signers(vec![self.wallets.authorized_signer1.pubkey()])
             .instruction();
 
-        self.send_and_confirm_instruction(
-            instruction,
-            &[&self.wallets.issuer],
-            "Credential created",
-        )
-        .await?;
+        self.send_and_confirm_instruction(instruction, &[&self.wallets.issuer], "Credential created")?;
 
         println!("    - Credential PDA: {}", credential_pda);
         Ok(credential_pda)
     }
 
-    async fn create_schema(&self, credential_pda: &Pubkey) -> Result<Pubkey> {
+    fn create_schema(&self, credential_pda: &Address) -> Result<Address> {
         println!("\n3. Creating Schema...");
 
         let (schema_pda, _bump) = self.derive_schema_pda(credential_pda);
@@ -257,36 +212,20 @@ impl SasDemo {
             .field_names(self.config.schema_fields.clone())
             .instruction();
 
-        self.send_and_confirm_instruction(instruction, &[&self.wallets.issuer], "Schema created")
-            .await?;
+        self.send_and_confirm_instruction(instruction, &[&self.wallets.issuer], "Schema created")?;
 
         println!("    - Schema PDA: {}", schema_pda);
         Ok(schema_pda)
     }
 
-    async fn create_attestation(
-        &self,
-        credential_pda: &Pubkey,
-        schema_pda: &Pubkey,
-    ) -> Result<Pubkey> {
+    fn create_attestation(&self, credential_pda: &Address, schema_pda: &Address) -> Result<Address> {
         println!("\n4. Creating Attestation...");
 
-        let attestation_data = TestData::get_example_data();
-
-        // Calculate expiry timestamp
-        let current_timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
-        let expiry = current_timestamp + (self.config.attestation_expiry_days * 24 * 60 * 60);
-
-        // Serialize attestation data using Borsh
-        let mut serialized_data = Vec::new();
-        attestation_data.serialize(&mut serialized_data)?;
+        let expiry = now() + (self.config.attestation_expiry_days * 24 * 60 * 60);
+        let serialized_data = borsh::to_vec(&TestData::get_example_data())?;
 
         let nonce = self.wallets.test_user.pubkey();
-        let (attestation_pda, _bump) =
-            self.derive_attestation_pda(credential_pda, schema_pda, &nonce);
+        let (attestation_pda, _bump) = self.derive_attestation_pda(credential_pda, schema_pda, &nonce);
 
         let instruction = CreateAttestationBuilder::new()
             .payer(self.wallets.payer.pubkey())
@@ -299,79 +238,47 @@ impl SasDemo {
             .nonce(nonce)
             .instruction();
 
-        self.send_and_confirm_instruction(
-            instruction,
-            &[&self.wallets.authorized_signer1],
-            "Attestation created",
-        )
-        .await?;
+        self.send_and_confirm_instruction(instruction, &[&self.wallets.authorized_signer1], "Attestation created")?;
 
         println!("    - Attestation PDA: {}", attestation_pda);
         Ok(attestation_pda)
     }
 
-    async fn update_authorized_signers(&self, credential_pda: &Pubkey) -> Result<()> {
+    fn update_authorized_signers(&self, credential_pda: &Address) -> Result<()> {
         println!("\n5. Updating Authorized Signers...");
 
         let instruction = ChangeAuthorizedSignersBuilder::new()
             .payer(self.wallets.payer.pubkey())
             .authority(self.wallets.issuer.pubkey())
             .credential(*credential_pda)
-            .signers(vec![
-                self.wallets.authorized_signer1.pubkey(),
-                self.wallets.authorized_signer2.pubkey(),
-            ])
+            .signers(vec![self.wallets.authorized_signer1.pubkey(), self.wallets.authorized_signer2.pubkey()])
             .instruction();
 
-        self.send_and_confirm_instruction(
-            instruction,
-            &[&self.wallets.issuer],
-            "Authorized signers updated",
-        )
-        .await?;
-
-        Ok(())
+        self.send_and_confirm_instruction(instruction, &[&self.wallets.issuer], "Authorized signers updated")
     }
 
-    async fn verify_attestation(
+    fn verify_attestation(
         &self,
-        schema_pda: &Pubkey,
-        user_address: &Pubkey,
-        credential_pda: &Pubkey,
-        user_name: &str,
-    ) -> Result<bool> {
-        let (attestation_pda, _bump) =
-            self.derive_attestation_pda(credential_pda, schema_pda, user_address);
+        schema_pda: &Address,
+        user_address: &Address,
+        credential_pda: &Address,
+        label: &str,
+    ) -> bool {
+        let (attestation_pda, _bump) = self.derive_attestation_pda(credential_pda, schema_pda, user_address);
 
-        let is_valid = match self.rpc_client.get_account(&attestation_pda) {
-            Ok(account) => match Attestation::from_bytes(&account.data) {
-                Ok(attestation) => {
-                    let current_timestamp = SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap()
-                        .as_secs() as i64;
+        let is_valid = self
+            .rpc_client
+            .get_account(&attestation_pda)
+            .ok()
+            .and_then(|account| Attestation::from_bytes(&account.data).ok())
+            .is_some_and(|attestation| now() < attestation.expiry);
 
-                    current_timestamp < attestation.expiry
-                }
-                Err(_) => false,
-            },
-            Err(_) => false,
-        };
+        println!("    - {} is {}", label, if is_valid { "verified" } else { "not verified" });
 
-        println!(
-            "    - {} is {}",
-            user_name,
-            if is_valid { "verified" } else { "not verified" }
-        );
-
-        Ok(is_valid)
+        is_valid
     }
 
-    async fn close_attestation(
-        &self,
-        attestation_pda: &Pubkey,
-        credential_pda: &Pubkey,
-    ) -> Result<()> {
+    fn close_attestation(&self, attestation_pda: &Address, credential_pda: &Address) -> Result<()> {
         println!("\n7. Closing Attestation...");
 
         let instruction = CloseAttestationBuilder::new()
@@ -381,75 +288,30 @@ impl SasDemo {
             .credential(*credential_pda)
             .instruction();
 
-        self.send_and_confirm_instruction(
-            instruction,
-            &[&self.wallets.authorized_signer1],
-            "Closed attestation",
-        )
-        .await?;
-
-        Ok(())
+        self.send_and_confirm_instruction(instruction, &[&self.wallets.authorized_signer1], "Closed attestation")
     }
 
-    pub async fn run_demo(&self) -> Result<()> {
+    pub fn run_demo(&self) -> Result<()> {
         println!("Starting Solana Attestation Service Demo\n");
 
-        // Step 1: Fund payer
-        self.fund_payer().await?;
+        self.fund_payer()?;
+        let credential_pda = self.create_credential()?;
+        let schema_pda = self.create_schema(&credential_pda)?;
+        let attestation_pda = self.create_attestation(&credential_pda, &schema_pda)?;
+        self.update_authorized_signers(&credential_pda)?;
 
-        // Step 2: Create Credential
-        let credential_pda = self.create_credential().await?;
-
-        // Step 3: Create Schema
-        let schema_pda = self.create_schema(&credential_pda).await?;
-
-        // Step 4: Create Attestation
-        let attestation_pda = self
-            .create_attestation(&credential_pda, &schema_pda)
-            .await?;
-
-        // Step 5: Update Authorized Signers
-        self.update_authorized_signers(&credential_pda).await?;
-
-        // Step 6: Verify Attestations
         println!("\n6. Verifying Attestations...");
-        let _test_user_result = self
-            .verify_attestation(
-                &schema_pda,
-                &self.wallets.test_user.pubkey(),
-                &credential_pda,
-                "Test User",
-            )
-            .await;
-        let _random_user_result = self
-            .verify_attestation(
-                &schema_pda,
-                &Keypair::new().pubkey(),
-                &credential_pda,
-                "Random User",
-            )
-            .await;
+        self.verify_attestation(&schema_pda, &self.wallets.test_user.pubkey(), &credential_pda, "Test User");
+        self.verify_attestation(&schema_pda, &Keypair::new().pubkey(), &credential_pda, "Random User");
 
-        // Step 7: Close Attestation
-        self.close_attestation(&attestation_pda, &credential_pda)
-            .await?;
+        self.close_attestation(&attestation_pda, &credential_pda)?;
 
         println!("\nSolana Attestation Service demo completed successfully!");
 
         Ok(())
     }
-    
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    let demo = SasDemo::new();
- 
-    match demo.run_demo().await {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            eprintln!("❌ Demo failed: {}", e);
-            std::process::exit(1);
-        }
-    }
+fn main() -> Result<()> {
+    SasDemo::new().run_demo()
 }

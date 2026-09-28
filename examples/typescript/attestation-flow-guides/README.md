@@ -59,7 +59,7 @@ For local development and testing:
     pnpm start-local
     ```
 
-3. **Update configuration** in the demo files:
+3. **Update configuration** in `src/kit/shared.ts`:
 
     ```typescript
     const CONFIG = {

@@ -2,22 +2,20 @@
 name = "sas-standard-demo"
 version = "0.1.0"
 edition = "2021"
- 
+
+[workspace]
+
 [dependencies]
-# Solana core dependencies
-solana-sdk = "2.3.1"
-solana-client = "2.3.2"
-solana-program = "2.3.0"
-solana-system-interface = "1.0.0"
- 
-# Solana Attestation Service client
-solana-attestation-service-client = "1.0.9"
- 
-# Async runtime
-tokio = { version = "1.0", features = ["full"] }
- 
-# Serialization
-borsh = "0.10"
- 
-# Error handling
 anyhow = "1.0"
+borsh = { version = "1.5.5", features = ["derive"] }
+solana-address = { version = "2.8.0", features = ["curve25519"] }
+solana-attestation-service-client = { version = "2.0.0", path = "../../../../clients/rust" }
+solana-commitment-config = "3.1"
+solana-compute-budget-interface = "3.1"
+solana-instruction = "3.1"
+solana-keypair = "3.1"
+solana-message = "3.1"
+solana-native-token = "3.0"
+solana-rpc-client = "3.1.8"
+solana-signer = "3.0"
+solana-transaction = "3.0"

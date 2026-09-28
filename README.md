@@ -154,10 +154,10 @@ pnpm add sas-lib
 ```
 
 ```typescript
-import { deriveCredentialPda, deriveSchemaPda, serializeAttestationData } from 'sas-lib';
+import { findCredentialPda, findSchemaPda, serializeAttestationData } from 'sas-lib';
 ```
 
-The package re-exports the Codama-generated instruction builders, account decoders, and PDA finders, plus hand-written helpers: PDA derivation shorthands (`deriveCredentialPda`, `deriveSchemaPda`, `deriveAttestationPda`, `deriveSchemaMintPda`, `deriveAttestationMintPda`, `deriveEventAuthorityAddress`, `deriveSasAuthorityAddress`) and schema-driven codecs (`getAttestationDataCodec`, `serializeAttestationData`, `deserializeAttestationData`). It is built on `@solana/kit` v7, declared as a peer dependency.
+The package re-exports the Codama-generated instruction builders, account decoders, and PDA finders (`findCredentialPda`, `findSchemaPda`, `findAttestationPda`, `findSchemaMintPda`, `findAttestationMintPda`, `findEventAuthorityPda`, `findSasAuthorityPda`), plus hand-written schema-driven codecs (`getAttestationDataCodec`, `serializeAttestationData`, `deserializeAttestationData`). It is built on `@solana/kit` v8, declared as a peer dependency.
 
 Rust:
 

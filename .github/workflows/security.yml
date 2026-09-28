@@ -39,7 +39,6 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-rust: 'false'
-          enable-rust-cache: 'false'
           install-solana: 'false'
           install-just: 'false'
           install-pnpm-dependencies: 'false'

@@ -37,7 +37,6 @@ jobs:
     name: Run release tests
     needs: guard-allowed-branch
     uses: ./.github/workflows/test.yml
-    secrets: inherit
 
   publish:
     name: Publish sas-lib package

@@ -16,6 +16,7 @@ import {
     getU32Codec,
     getU64Codec,
     getU128Codec,
+    type ReadonlyUint8Array,
     transformCodec,
 } from '@solana/kit';
 
@@ -122,8 +123,6 @@ const dataTypeCodecs: Record<SchemaDataType, () => Codec<any>> = {
 /**
  * Given the onchain representation of a Schema, build a codec that
  * (de)serializes Attestation data conforming to that Schema.
- * @param schema
- * @returns
  */
 export const getAttestationDataCodec = (schema: Schema): Codec<AttestationData> => {
     if (schema.fieldNames.length !== schema.layout.length) {
@@ -144,7 +143,6 @@ export const getAttestationDataCodec = (schema: Schema): Codec<AttestationData> 
 /**
  * Given a SAS Schema and an object that represents the Attestation data,
  * serialize the Attestation data to valid byte array.
- * @param schema
  */
 export const serializeAttestationData = (schema: Schema, data: Record<string, unknown>): Uint8Array =>
     new Uint8Array(getAttestationDataCodec(schema).encode(data as AttestationData));
@@ -152,7 +150,6 @@ export const serializeAttestationData = (schema: Schema, data: Record<string, un
 /**
  * Given a SAS Schema and a byte array of Attestation data,
  * deserialize the Attestation data to an object.
- * @param schema
  */
-export const deserializeAttestationData = <T>(schema: Schema, data: Uint8Array): T =>
+export const deserializeAttestationData = <T>(schema: Schema, data: ReadonlyUint8Array): T =>
     getAttestationDataCodec(schema).decode(data) as T;

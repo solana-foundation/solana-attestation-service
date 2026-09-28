@@ -13,9 +13,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  SOLANA_VERSION: '4.3.0'
-
 jobs:
   unit-test:
     runs-on: ubuntu-latest
@@ -29,7 +26,6 @@ jobs:
         with:
           install-solana: 'false'
           rust-cache-key: 'unit-test'
-          save-rust-cache: 'true'
 
       - name: Run unit tests
         run: just unit-test
@@ -45,10 +41,16 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           rust-cache-key: 'rust-integration-test'
-          solana-version: ${{ env.SOLANA_VERSION }}
 
       - name: Run Rust integration tests
         run: just integration-test
+
+      - name: Check Rust examples
+        env:
+          CARGO_TARGET_DIR: target
+        run: |
+          cargo check --manifest-path examples/rust/attestation-flow-guide/standard-demo/Cargo.toml
+          cargo check --manifest-path examples/rust/attestation-flow-guide/tokenization-demo/Cargo.toml
 
   typescript-test:
     runs-on: ubuntu-latest
@@ -61,7 +63,9 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           rust-cache-key: 'typescript-test'
-          solana-version: ${{ env.SOLANA_VERSION }}
+
+      - name: Build TypeScript client
+        run: just build-client
 
       - name: Run TypeScript client tests
         run: just test-client

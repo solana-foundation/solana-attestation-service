@@ -13,8 +13,6 @@
         "resolveJsonModule": true,
         "moduleResolution": "nodenext"
     },
-    "rootDir": "./",
-    "outDir": "./dist",
     "include": ["./src"],
     "exclude": ["node_modules", "dist"]
 }
