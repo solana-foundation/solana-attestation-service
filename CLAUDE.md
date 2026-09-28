@@ -35,7 +35,9 @@ from `#[codama(...)]` attributes on `program/src/instructions.rs`, `state/`,
 numbers rather than a byte string, and `payer` / `system_program` accounts
 carry explicit `default_value`s because nothing infers them. Two directives
 cannot share one attribute; write them as separate lines, and put them after
-the `derive`, since they are derive helper attributes.
+the `derive`, since they are derive helper attributes. Codama matches a field
+type by the last segment of how it is written, so the `Address as Pubkey`
+alias resolves to a public key either way.
 
 **Four structs in `constants.rs` exist only to declare PDA seeds.** Codama
 attaches seeds to accounts, so `SchemaMint`, `AttestationMint`,
@@ -102,7 +104,7 @@ deployment will not reproduce any prior deployment's build hash.
 **`declare_id!` in `program/src/lib.rs` is parsed twice by text.** The
 `program-id` recipe seds it, and Codama only recognizes the unqualified macro
 call, which is why it is imported rather than called through
-`pinocchio_pubkey::`. Keep it a single literal line.
+`pinocchio::address::`. Keep it a single literal line.
 
 **ESLint does not cover everything.** `examples/`, `scripts/`, and the
 TypeScript tests are in the ignore list; changes there are unlinted.
