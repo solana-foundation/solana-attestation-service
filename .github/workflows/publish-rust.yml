@@ -70,7 +70,7 @@ jobs:
 
       - name: Publish Rust client crate
         id: cargo_publish
-        uses: solana-foundation/github-actions/cargo-publish@4dcdecb13d956467088835b1c644b38e0ee1d5d9
+        uses: solana-foundation/github-actions/cargo-publish@e6ed2eb93c55eca911dbc711fb08683b42926a28
         with:
           package: solana-attestation-service-client
           working-directory: clients/rust
