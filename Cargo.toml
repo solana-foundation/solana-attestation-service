@@ -31,15 +31,15 @@ codegen-units = 1
 [workspace.dependencies]
 borsh = "1.5.5"
 const-crypto = "0.3.0"
-pinocchio = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio" }
-pinocchio-log = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-log" }
-pinocchio-pubkey = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-pubkey" }
-pinocchio-system = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-system" }
-pinocchio-token = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-token" }
-pinocchio-associated-token-account = { git = "https://github.com/Nagaprasadvr/pinocchio", branch = "feat-add-token-extensions", package = "pinocchio-associated-token-account" }
+pinocchio = { version = "0.11.2", features = ["account-resize", "cpi"] }
+pinocchio-log = "0.5.1"
+pinocchio-system = "0.6.1"
+pinocchio-token-2022 = "0.4.0"
+pinocchio-associated-token-account = "0.4.0"
 shank = "0.4.2"
 solana-attestation-service-client = { path = "clients/rust" }
 solana-program = "2.1.13"
+solana-address = { version = "2.8.0", features = ["curve25519", "decode"] }
 solana-program-test = "2.1.13"
 solana-sdk = "2.1.13"
 spl-token-2022 = "8.0.1"

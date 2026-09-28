@@ -1,7 +1,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::pubkey::Pubkey;
+use pinocchio::Address as Pubkey;
 use shank::ShankType;
 
 use crate::constants::EVENT_IX_TAG_LE;

@@ -1,10 +1,8 @@
 use pinocchio::{
-    account_info::AccountInfo,
-    instruction::{AccountMeta, Instruction, Seed, Signer},
-    program::invoke_signed,
-    program_error::ProgramError,
-    pubkey::Pubkey,
-    ProgramResult,
+    cpi::{invoke_signed, Seed, Signer},
+    error::ProgramError,
+    instruction::{InstructionAccount, InstructionView},
+    AccountView, Address, ProgramResult,
 };
 
 use crate::{
@@ -18,9 +16,9 @@ use super::{verify_current_program, verify_owner_mutability, verify_signer, veri
 
 #[inline(always)]
 pub fn process_close_attestation(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    token_account: Option<Pubkey>,
+    program_id: &Address,
+    accounts: &mut [AccountView],
+    token_account: Option<Address>,
 ) -> ProgramResult {
     let [payer_info, authorized_signer, credential_info, attestation_info, event_authority_info, system_program, attestation_program] =
         accounts
@@ -42,11 +40,11 @@ pub fn process_close_attestation(
     verify_owner_mutability(attestation_info, program_id, true)?;
 
     // Check that one of credential's authorized signers have signed.
-    let credential_data = credential_info.try_borrow_data()?;
+    let credential_data = credential_info.try_borrow()?;
     let credential = Credential::try_from_bytes(&credential_data)?;
-    credential.validate_authorized_signer(authorized_signer.key())?;
+    credential.validate_authorized_signer(authorized_signer.address())?;
 
-    let attestation_data = attestation_info.try_borrow_data()?;
+    let attestation_data = attestation_info.try_borrow()?;
     let attestation = Attestation::try_from_bytes(&attestation_data)?;
     drop(attestation_data); // Drop immutable borrow.
 
@@ -55,23 +53,23 @@ pub fn process_close_attestation(
         if token_account.ne(&attestation.token_account) {
             return Err(AttestationServiceError::InvalidTokenAccount.into());
         }
-    } else if attestation.token_account.ne(&Pubkey::default()) {
+    } else if attestation.token_account.ne(&Address::default()) {
         return Err(AttestationServiceError::InvalidTokenAccount.into());
     }
 
     // Check that credential matches attestation's.
-    if !attestation.credential.eq(credential_info.key()) {
+    if !attestation.credential.eq(credential_info.address()) {
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
     // Close account and transfer rent to payer.
     let payer_lamports = payer_info.lamports();
-    *payer_info.try_borrow_mut_lamports().unwrap() = payer_lamports.checked_add(attestation_info.lamports()).unwrap();
-    *attestation_info.try_borrow_mut_lamports().unwrap() = 0;
+    payer_info.set_lamports(payer_lamports.checked_add(attestation_info.lamports()).unwrap());
+    attestation_info.set_lamports(0);
     attestation_info.close()?;
 
     // Check that event authority PDA is valid.
-    if event_authority_info.key().ne(&event_authority_pda::ID) {
+    if event_authority_info.address().ne(&event_authority_pda::ID) {
         return Err(AttestationServiceError::InvalidEventAuthority.into());
     }
 
@@ -82,12 +80,12 @@ pub fn process_close_attestation(
         attestation_data: attestation.data,
     };
     invoke_signed(
-        &Instruction {
+        &InstructionView {
             program_id,
-            accounts: &[AccountMeta::new(event_authority_info.key(), false, true)],
+            accounts: &[InstructionAccount::readonly_signer(event_authority_info.address())],
             data: event.to_bytes().as_slice(),
         },
-        &[event_authority_info],
+        &[&*event_authority_info],
         &[Signer::from(&[Seed::from(EVENT_AUTHORITY_SEED), Seed::from(&[event_authority_pda::BUMP])])],
     )?;
 

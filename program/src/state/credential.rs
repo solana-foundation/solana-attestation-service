@@ -1,7 +1,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::{msg, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{error::ProgramError, Address as Pubkey};
 use pinocchio_log::log;
 use shank::ShankAccount;
 
@@ -67,7 +67,7 @@ impl Credential {
     pub fn try_from_bytes(data: &[u8]) -> Result<Self, ProgramError> {
         // Check discriminator
         if data[0] != Self::DISCRIMINATOR {
-            msg!("Invalid Credential Data");
+            log!("Invalid Credential Data");
             return Err(ProgramError::InvalidAccountData);
         }
 

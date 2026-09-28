@@ -2,7 +2,7 @@ extern crate alloc;
 
 use alloc::string::String;
 use alloc::vec::Vec;
-use pinocchio::pubkey::Pubkey;
+use pinocchio::Address as Pubkey;
 use shank::ShankInstruction;
 
 /// Instructions for the Solana Attestation Service. This

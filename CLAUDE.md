@@ -34,10 +34,21 @@ breaking either one publishes a crate with no source.
 not build it. Run `just integration-test`, which runs `cargo-build-sbf` first
 and sets `SBF_OUT_DIR` to `target/sbpf-solana-solana/release`.
 
-**Pinocchio is a git fork, not a release.** All six `pinocchio-*` crates point
-at a branch of `Nagaprasadvr/pinocchio` with no rev pinned, so the dependency
-can move under a `cargo update` and verified builds are impossible until it is
-pinned or upstreamed.
+**Token-2022 metadata and group CPIs are hand-written.** `pinocchio-token-2022`
+has no builders for `InitializeTokenMetadata`, `UpdateField`, `InitializeGroup`
+or `InitializeMember`, so they live in `processor/shared/token_ext.rs`. Delete
+each one once upstream ships it; `test_tokenization.rs` re-parses the minted
+state with the SPL interface crates, so an encoding change fails there.
+
+**Rent is post-SIMD-0194.** Pinocchio 0.11 reads the rent sysvar's first field
+as lamports per byte, which only holds once the exemption threshold is 1.0, as
+on mainnet and devnet. `solana-program-test` 2.x still boots with the old
+values, so the test helper overrides the sysvar; without it, account creation
+fails with `InsufficientFundsForRent`.
+
+**Shank only recognises a type named `Pubkey`.** Files that derive Shank
+traits import `pinocchio::Address as Pubkey`; renaming it to `Address` there
+changes the IDL.
 
 **`cargo audit` suppressions are test-tree only.** The ignore list in
 `.cargo/audit.toml` exists because `solana-program-test` drags in the Agave

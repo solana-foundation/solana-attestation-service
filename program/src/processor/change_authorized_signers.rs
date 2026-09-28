@@ -1,12 +1,11 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
+use pinocchio::Resize;
 use pinocchio::{
-    account_info::AccountInfo,
-    program_error::ProgramError,
-    pubkey::Pubkey,
+    error::ProgramError,
     sysvars::{rent::Rent, Sysvar},
-    ProgramResult,
+    AccountView, Address, ProgramResult,
 };
 use pinocchio_system::instructions::Transfer;
 
@@ -18,8 +17,8 @@ use crate::{
 
 #[inline(always)]
 pub fn process_change_authorized_signers(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+    program_id: &Address,
+    accounts: &mut [AccountView],
     instruction_data: &[u8],
 ) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
@@ -34,12 +33,12 @@ pub fn process_change_authorized_signers(
     // Verify program ownership, mutability and PDAs.
     verify_owner_mutability(credential_info, program_id, true)?;
 
-    let data = credential_info.try_borrow_data()?;
+    let data = credential_info.try_borrow()?;
     let mut credential = Credential::try_from_bytes(&data)?;
     drop(data); // Drop immutable borrow.
 
     // Verify that signer matches credential authority.
-    if credential.authority.ne(authority_info.key()) {
+    if credential.authority.ne(authority_info.address()) {
         return Err(ProgramError::IncorrectAuthority);
     }
 
@@ -54,12 +53,12 @@ pub fn process_change_authorized_signers(
         new_space -= (prev_len - new_len) * 32;
     }
     if new_space != credential_info.data_len() {
-        credential_info.realloc(new_space, false)?;
+        credential_info.resize(new_space)?;
         let diff = new_space.saturating_sub(prev_space);
         if diff > 0 {
             // top up lamports to account for additional rent.
             let rent = Rent::get()?;
-            let min_rent = rent.minimum_balance(new_space);
+            let min_rent = rent.try_minimum_balance(new_space)?;
             let current_rent = credential_info.lamports();
             let rent_diff = min_rent.saturating_sub(current_rent);
             if rent_diff > 0 {
@@ -72,14 +71,14 @@ pub fn process_change_authorized_signers(
     credential.authorized_signers = args.signers;
 
     // Write updated data.
-    let mut credential_data = credential_info.try_borrow_mut_data()?;
+    let mut credential_data = credential_info.try_borrow_mut()?;
     credential_data.copy_from_slice(&credential.to_bytes());
 
     Ok(())
 }
 
 struct ChangeAuthorizedSignersArgs {
-    signers: Vec<Pubkey>,
+    signers: Vec<Address>,
 }
 
 fn process_instruction_data(data: &[u8]) -> Result<ChangeAuthorizedSignersArgs, ProgramError> {
@@ -92,7 +91,7 @@ fn process_instruction_data(data: &[u8]) -> Result<ChangeAuthorizedSignersArgs, 
     require_len!(data, 4 + signers_len * 32);
     let mut signers = Vec::with_capacity(signers_len);
     for _ in 0..signers_len {
-        let signer: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let signer: Address = data[offset..offset + 32].try_into().unwrap();
         signers.push(signer);
         offset += 32;
     }
