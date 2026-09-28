@@ -82,20 +82,13 @@ or `InitializeMember`, so they live in `processor/shared/token_ext.rs`. Delete
 each one once upstream ships it; `test_tokenization.rs` re-parses the minted
 state with the SPL interface crates, so an encoding change fails there.
 
-**Rent is post-SIMD-0194.** Pinocchio 0.11 reads the rent sysvar's first field
-as lamports per byte, which only holds once the exemption threshold is 1.0, as
-on mainnet and devnet. `solana-program-test` 2.x still boots with the old
-values, so the test helper overrides the sysvar; without it, account creation
-fails with `InsufficientFundsForRent`.
-
 **Shank only recognises a type named `Pubkey`.** Files that derive Shank
 traits import `pinocchio::Address as Pubkey`; renaming it to `Address` there
 changes the IDL.
 
-**`cargo audit` suppressions are test-tree only.** The ignore list in
-`.cargo/audit.toml` exists because `solana-program-test` drags in the Agave
-validator stack. Re-audit the whole list when that dependency is upgraded, and
-never add an advisory that reaches the program or the published client.
+**litesvm is held at 0.12 by the toolchain pin.** litesvm 0.13 and later pull
+Agave 4.x, which uses standard library APIs newer than Rust 1.92. Bumping it
+means bumping `rust-toolchain.toml` and the CI setup action together.
 
 **The release profile changed the binary.** `overflow-checks` and fat LTO are
 on, so arithmetic that used to wrap now aborts the instruction, and the next

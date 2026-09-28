@@ -4,13 +4,17 @@ use solana_attestation_service_client::{
     accounts::Schema,
     instructions::{ChangeSchemaDescriptionBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
-use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction};
+use solana_keypair::Keypair;
+use solana_pubkey::Pubkey;
+use solana_sdk_ids::system_program;
+use solana_signer::Signer;
+use solana_transaction::Transaction;
 
 mod helpers;
 
-#[tokio::test]
-async fn change_schema_description_success() {
-    let ctx = program_test_context().await;
+#[test]
+fn change_schema_description_success() {
+    let mut ctx = program_test_context();
     let authority = Keypair::new();
     let credential_name = "test";
     let (credential_pda, _bump) = Pubkey::find_program_address(
@@ -31,9 +35,9 @@ async fn change_schema_description_success() {
         &[create_credential_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     // Create Schema
     let schema_name = "test_data";
@@ -59,9 +63,9 @@ async fn change_schema_description_success() {
         &[create_schema_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     let description = "new test new test new test";
     let change_ix = ChangeSchemaDescriptionBuilder::new()
@@ -76,13 +80,12 @@ async fn change_schema_description_success() {
         &[change_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     // Assert schema account
-    let schema_account =
-        ctx.banks_client.get_account(schema_pda).await.expect("get_account").expect("account not nonex");
+    let schema_account = ctx.svm.get_account(&schema_pda).expect("account not nonex");
     let schema = Schema::try_from_slice(&schema_account.data).unwrap();
     assert_eq!(schema.credential, credential_pda);
     assert_eq!(schema.layout, schema_layout);

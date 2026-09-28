@@ -1,19 +1,17 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use helpers::program_test_context;
+use helpers::{program_test_context, TestContext};
 use solana_attestation_service_client::{
     accounts::Attestation,
     instructions::{ChangeSchemaStatusBuilder, CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
-use solana_program_test::ProgramTestContext;
-use solana_sdk::{
-    clock::Clock,
-    instruction::InstructionError,
-    pubkey::Pubkey,
-    signature::Keypair,
-    signer::Signer,
-    system_program,
-    transaction::{Transaction, TransactionError},
-};
+use solana_clock::Clock;
+use solana_instruction_error::InstructionError;
+use solana_keypair::Keypair;
+use solana_pubkey::Pubkey;
+use solana_sdk_ids::system_program;
+use solana_signer::Signer;
+use solana_transaction::Transaction;
+use solana_transaction_error::TransactionError;
 
 mod helpers;
 
@@ -24,14 +22,14 @@ struct TestData {
 }
 
 struct TestFixtures {
-    ctx: ProgramTestContext,
+    ctx: TestContext,
     credential: Pubkey,
     schema: Pubkey,
     authority: Keypair,
 }
 
-async fn setup() -> TestFixtures {
-    let ctx = program_test_context().await;
+fn setup() -> TestFixtures {
+    let mut ctx = program_test_context();
 
     let authority = Keypair::new();
     let credential_name = "test";
@@ -74,19 +72,19 @@ async fn setup() -> TestFixtures {
         &[create_credential_ix, create_schema_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     TestFixtures { ctx, credential: credential_pda, schema: schema_pda, authority }
 }
 
-#[tokio::test]
-async fn create_attestation_success() {
-    let TestFixtures { ctx, credential, schema, authority } = setup().await;
+#[test]
+fn create_attestation_success() {
+    let TestFixtures { mut ctx, credential, schema, authority } = setup();
     // Create Attestation
     let attestation_data = TestData { name: "attest".to_string(), location: 11 };
-    let clock: Clock = ctx.banks_client.get_sysvar().await.unwrap();
+    let clock: Clock = ctx.svm.get_sysvar();
     let expiry: i64 = clock.unix_timestamp + 60;
     let mut serialized_attestation_data = Vec::new();
     attestation_data.serialize(&mut serialized_attestation_data).unwrap();
@@ -112,12 +110,12 @@ async fn create_attestation_success() {
         &[create_attestation_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     // Assert attestation
-    let attestation_account = ctx.banks_client.get_account(attestation_pda).await.unwrap().unwrap();
+    let attestation_account = ctx.svm.get_account(&attestation_pda).unwrap();
     let attestation = Attestation::try_from_slice(&attestation_account.data).unwrap();
     assert_eq!(attestation.data, serialized_attestation_data);
     assert_eq!(attestation.credential, credential);
@@ -128,9 +126,9 @@ async fn create_attestation_success() {
     assert_eq!(attestation.token_account, Pubkey::default());
 }
 
-#[tokio::test]
-async fn create_attestation_fail_bad_data() {
-    let TestFixtures { ctx, credential, schema, authority } = setup().await;
+#[test]
+fn create_attestation_fail_bad_data() {
+    let TestFixtures { mut ctx, credential, schema, authority } = setup();
     // Create Attestation
     let attestation_data = TestData { name: "attest".to_string(), location: 11 };
     let expiry: i64 = 1000;
@@ -159,15 +157,15 @@ async fn create_attestation_fail_bad_data() {
         &[create_attestation_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    let tx_err = ctx.banks_client.process_transaction(transaction).await.expect_err("should error").unwrap();
+    let tx_err = ctx.svm.send_transaction(transaction).expect_err("should error").err;
     assert_eq!(tx_err, TransactionError::InstructionError(0, InstructionError::Custom(6)))
 }
 
-#[tokio::test]
-async fn create_attestation_fail_schema_paused() {
-    let TestFixtures { ctx, credential, schema, authority } = setup().await;
+#[test]
+fn create_attestation_fail_schema_paused() {
+    let TestFixtures { mut ctx, credential, schema, authority } = setup();
     // Pause Schema
     let pause_schema_ix = ChangeSchemaStatusBuilder::new()
         .authority(authority.pubkey())
@@ -179,9 +177,9 @@ async fn create_attestation_fail_schema_paused() {
         &[pause_schema_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    ctx.banks_client.process_transaction(transaction).await.unwrap();
+    ctx.svm.send_transaction(transaction).unwrap();
 
     // Create Attestation
     let attestation_data = TestData { name: "attest".to_string(), location: 11 };
@@ -210,8 +208,8 @@ async fn create_attestation_fail_schema_paused() {
         &[create_attestation_ix],
         Some(&ctx.payer.pubkey()),
         &[&ctx.payer, &authority],
-        ctx.last_blockhash,
+        ctx.svm.latest_blockhash(),
     );
-    let tx_err = ctx.banks_client.process_transaction(transaction).await.expect_err("should error").unwrap();
+    let tx_err = ctx.svm.send_transaction(transaction).expect_err("should error").err;
     assert_eq!(tx_err, TransactionError::InstructionError(0, InstructionError::Custom(11)))
 }
