@@ -17,6 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if env::var_os("GENERATE_IDL").is_none() {
         return Ok(());
     }
+    println!("cargo:rerun-if-changed=../idl/{PROGRAM_NAME}.json");
 
     generate_idl()
 }
