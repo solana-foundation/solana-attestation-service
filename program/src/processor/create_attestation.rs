@@ -27,35 +27,22 @@ pub fn process_create_attestation(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Validate: authority should have signed
-    verify_signer(authorized_signer, false)?;
-
-    // Validate system program
+    verify_signer(authorized_signer)?;
     verify_system_program(system_program)?;
-    // Validate Credential and Schema are owned by our program
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(schema_info, program_id, false)?;
 
-    let credential_data = credential_info.try_borrow()?;
-    let credential = Credential::try_from_bytes(&credential_data)?;
-
-    // Validate Authority is an authorized signer
+    let credential = Credential::try_from_bytes(&credential_info.try_borrow()?)?;
     credential.validate_authorized_signer(authorized_signer.address())?;
 
-    let schema_data = schema_info.try_borrow()?;
-    let schema = Schema::try_from_bytes(&schema_data)?;
-
-    // Validate Schema is not paused
+    let schema = Schema::try_from_bytes(&schema_info.try_borrow()?)?;
     if schema.is_paused {
         return Err(AttestationServiceError::SchemaPaused.into());
     }
-
-    // Validate Schema is owned by Credential
     if schema.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
-    // Validate expiry is greater than current timestamp
     let clock = Clock::get()?;
     if args.expiry < clock.unix_timestamp && args.expiry != 0 {
         return Err(AttestationServiceError::InvalidAttestationData.into());
@@ -66,23 +53,21 @@ pub fn process_create_attestation(
         program_id,
     );
 
-    // Validate attestation PDA is correct
     if attestation_info.address().ne(&attestation_pda) {
         return Err(AttestationServiceError::InvalidAttestation.into());
     }
 
-    // Create Attestation account
-
-    // Account layout
-    // discriminator - 1
-    // nonce - 32
-    // Credential - 32
-    // Schema - 32
-    // data - 4 + len
-    // signer - 32
-    // expiry - 8
-    // token account - 32
-    let space = 1 + 32 + 32 + 32 + (4 + args.data.len()) + 32 + 8 + 32;
+    let attestation = Attestation {
+        nonce: args.nonce,
+        credential: *credential_info.address(),
+        schema: *schema_info.address(),
+        data: args.data.to_vec(),
+        signer: *authorized_signer.address(),
+        expiry: args.expiry,
+        token_account: token_account.unwrap_or_default(),
+    };
+    attestation.validate_data(&schema.layout)?;
+    let attestation_bytes = attestation.to_bytes();
 
     let bump_seed = [attestation_bump];
     let signer_seeds = [
@@ -94,23 +79,8 @@ pub fn process_create_attestation(
     ];
 
     let rent = Rent::get()?;
-    create_pda_account(payer_info, &rent, space, program_id, attestation_info, signer_seeds, None)?;
-
-    let attestation = Attestation {
-        nonce: args.nonce,
-        credential: *credential_info.address(),
-        schema: *schema_info.address(),
-        data: args.data.to_vec(),
-        signer: *authorized_signer.address(),
-        expiry: args.expiry,
-        token_account: token_account.unwrap_or_default(),
-    };
-
-    // Validate the Attestation data matches the layout of the Schema
-    attestation.validate_data(&schema.layout)?;
-
-    let mut attestation_data = attestation_info.try_borrow_mut()?;
-    attestation_data.copy_from_slice(&attestation.to_bytes());
+    create_pda_account(payer_info, &rent, attestation_bytes.len(), program_id, attestation_info, signer_seeds, None)?;
+    attestation_info.try_borrow_mut()?.copy_from_slice(&attestation_bytes);
 
     Ok(())
 }

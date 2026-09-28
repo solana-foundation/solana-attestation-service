@@ -27,27 +27,20 @@ pub fn process_create_credential(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Validate: should be owned by system account, empty, and writable
-    verify_system_account(credential_info, true)?;
-    // Validate: authority should have signed
-    verify_signer(authority_info, false)?;
-    // Validate: system program
+    verify_system_account(credential_info)?;
+    verify_signer(authority_info)?;
     verify_system_program(system_program)?;
 
     let (credential_pda, credential_bump) =
         Address::find_program_address(&[CREDENTIAL_SEED, authority_info.address().as_ref(), args.name], program_id);
 
     if credential_info.address().ne(&credential_pda) {
-        // PDA was invalid
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
-    // Account layout
-    // discriminator - 1
-    // authorized_signers - 4 + 32 * len
-    // authority - 32
-    // name - 4 + len
-    let space = 1 + (4 + args.signers.len() * 32) + 32 + (4 + args.name.len());
+    let credential =
+        Credential { authority: *authority_info.address(), name: args.name.to_vec(), authorized_signers: args.signers };
+    let credential_bytes = credential.to_bytes();
 
     let rent = Rent::get()?;
     let bump_seed = [credential_bump];
@@ -57,12 +50,8 @@ pub fn process_create_credential(
         Seed::from(args.name),
         Seed::from(&bump_seed),
     ];
-    create_pda_account(payer_info, &rent, space, program_id, credential_info, signer_seeds, None)?;
-
-    let credential =
-        Credential { authority: *authority_info.address(), name: args.name.to_vec(), authorized_signers: args.signers };
-    let mut credential_data = credential_info.try_borrow_mut()?;
-    credential_data.copy_from_slice(&credential.to_bytes());
+    create_pda_account(payer_info, &rent, credential_bytes.len(), program_id, credential_info, signer_seeds, None)?;
+    credential_info.try_borrow_mut()?.copy_from_slice(&credential_bytes);
 
     Ok(())
 }

@@ -8,12 +8,12 @@ use pinocchio::{
 use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
-    processor::{create_pda_account, verify_signer, verify_system_account, verify_system_program},
+    processor::{
+        create_pda_account, verify_owner_mutability, verify_signer, verify_system_account, verify_system_program,
+    },
     require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
-
-use super::verify_owner_mutability;
 
 #[inline(always)]
 pub fn process_create_schema(
@@ -26,20 +26,13 @@ pub fn process_create_schema(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Validate: authority should have signed
-    verify_signer(authority_info, false)?;
-    // Verify Credential is owned by current program.
+    verify_signer(authority_info)?;
     verify_owner_mutability(credential_info, program_id, false)?;
-    // Validate: schema should be owned by system account, empty, and writable
-    verify_system_account(schema_info, true)?;
-    // Validate: system program
+    verify_system_account(schema_info)?;
     verify_system_program(system_program)?;
 
-    let credential = &Credential::try_from_bytes(&credential_info.try_borrow()?)?;
-    // Verify signer matches credential authority.
-    if credential.authority.ne(authority_info.address()) {
-        return Err(ProgramError::IncorrectAuthority);
-    }
+    let credential = Credential::try_from_bytes(&credential_info.try_borrow()?)?;
+    credential.validate_authority(authority_info.address())?;
 
     let version = &[1];
     let (schema_pda, schema_bump) = Address::find_program_address(
@@ -48,37 +41,8 @@ pub fn process_create_schema(
     );
 
     if schema_info.address().ne(&schema_pda) {
-        // PDA was invalid
         return Err(AttestationServiceError::InvalidSchema.into());
     }
-
-    // Account layout
-    // discriminator - 1
-    // credential - 32
-    // name - 4 + length
-    // description - 4 + length
-    // layout - 4 + length
-    // field_names - 4 + length
-    // is_paused - 1
-    // version - 1
-    let space = 1
-        + 32
-        + (4 + args.name.len())
-        + (4 + args.description.len())
-        + (4 + args.layout.len())
-        + (4 + args.field_names_bytes.len())
-        + 1
-        + 1;
-    let rent = Rent::get()?;
-    let bump_seed = [schema_bump];
-    let signer_seeds = [
-        Seed::from(SCHEMA_SEED),
-        Seed::from(credential_info.address().as_ref()),
-        Seed::from(args.name),
-        Seed::from(version),
-        Seed::from(&bump_seed),
-    ];
-    create_pda_account(payer_info, &rent, space, program_id, schema_info, signer_seeds, None)?;
 
     let schema = Schema {
         credential: *credential_info.address(),
@@ -89,12 +53,20 @@ pub fn process_create_schema(
         is_paused: false,
         version: version[0],
     };
-
-    // Checks that layout and field names are valid.
     schema.validate(args.field_names_count)?;
+    let schema_bytes = schema.to_bytes();
 
-    let mut schema_data = schema_info.try_borrow_mut()?;
-    schema_data.copy_from_slice(&schema.to_bytes());
+    let rent = Rent::get()?;
+    let bump_seed = [schema_bump];
+    let signer_seeds = [
+        Seed::from(SCHEMA_SEED),
+        Seed::from(credential_info.address().as_ref()),
+        Seed::from(args.name),
+        Seed::from(version),
+        Seed::from(&bump_seed),
+    ];
+    create_pda_account(payer_info, &rent, schema_bytes.len(), program_id, schema_info, signer_seeds, None)?;
+    schema_info.try_borrow_mut()?.copy_from_slice(&schema_bytes);
 
     Ok(())
 }

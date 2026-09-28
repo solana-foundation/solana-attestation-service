@@ -27,37 +27,24 @@ pub fn process_change_schema_version(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Validate: authority should have signed
-    verify_signer(authority_info, false)?;
-    // Validate: schema should be owned by system account, empty, and writable
-    verify_system_account(new_schema_info, true)?;
-    // Validate: system program
+    verify_signer(authority_info)?;
+    verify_system_account(new_schema_info)?;
     verify_system_program(system_program)?;
-    // Verify program ownership, mutability and PDAs.
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(existing_schema_info, program_id, false)?;
 
-    let credential = &Credential::try_from_bytes(&credential_info.try_borrow()?)?;
+    let credential = Credential::try_from_bytes(&credential_info.try_borrow()?)?;
+    credential.validate_authority(authority_info.address())?;
 
-    // Verify signer matches credential authority.
-    if credential.authority.ne(authority_info.address()) {
-        return Err(ProgramError::IncorrectAuthority);
-    }
-
-    let existing_schema_data = existing_schema_info.try_borrow()?;
-    let existing_schema = Schema::try_from_bytes(&existing_schema_data)?;
-
-    // Verify that existing schema is under the same credential.
+    let existing_schema = Schema::try_from_bytes(&existing_schema_info.try_borrow()?)?;
     if existing_schema.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidSchema.into());
     }
 
-    let name = &existing_schema.name;
-    let description = existing_schema.description;
     let version = &[existing_schema.version.checked_add(1).ok_or(ProgramError::ArithmeticOverflow)?];
 
     let (schema_pda, schema_bump) = Address::find_program_address(
-        &[SCHEMA_SEED, credential_info.address().as_ref(), name.as_ref(), version],
+        &[SCHEMA_SEED, credential_info.address().as_ref(), existing_schema.name.as_ref(), version],
         program_id,
     );
 
@@ -65,49 +52,29 @@ pub fn process_change_schema_version(
         return Err(AttestationServiceError::InvalidSchema.into());
     }
 
-    // Account layout
-    // discriminator - 1
-    // credential - 32
-    // name - 4 + length
-    // description - 4 + length
-    // layout - 4 + length
-    // field_names - 4 + length
-    // is_paused - 1
-    // version - 1
-    let space = 1
-        + 32
-        + (4 + name.len())
-        + (4 + description.len())
-        + (4 + args.layout.len())
-        + (4 + args.field_names_bytes.len())
-        + 1
-        + 1;
-    let rent = Rent::get()?;
-    let bump_seed = [schema_bump];
-    let signer_seeds = [
-        Seed::from(SCHEMA_SEED),
-        Seed::from(credential_info.address().as_ref()),
-        Seed::from(name.as_slice()),
-        Seed::from(version),
-        Seed::from(&bump_seed),
-    ];
-    create_pda_account(payer_info, &rent, space, program_id, new_schema_info, signer_seeds, None)?;
-
     let schema = Schema {
         credential: *credential_info.address(),
-        name: name.to_vec(),
-        description,
+        name: existing_schema.name,
+        description: existing_schema.description,
         layout: args.layout.to_vec(),
         field_names: args.field_names_bytes.to_vec(),
         is_paused: false,
         version: version[0],
     };
-
-    // Checks that layout and field names are valid.
     schema.validate(args.field_names_count)?;
+    let schema_bytes = schema.to_bytes();
 
-    let mut schema_data = new_schema_info.try_borrow_mut()?;
-    schema_data.copy_from_slice(&schema.to_bytes());
+    let rent = Rent::get()?;
+    let bump_seed = [schema_bump];
+    let signer_seeds = [
+        Seed::from(SCHEMA_SEED),
+        Seed::from(credential_info.address().as_ref()),
+        Seed::from(schema.name.as_slice()),
+        Seed::from(version),
+        Seed::from(&bump_seed),
+    ];
+    create_pda_account(payer_info, &rent, schema_bytes.len(), program_id, new_schema_info, signer_seeds, None)?;
+    new_schema_info.try_borrow_mut()?.copy_from_slice(&schema_bytes);
 
     Ok(())
 }

@@ -1,17 +1,11 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use pinocchio::Resize;
-use pinocchio::{
-    error::ProgramError,
-    sysvars::{rent::Rent, Sysvar},
-    AccountView, Address, ProgramResult,
-};
-use pinocchio_system::instructions::Transfer;
+use pinocchio::{error::ProgramError, AccountView, Address, ProgramResult};
 
 use crate::{
     error::AttestationServiceError,
-    processor::{verify_owner_mutability, verify_signer, verify_system_program},
+    processor::{resize_account, verify_owner_mutability, verify_signer, verify_system_program},
     require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
@@ -27,57 +21,23 @@ pub fn process_change_schema_description(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Validate: authority should have signed
-    verify_signer(authority_info, false)?;
-
-    // Verify program ownership, mutability and PDAs.
+    verify_signer(authority_info)?;
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(schema_info, program_id, true)?;
     verify_system_program(system_program)?;
 
-    let credential = &Credential::try_from_bytes(&credential_info.try_borrow()?)?;
+    let credential = Credential::try_from_bytes(&credential_info.try_borrow()?)?;
+    credential.validate_authority(authority_info.address())?;
 
-    // Verify signer matches credential authority.
-    if credential.authority.ne(authority_info.address()) {
-        return Err(ProgramError::IncorrectAuthority);
-    }
-
-    let schema_data = schema_info.try_borrow()?;
-    let mut schema = Schema::try_from_bytes(&schema_data)?;
-    drop(schema_data); // Drop immutable borrow.
-
-    // Verify that schema is under the same credential.
+    let mut schema = Schema::try_from_bytes(&schema_info.try_borrow()?)?;
     if schema.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidSchema.into());
     }
 
-    let prev_description_len = schema.description.len();
-
-    // Update description on struct.
     schema.description = args.description;
-
-    // Resize account if needed.
-    let new_description_len = schema.description.len();
-    if new_description_len != prev_description_len {
-        let previous_space = schema_info.data_len();
-        let new_space = previous_space + new_description_len - prev_description_len;
-        schema_info.resize(new_space)?;
-        let diff = new_space.saturating_sub(previous_space);
-        if diff > 0 {
-            // top up lamports to account for additional rent.
-            let rent = Rent::get()?;
-            let min_rent = rent.try_minimum_balance(new_space)?;
-            let current_rent = schema_info.lamports();
-            let rent_diff = min_rent.saturating_sub(current_rent);
-            if rent_diff > 0 {
-                Transfer { from: payer_info, to: schema_info, lamports: rent_diff }.invoke()?;
-            }
-        }
-    }
-
-    // Write updated data.
-    let mut schema_data = schema_info.try_borrow_mut()?;
-    schema_data.copy_from_slice(&schema.to_bytes());
+    let schema_bytes = schema.to_bytes();
+    resize_account(schema_info, payer_info, schema_bytes.len())?;
+    schema_info.try_borrow_mut()?.copy_from_slice(&schema_bytes);
 
     Ok(())
 }

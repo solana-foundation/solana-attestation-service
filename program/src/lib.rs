@@ -4,7 +4,7 @@ pub mod constants;
 pub mod error;
 pub mod events;
 pub mod instructions;
-pub mod macros;
+mod macros;
 pub mod processor;
 pub mod state;
 

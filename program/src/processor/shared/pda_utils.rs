@@ -1,7 +1,7 @@
 use pinocchio::{
     cpi::{Seed, Signer},
-    sysvars::rent::Rent,
-    AccountView, Address, ProgramResult,
+    sysvars::{rent::Rent, Sysvar},
+    AccountView, Address, ProgramResult, Resize,
 };
 use pinocchio_system::instructions::{Allocate, Assign, CreateAccount, Transfer};
 
@@ -37,4 +37,18 @@ pub fn create_pda_account<const N: usize>(
         CreateAccount { from: payer, to: new_pda_account, lamports: required_lamports, space: space as u64, owner }
             .invoke_signed(&signers)
     }
+}
+
+/// Resize a program-owned account, topping it up from `payer` if it needs more rent.
+pub fn resize_account(account: &mut AccountView, payer: &AccountView, new_len: usize) -> ProgramResult {
+    if new_len == account.data_len() {
+        return Ok(());
+    }
+    account.resize(new_len)?;
+    let rent_diff = Rent::get()?.try_minimum_balance(new_len)?.saturating_sub(account.lamports());
+    if rent_diff > 0 {
+        Transfer { from: payer, to: account, lamports: rent_diff }.invoke()?;
+    }
+
+    Ok(())
 }

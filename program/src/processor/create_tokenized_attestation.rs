@@ -17,14 +17,12 @@ use pinocchio_token_2022::{
 use crate::{
     constants::{sas_pda, ATTESTATION_MINT_SEED, SAS_SEED, SCHEMA_MINT_SEED},
     error::AttestationServiceError,
-    processor::process_create_attestation,
+    processor::{
+        create_pda_account, process_create_attestation,
+        token_ext::{InitializeMember, InitializeTokenMetadata, UpdateField},
+        verify_ata_program, verify_sas_pda, verify_token22_program,
+    },
     require_len,
-};
-
-use super::{
-    create_pda_account,
-    token_ext::{InitializeMember, InitializeTokenMetadata, UpdateField},
-    verify_ata_program, verify_token22_program,
 };
 
 #[inline(always)]
@@ -39,7 +37,6 @@ pub fn process_create_tokenized_attestation(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Create Attestation first
     process_create_attestation(
         program_id,
         &mut [*payer_info, *authorized_signer, *credential_info, *schema_info, *attestation_info, *system_program],
@@ -49,16 +46,13 @@ pub fn process_create_tokenized_attestation(
 
     let args = process_instruction_data(instruction_data)?;
 
-    // Validate Recipient TokenAccount is writable
     if !recipient_token_account_info.is_writable() {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Verify token programs.
     verify_token22_program(token_program)?;
     verify_ata_program(ata_program)?;
 
-    // Validate that mint matches expected PDA
     let (attestation_mint_pda, attestation_mint_bump) =
         Address::find_program_address(&[ATTESTATION_MINT_SEED, attestation_info.address().as_ref()], program_id);
     if attestation_mint_info.address().ne(&attestation_mint_pda) {
@@ -71,12 +65,8 @@ pub fn process_create_tokenized_attestation(
         return Err(AttestationServiceError::InvalidMint.into());
     }
 
-    // Validate that sas_pda matches
-    if sas_pda_info.address().ne(&sas_pda::ID) {
-        return Err(AttestationServiceError::InvalidProgramSigner.into());
-    }
+    verify_sas_pda(sas_pda_info)?;
 
-    // Initialize new account owned by token_program.
     create_pda_account(
         payer_info,
         &Rent::get()?,
@@ -93,7 +83,6 @@ pub fn process_create_tokenized_attestation(
         Some(args.mint_account_space.into()),
     )?;
 
-    // Initialize GroupMemberPointer extension
     InitializeGroupMemberPointer {
         mint: attestation_mint_info,
         authority: Some(&sas_pda::ID),
@@ -102,10 +91,8 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke()?;
 
-    // Initialize NonTransferable extension
     InitializeNonTransferableMint { mint: attestation_mint_info, token_program: &TOKEN_2022_PROGRAM_ID }.invoke()?;
 
-    // Initialize MetadataPointer extension
     InitializeMetadataPointer {
         mint: attestation_mint_info,
         authority: Some(sas_pda_info.address()),
@@ -114,7 +101,6 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke()?;
 
-    // Initialize Permanent Delegate extension
     InitializePermanentDelegate {
         mint: attestation_mint_info,
         delegate: sas_pda_info.address(),
@@ -122,7 +108,6 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke()?;
 
-    // Initialize Mint Close extension
     InitializeMintCloseAuthority {
         mint: attestation_mint_info,
         close_authority: Some(sas_pda_info.address()),
@@ -130,10 +115,8 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke()?;
 
-    // Initialize Mint on created account
     InitializeMint2::new(attestation_mint_info, 0, sas_pda_info.address(), Some(sas_pda_info.address())).invoke()?;
 
-    // Initialize TokenMetadata extension
     let bump_seed = [sas_pda::BUMP];
     let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
 
@@ -148,7 +131,6 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
-    // Set attestation and schema metadata using UpdateField extension
     UpdateField {
         metadata: attestation_mint_info,
         update_authority: sas_pda_info,
@@ -165,7 +147,6 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
-    // Initialize TokenGroupMember extension
     InitializeMember {
         group: schema_mint_info,
         group_update_authority: sas_pda_info,
@@ -175,8 +156,6 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 
-    // Only create the ATA when the TokenAccount is owned by the System program with empty data.
-    // Create new associated token account to hold Attestation token.
     CreateIdempotent {
         funding_account: payer_info,
         account: recipient_token_account_info,
@@ -187,7 +166,6 @@ pub fn process_create_tokenized_attestation(
     }
     .invoke()?;
 
-    // Mint to recipient token account.
     MintToChecked::new(attestation_mint_info, recipient_token_account_info, sas_pda_info, 1, 0)
         .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
 

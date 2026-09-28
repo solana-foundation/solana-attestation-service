@@ -1,6 +1,6 @@
 use pinocchio::{error::ProgramError, AccountView, Address, ProgramResult};
 
-use crate::{constants::event_authority_pda, error::AttestationServiceError, processor::verify_signer};
+use crate::processor::{verify_event_authority, verify_signer};
 
 #[inline(always)]
 pub fn process_emit_event(_program_id: &Address, accounts: &mut [AccountView]) -> ProgramResult {
@@ -8,12 +8,8 @@ pub fn process_emit_event(_program_id: &Address, accounts: &mut [AccountView]) -
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    if event_authority.address().ne(&event_authority_pda::ID) {
-        return Err(AttestationServiceError::InvalidEventAuthority.into());
-    }
-
-    // No-op, besides checking for event authority signing.
-    verify_signer(event_authority, false)?;
+    verify_event_authority(event_authority)?;
+    verify_signer(event_authority)?;
 
     Ok(())
 }

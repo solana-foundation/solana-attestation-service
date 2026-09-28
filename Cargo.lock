@@ -5647,7 +5647,6 @@ dependencies = [
  "solana-keypair",
  "solana-program-option",
  "solana-program-pack",
- "solana-sdk-ids",
  "solana-signer",
  "solana-transaction",
  "solana-transaction-error",

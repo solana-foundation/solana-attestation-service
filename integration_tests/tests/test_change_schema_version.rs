@@ -1,15 +1,13 @@
 use borsh::BorshDeserialize;
-use helpers::{program_test_context, TestContext};
+use helpers::{create_credential, create_schema, program_error, program_test_context, send, TestContext};
 use solana_address::Address;
 use solana_attestation_service_client::{
-    accounts::Schema,
-    instructions::{ChangeSchemaVersionBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
+    accounts::Schema, errors::SolanaAttestationServiceError, instructions::ChangeSchemaVersionBuilder,
+    programs::SOLANA_ATTESTATION_SERVICE_ID,
 };
 use solana_instruction_error::InstructionError;
 use solana_keypair::Keypair;
-use solana_sdk_ids::system_program;
 use solana_signer::Signer;
-use solana_transaction::Transaction;
 use solana_transaction_error::TransactionError;
 
 mod helpers;
@@ -25,63 +23,26 @@ struct TestFixtures {
 
 fn setup() -> TestFixtures {
     let mut ctx = program_test_context();
-
     let authority = Keypair::new();
-    let credential_name = "test";
-    let (credential_pda, _bump) = Address::find_program_address(
-        &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let signers = vec![authority.pubkey(), ctx.payer.pubkey()];
+    let credential = create_credential(&mut ctx, &authority, "test", signers);
 
-    let create_credential_ix = CreateCredentialBuilder::new()
-        .payer(ctx.payer.pubkey())
-        .credential(credential_pda)
-        .authority(authority.pubkey())
-        .system_program(system_program::ID)
-        .name(credential_name.to_string())
-        .signers(vec![authority.pubkey(), ctx.payer.pubkey()])
-        .instruction();
-
-    let transaction = Transaction::new_signed_with_payer(
-        &[create_credential_ix],
-        Some(&ctx.payer.pubkey()),
-        &[&ctx.payer, &authority],
-        ctx.svm.latest_blockhash(),
-    );
-    ctx.svm.send_transaction(transaction).unwrap();
-
-    // Create Schema
     let schema_name = "test_data";
     let description = "schema for test data";
-    let schema_layout = vec![12, 0];
-    let field_names = vec!["name".into(), "location".into()];
-    let (schema_pda, _bump) = Address::find_program_address(
-        &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+    let schema = create_schema(
+        &mut ctx,
+        &authority,
+        credential,
+        schema_name,
+        description,
+        vec![12, 0],
+        vec!["name".into(), "location".into()],
     );
-    let create_schema_ix = CreateSchemaBuilder::new()
-        .payer(ctx.payer.pubkey())
-        .authority(authority.pubkey())
-        .credential(credential_pda)
-        .schema(schema_pda)
-        .system_program(system_program::ID)
-        .description(description.to_string())
-        .name(schema_name.to_string())
-        .layout(schema_layout.clone())
-        .field_names(field_names.clone())
-        .instruction();
-    let transaction = Transaction::new_signed_with_payer(
-        &[create_schema_ix],
-        Some(&ctx.payer.pubkey()),
-        &[&ctx.payer, &authority],
-        ctx.svm.latest_blockhash(),
-    );
-    ctx.svm.send_transaction(transaction).unwrap();
 
     TestFixtures {
         ctx,
-        credential: credential_pda,
-        schema: schema_pda,
+        credential,
+        schema,
         authority,
         schema_name: schema_name.to_string(),
         schema_description: description.to_string(),
@@ -99,13 +60,12 @@ fn change_schema_version_success() {
         schema_description,
     } = setup();
 
-    // Update schema for version 2
     let (schema_pda2, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[2]],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+        &SOLANA_ATTESTATION_SERVICE_ID,
     );
     let schema_layout2 = vec![12, 0, 3];
-    let field_names2 = vec!["name".into(), "location".into(), "phone".into()];
+    let field_names2 = vec!["name".to_string(), "location".to_string(), "phone".to_string()];
 
     let change_schema_version_ix = ChangeSchemaVersionBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -113,19 +73,11 @@ fn change_schema_version_success() {
         .credential(credential_pda)
         .existing_schema(schema_pda)
         .new_schema(schema_pda2)
-        .system_program(system_program::ID)
         .layout(schema_layout2.clone())
         .field_names(field_names2.clone())
         .instruction();
-    let transaction = Transaction::new_signed_with_payer(
-        &[change_schema_version_ix],
-        Some(&ctx.payer.pubkey()),
-        &[&ctx.payer, &authority],
-        ctx.svm.latest_blockhash(),
-    );
-    ctx.svm.send_transaction(transaction).unwrap();
+    send(&mut ctx, &[change_schema_version_ix], &[&authority]).unwrap();
 
-    // Assert schema account
     let schema_account = ctx.svm.get_account(&schema_pda2).expect("account not none");
     let schema = Schema::try_from_slice(&schema_account.data).unwrap();
     assert_eq!(schema.credential, credential_pda);
@@ -143,45 +95,16 @@ fn change_schema_version_success() {
 
 #[test]
 fn change_schema_version_fail_incorrect_credential() {
-    let TestFixtures {
-        mut ctx,
-        credential: _credential_pda,
-        schema: schema_pda,
-        authority,
-        schema_name,
-        schema_description: _,
-    } = setup();
+    let TestFixtures { mut ctx, schema: schema_pda, authority, schema_name, .. } = setup();
 
-    let credential_name = "test-2";
-    let (credential_pda_2, _bump) = Address::find_program_address(
-        &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let signers = vec![authority.pubkey(), ctx.payer.pubkey()];
 
-    let create_credential_ix = CreateCredentialBuilder::new()
-        .payer(ctx.payer.pubkey())
-        .credential(credential_pda_2)
-        .authority(authority.pubkey())
-        .system_program(system_program::ID)
-        .name(credential_name.to_string())
-        .signers(vec![authority.pubkey(), ctx.payer.pubkey()])
-        .instruction();
+    let credential_pda_2 = create_credential(&mut ctx, &authority, "test-2", signers);
 
-    let transaction = Transaction::new_signed_with_payer(
-        &[create_credential_ix],
-        Some(&ctx.payer.pubkey()),
-        &[&ctx.payer, &authority],
-        ctx.svm.latest_blockhash(),
-    );
-    ctx.svm.send_transaction(transaction).unwrap();
-
-    // Update schema for version 2
     let (schema_pda2, _bump) = Address::find_program_address(
         &[b"schema", &credential_pda_2.to_bytes(), schema_name.as_bytes(), &[2]],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+        &SOLANA_ATTESTATION_SERVICE_ID,
     );
-    let schema_layout2 = vec![12, 0, 3];
-    let field_names2 = vec!["name".into(), "location".into(), "phone".into()];
 
     let change_schema_version_ix = ChangeSchemaVersionBuilder::new()
         .payer(ctx.payer.pubkey())
@@ -189,16 +112,46 @@ fn change_schema_version_fail_incorrect_credential() {
         .credential(credential_pda_2)
         .existing_schema(schema_pda)
         .new_schema(schema_pda2)
-        .system_program(system_program::ID)
-        .layout(schema_layout2.clone())
-        .field_names(field_names2.clone())
+        .layout(vec![12, 0, 3])
+        .field_names(vec!["name".into(), "location".into(), "phone".into()])
         .instruction();
-    let transaction = Transaction::new_signed_with_payer(
-        &[change_schema_version_ix],
-        Some(&ctx.payer.pubkey()),
-        &[&ctx.payer, &authority],
-        ctx.svm.latest_blockhash(),
+    let tx_err = send(&mut ctx, &[change_schema_version_ix], &[&authority]).expect_err("should error");
+    assert_eq!(tx_err, program_error(SolanaAttestationServiceError::InvalidSchema))
+}
+
+fn change_schema_version_ix(f: &TestFixtures, new_schema: Address) -> solana_transaction::Instruction {
+    ChangeSchemaVersionBuilder::new()
+        .payer(f.ctx.payer.pubkey())
+        .authority(f.authority.pubkey())
+        .credential(f.credential)
+        .existing_schema(f.schema)
+        .new_schema(new_schema)
+        .layout(vec![12, 0, 3])
+        .field_names(vec!["name".into(), "location".into(), "phone".into()])
+        .instruction()
+}
+
+#[test]
+fn change_schema_version_fail_wrong_new_schema_pda() {
+    let mut f = setup();
+    let (skipped_version_pda, _bump) = Address::find_program_address(
+        &[b"schema", &f.credential.to_bytes(), f.schema_name.as_bytes(), &[3]],
+        &SOLANA_ATTESTATION_SERVICE_ID,
     );
-    let tx_err = ctx.svm.send_transaction(transaction).expect_err("should error").err;
-    assert_eq!(tx_err, TransactionError::InstructionError(0, InstructionError::Custom(1)))
+
+    let ix = change_schema_version_ix(&f, skipped_version_pda);
+    let tx_err = send(&mut f.ctx, &[ix], &[&f.authority]).expect_err("should error");
+    assert_eq!(tx_err, program_error(SolanaAttestationServiceError::InvalidSchema))
+}
+
+#[test]
+fn change_schema_version_fail_at_max_version() {
+    let mut f = setup();
+    let mut schema_account = f.ctx.svm.get_account(&f.schema).unwrap();
+    *schema_account.data.last_mut().unwrap() = u8::MAX;
+    f.ctx.svm.set_account(f.schema, schema_account).unwrap();
+
+    let ix = change_schema_version_ix(&f, Address::new_unique());
+    let tx_err = send(&mut f.ctx, &[ix], &[&f.authority]).expect_err("should error");
+    assert_eq!(tx_err, TransactionError::InstructionError(0, InstructionError::ArithmeticOverflow))
 }
