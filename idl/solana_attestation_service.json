@@ -5,6 +5,54 @@
     "accounts": [
       {
         "data": {
+          "fields": [],
+          "kind": "structTypeNode"
+        },
+        "kind": "accountNode",
+        "name": "schemaMint",
+        "pda": {
+          "kind": "pdaLinkNode",
+          "name": "schemaMint"
+        }
+      },
+      {
+        "data": {
+          "fields": [],
+          "kind": "structTypeNode"
+        },
+        "kind": "accountNode",
+        "name": "attestationMint",
+        "pda": {
+          "kind": "pdaLinkNode",
+          "name": "attestationMint"
+        }
+      },
+      {
+        "data": {
+          "fields": [],
+          "kind": "structTypeNode"
+        },
+        "kind": "accountNode",
+        "name": "eventAuthority",
+        "pda": {
+          "kind": "pdaLinkNode",
+          "name": "eventAuthority"
+        }
+      },
+      {
+        "data": {
+          "fields": [],
+          "kind": "structTypeNode"
+        },
+        "kind": "accountNode",
+        "name": "sasAuthority",
+        "pda": {
+          "kind": "pdaLinkNode",
+          "name": "sasAuthority"
+        }
+      },
+      {
+        "data": {
           "fields": [
             {
               "kind": "structFieldTypeNode",
@@ -69,7 +117,11 @@
           "kind": "structTypeNode"
         },
         "kind": "accountNode",
-        "name": "attestation"
+        "name": "attestation",
+        "pda": {
+          "kind": "pdaLinkNode",
+          "name": "attestation"
+        }
       },
       {
         "data": {
@@ -118,7 +170,11 @@
           "kind": "structTypeNode"
         },
         "kind": "accountNode",
-        "name": "credential"
+        "name": "credential",
+        "pda": {
+          "kind": "pdaLinkNode",
+          "name": "credential"
+        }
       },
       {
         "data": {
@@ -215,52 +271,15 @@
           "kind": "structTypeNode"
         },
         "kind": "accountNode",
-        "name": "schema"
-      }
-    ],
-    "constants": [],
-    "definedTypes": [
-      {
-        "kind": "definedTypeNode",
-        "name": "closeAttestationEvent",
-        "type": {
-          "fields": [
-            {
-              "kind": "structFieldTypeNode",
-              "name": "discriminator",
-              "type": {
-                "endian": "le",
-                "format": "u8",
-                "kind": "numberTypeNode"
-              }
-            },
-            {
-              "kind": "structFieldTypeNode",
-              "name": "schema",
-              "type": {
-                "kind": "publicKeyTypeNode"
-              }
-            },
-            {
-              "kind": "structFieldTypeNode",
-              "name": "attestationData",
-              "type": {
-                "kind": "sizePrefixTypeNode",
-                "prefix": {
-                  "endian": "le",
-                  "format": "u32",
-                  "kind": "numberTypeNode"
-                },
-                "type": {
-                  "kind": "bytesTypeNode"
-                }
-              }
-            }
-          ],
-          "kind": "structTypeNode"
+        "name": "schema",
+        "pda": {
+          "kind": "pdaLinkNode",
+          "name": "schema"
         }
       }
     ],
+    "constants": [],
+    "definedTypes": [],
     "errors": [
       {
         "code": 0,
@@ -335,7 +354,65 @@
         "name": "schemaPaused"
       }
     ],
-    "events": [],
+    "events": [
+      {
+        "data": {
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "name": "discriminator",
+              "type": {
+                "endian": "le",
+                "format": "u8",
+                "kind": "numberTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "schema",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "name": "attestationData",
+              "type": {
+                "kind": "sizePrefixTypeNode",
+                "prefix": {
+                  "endian": "le",
+                  "format": "u32",
+                  "kind": "numberTypeNode"
+                },
+                "type": {
+                  "kind": "bytesTypeNode"
+                }
+              }
+            }
+          ],
+          "kind": "structTypeNode"
+        },
+        "discriminators": [
+          {
+            "constant": {
+              "kind": "constantValueNode",
+              "type": {
+                "kind": "bytesTypeNode"
+              },
+              "value": {
+                "data": "e445a52e51cb9a1d",
+                "encoding": "base16",
+                "kind": "bytesValueNode"
+              }
+            },
+            "kind": "constantDiscriminatorNode",
+            "offset": 0
+          }
+        ],
+        "kind": "eventNode",
+        "name": "closeAttestationEvent"
+      }
+    ],
     "instructions": [
       {
         "accounts": [
@@ -349,6 +426,31 @@
             "name": "payer"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "credential"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "authority",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "authority"
+                  }
+                },
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "name",
+                  "value": {
+                    "kind": "argumentValueNode",
+                    "name": "name"
+                  }
+                }
+              ]
+            },
             "isSigner": false,
             "isWritable": true,
             "kind": "instructionAccountNode",
@@ -458,6 +560,39 @@
             "name": "credential"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "schema"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "credential",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "credential"
+                  }
+                },
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "name",
+                  "value": {
+                    "kind": "argumentValueNode",
+                    "name": "name"
+                  }
+                },
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "version",
+                  "value": {
+                    "kind": "numberValueNode",
+                    "number": 1
+                  }
+                }
+              ]
+            },
             "isSigner": false,
             "isWritable": true,
             "kind": "instructionAccountNode",
@@ -964,6 +1099,39 @@
             "name": "schema"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "attestation"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "credential",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "credential"
+                  }
+                },
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "schema",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "schema"
+                  }
+                },
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "nonce",
+                  "value": {
+                    "kind": "argumentValueNode",
+                    "name": "nonce"
+                  }
+                }
+              ]
+            },
             "isSigner": false,
             "isWritable": true,
             "kind": "instructionAccountNode",
@@ -1070,6 +1238,10 @@
             "name": "attestation"
           },
           {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g"
+            },
             "isSigner": false,
             "isWritable": false,
             "kind": "instructionAccountNode",
@@ -1086,6 +1258,10 @@
             "name": "systemProgram"
           },
           {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG"
+            },
             "isSigner": false,
             "isWritable": false,
             "kind": "instructionAccountNode",
@@ -1151,6 +1327,23 @@
             "name": "schema"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "schemaMint"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "schema",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "schema"
+                  }
+                }
+              ]
+            },
             "docs": [
               "Mint of Schema Token"
             ],
@@ -1160,6 +1353,14 @@
             "name": "mint"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "sasAuthority"
+              },
+              "seeds": []
+            },
             "docs": [
               "Program derived address used as program signer authority"
             ],
@@ -1179,6 +1380,10 @@
             "name": "systemProgram"
           },
           {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+            },
             "isSigner": false,
             "isWritable": false,
             "kind": "instructionAccountNode",
@@ -1259,6 +1464,39 @@
             "name": "schema"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "attestation"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "credential",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "credential"
+                  }
+                },
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "schema",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "schema"
+                  }
+                },
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "nonce",
+                  "value": {
+                    "kind": "argumentValueNode",
+                    "name": "nonce"
+                  }
+                }
+              ]
+            },
             "isSigner": false,
             "isWritable": true,
             "kind": "instructionAccountNode",
@@ -1275,6 +1513,23 @@
             "name": "systemProgram"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "schemaMint"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "schema",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "schema"
+                  }
+                }
+              ]
+            },
             "docs": [
               "Mint of Schema Token"
             ],
@@ -1284,6 +1539,23 @@
             "name": "schemaMint"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "attestationMint"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "attestation",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "attestation"
+                  }
+                }
+              ]
+            },
             "docs": [
               "Mint of Attestation Token"
             ],
@@ -1293,6 +1565,14 @@
             "name": "attestationMint"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "sasAuthority"
+              },
+              "seeds": []
+            },
             "docs": [
               "Program derived address used as program signer authority"
             ],
@@ -1320,12 +1600,20 @@
             "name": "recipient"
           },
           {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+            },
             "isSigner": false,
             "isWritable": false,
             "kind": "instructionAccountNode",
             "name": "tokenProgram"
           },
           {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+            },
             "isSigner": false,
             "isWritable": false,
             "kind": "instructionAccountNode",
@@ -1479,6 +1767,10 @@
             "name": "attestation"
           },
           {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g"
+            },
             "isSigner": false,
             "isWritable": false,
             "kind": "instructionAccountNode",
@@ -1495,12 +1787,33 @@
             "name": "systemProgram"
           },
           {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG"
+            },
             "isSigner": false,
             "isWritable": false,
             "kind": "instructionAccountNode",
             "name": "attestationProgram"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "attestationMint"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "name": "attestation",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "name": "attestation"
+                  }
+                }
+              ]
+            },
             "docs": [
               "Mint of Attestation Token"
             ],
@@ -1510,6 +1823,14 @@
             "name": "attestationMint"
           },
           {
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "name": "sasAuthority"
+              },
+              "seeds": []
+            },
             "docs": [
               "Program derived address used as program signer authority"
             ],
@@ -1528,6 +1849,10 @@
             "name": "attestationTokenAccount"
           },
           {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+            },
             "isSigner": false,
             "isWritable": false,
             "kind": "instructionAccountNode",
@@ -1563,6 +1888,10 @@
       {
         "accounts": [
           {
+            "defaultValue": {
+              "kind": "publicKeyValueNode",
+              "publicKey": "DzSpKpST2TSyrxokMXchFz3G2yn5WEGoxzpGEUDjCX4g"
+            },
             "isSigner": true,
             "isWritable": false,
             "kind": "instructionAccountNode",
@@ -1598,7 +1927,201 @@
     ],
     "kind": "programNode",
     "name": "solana_attestation_service",
-    "pdas": [],
+    "pdas": [
+      {
+        "kind": "pdaNode",
+        "name": "schemaMint",
+        "seeds": [
+          {
+            "kind": "constantPdaSeedNode",
+            "type": {
+              "encoding": "utf8",
+              "kind": "stringTypeNode"
+            },
+            "value": {
+              "kind": "stringValueNode",
+              "string": "schemaMint"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "schema",
+            "type": {
+              "kind": "publicKeyTypeNode"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "pdaNode",
+        "name": "attestationMint",
+        "seeds": [
+          {
+            "kind": "constantPdaSeedNode",
+            "type": {
+              "encoding": "utf8",
+              "kind": "stringTypeNode"
+            },
+            "value": {
+              "kind": "stringValueNode",
+              "string": "attestationMint"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "attestation",
+            "type": {
+              "kind": "publicKeyTypeNode"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "pdaNode",
+        "name": "eventAuthority",
+        "seeds": [
+          {
+            "kind": "constantPdaSeedNode",
+            "type": {
+              "encoding": "utf8",
+              "kind": "stringTypeNode"
+            },
+            "value": {
+              "kind": "stringValueNode",
+              "string": "__event_authority"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "pdaNode",
+        "name": "sasAuthority",
+        "seeds": [
+          {
+            "kind": "constantPdaSeedNode",
+            "type": {
+              "encoding": "utf8",
+              "kind": "stringTypeNode"
+            },
+            "value": {
+              "kind": "stringValueNode",
+              "string": "sas"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "pdaNode",
+        "name": "attestation",
+        "seeds": [
+          {
+            "kind": "constantPdaSeedNode",
+            "type": {
+              "encoding": "utf8",
+              "kind": "stringTypeNode"
+            },
+            "value": {
+              "kind": "stringValueNode",
+              "string": "attestation"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "credential",
+            "type": {
+              "kind": "publicKeyTypeNode"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "schema",
+            "type": {
+              "kind": "publicKeyTypeNode"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "nonce",
+            "type": {
+              "kind": "publicKeyTypeNode"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "pdaNode",
+        "name": "credential",
+        "seeds": [
+          {
+            "kind": "constantPdaSeedNode",
+            "type": {
+              "encoding": "utf8",
+              "kind": "stringTypeNode"
+            },
+            "value": {
+              "kind": "stringValueNode",
+              "string": "credential"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "authority",
+            "type": {
+              "kind": "publicKeyTypeNode"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "name",
+            "type": {
+              "encoding": "utf8",
+              "kind": "stringTypeNode"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "pdaNode",
+        "name": "schema",
+        "seeds": [
+          {
+            "kind": "constantPdaSeedNode",
+            "type": {
+              "encoding": "utf8",
+              "kind": "stringTypeNode"
+            },
+            "value": {
+              "kind": "stringValueNode",
+              "string": "schema"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "credential",
+            "type": {
+              "kind": "publicKeyTypeNode"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "name",
+            "type": {
+              "encoding": "utf8",
+              "kind": "stringTypeNode"
+            }
+          },
+          {
+            "kind": "variablePdaSeedNode",
+            "name": "version",
+            "type": {
+              "endian": "le",
+              "format": "u8",
+              "kind": "numberTypeNode"
+            }
+          }
+        ]
+      }
+    ],
     "publicKey": "22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG",
     "version": "2.0.0"
   },

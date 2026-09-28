@@ -9,9 +9,11 @@ use crate::error::AttestationServiceError;
 
 use super::discriminator::{AccountSerialize, AttestationAccountDiscriminators, Discriminator};
 
-// PDA ["credential", authority, name]
 /// Tracks the authorized signers of for schemas and their attestations.
 #[derive(Clone, Debug, PartialEq, CodamaAccount)]
+#[codama(seed(type = string(utf8), value = "credential"))]
+#[codama(seed(name = "authority", type = public_key))]
+#[codama(seed(name = "name", type = string(utf8)))]
 #[repr(C)]
 pub struct Credential {
     /// Admin of this credential

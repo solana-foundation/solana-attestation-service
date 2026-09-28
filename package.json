@@ -1,5 +1,6 @@
 {
   "name": "solana-attestation-service",
+  "type": "module",
   "version": "2.0.0",
   "private": true,
   "main": "index.js",
@@ -8,7 +9,7 @@
   "license": "MIT",
   "packageManager": "pnpm@12.3.4",
   "scripts": {
-    "generate-clients": "node ./scripts/generate-clients.js",
+    "generate-clients": "node ./scripts/generate-clients.ts",
     "generate-idl": "cd program && GENERATE_IDL=1 cargo check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -16,10 +17,10 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@codama/renderers": "^1.0.23",
-    "@codama/renderers-js": "^2.3.1",
+    "@codama/renderers-js": "~2.4.0",
+    "@codama/renderers-rust": "~2.0.2",
     "@solana/kit": "^7.0.0",
-    "codama": "^1.4.0"
+    "codama": "^1.11.0"
   },
   "devDependencies": {
     "@solana/eslint-config-solana": "^6.0.0",

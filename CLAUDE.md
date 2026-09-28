@@ -28,12 +28,34 @@ The IDL embeds the workspace version, so bumping `version` in the root
 diff is committed. `just check-generated` catches it, and CI fails on it.
 
 **Codama reads the source, so annotations are the contract.** Account lists,
-argument types, PDA defaults and error messages all come from `#[codama(...)]`
-attributes on `program/src/instructions.rs`, `state/`, `events.rs` and
-`error.rs`. `Vec<u8>` fields carry `type = bytes` plus `size_prefix` because
-the bare mapping renders an array of numbers rather than a byte string, and
-`payer` / `system_program` accounts carry explicit `default_value`s. Two
-directives cannot share one attribute; write them as separate lines.
+argument types, PDA seeds, account defaults, events and error messages all come
+from `#[codama(...)]` attributes on `program/src/instructions.rs`, `state/`,
+`constants.rs`, `events.rs` and `error.rs`. `Vec<u8>` fields carry
+`type = bytes` plus `size_prefix` because the bare mapping renders an array of
+numbers rather than a byte string, and `payer` / `system_program` accounts
+carry explicit `default_value`s because nothing infers them. Two directives
+cannot share one attribute; write them as separate lines, and put them after
+the `derive`, since they are derive helper attributes.
+
+**Four structs in `constants.rs` exist only to declare PDA seeds.** Codama
+attaches seeds to accounts, so `SchemaMint`, `AttestationMint`,
+`EventAuthority` and `SasAuthority` are empty structs whose only job is
+`#[codama(seed(...))]`. `scripts/generate-clients.ts` drops any account with no
+fields before rendering, which keeps the PDA helpers and skips decoders for an
+account that holds no data.
+
+**The renderer majors are pinned to the stack they target.**
+`@codama/renderers-rust` 3.x generates against the solana 3.x split crates and
+`@codama/renderers-js` 2.5 against `@solana/kit` 8, while this repo is on
+solana 2.x and kit 7. Both are pinned with `~`; widening either range breaks
+the clients until the underlying stack is upgraded.
+
+**Only the TypeScript renderer understands events.** `scripts/generate-clients.ts`
+mirrors every event into a defined type for the Rust render, which is what keeps
+`types::CloseAttestationEvent` available to Rust callers; the TypeScript client
+gets real event codecs under `events/`. The event's one-byte type discriminator
+is a struct field rather than a second Codama discriminator, so the mirrored
+type matches the wire format on its own.
 
 **Generated client sources are gitignored.** `clients/*/src/generated/` is
 produced by `just generate-clients`. Never hand-edit it, and never commit it.

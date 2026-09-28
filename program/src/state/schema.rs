@@ -85,8 +85,11 @@ impl From<SchemaDataTypes> for u8 {
     }
 }
 
-// PDA ["schema", credential, name, version]
 #[derive(Clone, Debug, PartialEq, CodamaAccount)]
+#[codama(seed(type = string(utf8), value = "schema"))]
+#[codama(seed(name = "credential", type = public_key))]
+#[codama(seed(name = "name", type = string(utf8)))]
+#[codama(seed(name = "version", type = number(u8)))]
 #[repr(C)]
 pub struct Schema {
     /// The Credential that manages this Schema

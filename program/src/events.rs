@@ -1,7 +1,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use codama::CodamaType;
+use codama::CodamaEvent;
 use pinocchio::Address as Pubkey;
 
 use crate::constants::EVENT_IX_TAG_LE;
@@ -11,7 +11,8 @@ pub enum EventDiscriminators {
     CloseEvent = 0,
 }
 
-#[derive(CodamaType)]
+#[derive(CodamaEvent)]
+#[codama(discriminator(bytes = [228, 69, 165, 46, 81, 203, 154, 29], offset = 0))]
 pub struct CloseAttestationEvent {
     /// Unique u8 byte for event type.
     pub discriminator: u8,

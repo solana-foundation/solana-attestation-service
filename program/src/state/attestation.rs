@@ -12,8 +12,11 @@ use super::{
     SchemaDataTypes,
 };
 
-// PDA ["attestation", credential, schema, nonce]
 #[derive(Clone, Debug, PartialEq, CodamaAccount)]
+#[codama(seed(type = string(utf8), value = "attestation"))]
+#[codama(seed(name = "credential", type = public_key))]
+#[codama(seed(name = "schema", type = public_key))]
+#[codama(seed(name = "nonce", type = public_key))]
 #[repr(C)]
 pub struct Attestation {
     /// A pubkey that may either be randomly generated OR associated with a User's wallet
