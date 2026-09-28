@@ -1,12 +1,9 @@
 use pinocchio::{
-    account_info::AccountInfo,
-    instruction::Seed,
-    program_error::ProgramError,
-    pubkey::Pubkey,
+    cpi::Seed,
+    error::ProgramError,
     sysvars::{clock::Clock, rent::Rent, Sysvar},
-    ProgramResult,
+    AccountView, Address, ProgramResult,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::ATTESTATION_SEED,
@@ -19,10 +16,10 @@ use super::{create_pda_account, verify_owner_mutability, verify_signer, verify_s
 
 #[inline(always)]
 pub fn process_create_attestation(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+    program_id: &Address,
+    accounts: &mut [AccountView],
     instruction_data: &[u8],
-    token_account: Option<Pubkey>,
+    token_account: Option<Address>,
 ) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
     let [payer_info, authorized_signer, credential_info, schema_info, attestation_info, system_program] = accounts
@@ -39,13 +36,13 @@ pub fn process_create_attestation(
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(schema_info, program_id, false)?;
 
-    let credential_data = credential_info.try_borrow_data()?;
+    let credential_data = credential_info.try_borrow()?;
     let credential = Credential::try_from_bytes(&credential_data)?;
 
     // Validate Authority is an authorized signer
-    credential.validate_authorized_signer(authorized_signer.key())?;
+    credential.validate_authorized_signer(authorized_signer.address())?;
 
-    let schema_data = schema_info.try_borrow_data()?;
+    let schema_data = schema_info.try_borrow()?;
     let schema = Schema::try_from_bytes(&schema_data)?;
 
     // Validate Schema is not paused
@@ -54,7 +51,7 @@ pub fn process_create_attestation(
     }
 
     // Validate Schema is owned by Credential
-    if schema.credential.ne(credential_info.key()) {
+    if schema.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
@@ -64,16 +61,13 @@ pub fn process_create_attestation(
         return Err(AttestationServiceError::InvalidAttestationData.into());
     }
 
-    // NOTE: this could be optimized further by removing the `solana-program` dependency
-    // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
-    // pubkey and associated bump (needed to be added as arg) is valid.
-    let (attestation_pda, attestation_bump) = SolanaPubkey::find_program_address(
-        &[ATTESTATION_SEED, credential_info.key(), schema_info.key(), &args.nonce],
-        &SolanaPubkey::from(*program_id),
+    let (attestation_pda, attestation_bump) = Address::find_program_address(
+        &[ATTESTATION_SEED, credential_info.address().as_ref(), schema_info.address().as_ref(), args.nonce.as_ref()],
+        program_id,
     );
 
     // Validate attestation PDA is correct
-    if attestation_info.key().ne(&attestation_pda.to_bytes()) {
+    if attestation_info.address().ne(&attestation_pda) {
         return Err(AttestationServiceError::InvalidAttestation.into());
     }
 
@@ -93,9 +87,9 @@ pub fn process_create_attestation(
     let bump_seed = [attestation_bump];
     let signer_seeds = [
         Seed::from(ATTESTATION_SEED),
-        Seed::from(credential_info.key()),
-        Seed::from(schema_info.key()),
-        Seed::from(&args.nonce),
+        Seed::from(credential_info.address().as_ref()),
+        Seed::from(schema_info.address().as_ref()),
+        Seed::from(args.nonce.as_ref()),
         Seed::from(&bump_seed),
     ];
 
@@ -104,10 +98,10 @@ pub fn process_create_attestation(
 
     let attestation = Attestation {
         nonce: args.nonce,
-        credential: *credential_info.key(),
-        schema: *schema_info.key(),
+        credential: *credential_info.address(),
+        schema: *schema_info.address(),
         data: args.data.to_vec(),
-        signer: *authorized_signer.key(),
+        signer: *authorized_signer.address(),
         expiry: args.expiry,
         token_account: token_account.unwrap_or_default(),
     };
@@ -115,14 +109,14 @@ pub fn process_create_attestation(
     // Validate the Attestation data matches the layout of the Schema
     attestation.validate_data(schema.layout)?;
 
-    let mut attestation_data = attestation_info.try_borrow_mut_data()?;
+    let mut attestation_data = attestation_info.try_borrow_mut()?;
     attestation_data.copy_from_slice(&attestation.to_bytes());
 
     Ok(())
 }
 
 struct CreateAttestationArgs<'a> {
-    nonce: Pubkey,
+    nonce: Address,
     data: &'a [u8],
     expiry: i64,
 }
@@ -131,7 +125,7 @@ fn process_instruction_data(data: &[u8]) -> Result<CreateAttestationArgs<'_>, Pr
     let mut offset: usize = 0;
 
     require_len!(data, 32);
-    let nonce: Pubkey = data[offset..offset + 32].try_into().unwrap();
+    let nonce: Address = data[offset..offset + 32].try_into().unwrap();
     offset += 32;
 
     require_len!(data, offset + 4);

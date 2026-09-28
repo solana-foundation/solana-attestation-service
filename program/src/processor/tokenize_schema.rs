@@ -1,22 +1,18 @@
 use pinocchio::{
-    account_info::AccountInfo,
-    instruction::{Seed, Signer},
-    program_error::ProgramError,
-    pubkey::Pubkey,
+    cpi::{Seed, Signer},
+    error::ProgramError,
     sysvars::{rent::Rent, Sysvar},
-    ProgramResult,
+    AccountView, Address, ProgramResult,
 };
-use pinocchio_token::{
-    extensions::{group_pointer::Initialize as InitializeGroupPointer, token_group::InitializeGroup},
-    instructions::{InitializeMint2, TokenProgramVariant},
-    TOKEN_2022_PROGRAM_ID,
+use pinocchio_token_2022::{
+    instructions::{group_pointer::Initialize as InitializeGroupPointer, InitializeMint2},
+    ID as TOKEN_2022_PROGRAM_ID,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::{sas_pda, SAS_SEED, SCHEMA_MINT_SEED},
     error::AttestationServiceError,
-    processor::{create_pda_account, verify_signer, verify_system_program},
+    processor::{create_pda_account, token_ext::InitializeGroup, verify_signer, verify_system_program},
     require_len,
     state::{Credential, Schema},
 };
@@ -25,8 +21,8 @@ use super::{verify_owner_mutability, verify_token22_program};
 
 #[inline(always)]
 pub fn process_tokenize_schema(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+    program_id: &Address,
+    accounts: &mut [AccountView],
     instruction_data: &[u8],
 ) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
@@ -46,26 +42,26 @@ pub fn process_tokenize_schema(
     verify_token22_program(token_program)?;
 
     // Verify signer matches credential authority.
-    let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
-    if credential.authority.ne(authority_info.key()) {
+    let credential = &Credential::try_from_bytes(&credential_info.try_borrow()?)?;
+    if credential.authority.ne(authority_info.address()) {
         return Err(ProgramError::IncorrectAuthority);
     }
 
     // Validate Schema is owned by Credential
-    let schema = Schema::try_from_bytes(&schema_info.try_borrow_data()?)?;
-    if schema.credential.ne(credential_info.key()) {
+    let schema = Schema::try_from_bytes(&schema_info.try_borrow()?)?;
+    if schema.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
     // Validate that mint to initialize matches expected PDA
     let (mint_pda, mint_bump) =
-        SolanaPubkey::find_program_address(&[SCHEMA_MINT_SEED, schema_info.key()], &SolanaPubkey::from(*program_id));
-    if mint_info.key().ne(&mint_pda.to_bytes()) {
+        Address::find_program_address(&[SCHEMA_MINT_SEED, schema_info.address().as_ref()], program_id);
+    if mint_info.address().ne(&mint_pda) {
         return Err(AttestationServiceError::InvalidMint.into());
     }
 
     // Validate that sas_pda matches
-    if sas_pda_info.key().ne(&sas_pda::ID) {
+    if sas_pda_info.address().ne(&sas_pda::ID) {
         return Err(AttestationServiceError::InvalidProgramSigner.into());
     }
 
@@ -76,26 +72,21 @@ pub fn process_tokenize_schema(
         234, // Size before Group Extension
         &TOKEN_2022_PROGRAM_ID,
         mint_info,
-        [Seed::from(SCHEMA_MINT_SEED), Seed::from(schema_info.key()), Seed::from(&[mint_bump])],
+        [Seed::from(SCHEMA_MINT_SEED), Seed::from(schema_info.address().as_ref()), Seed::from(&[mint_bump])],
         Some(318), // Size after Group Extension
     )?;
 
     // Initialize GroupPointer extension.
     InitializeGroupPointer {
         mint: mint_info,
-        authority: Some(*sas_pda_info.key()),
-        group_address: Some(*sas_pda_info.key()),
+        authority: Some(sas_pda_info.address()),
+        group_address: Some(sas_pda_info.address()),
+        token_program: &TOKEN_2022_PROGRAM_ID,
     }
     .invoke()?;
 
     // Initialize Mint on created account.
-    InitializeMint2 {
-        mint: mint_info,
-        decimals: 0,
-        mint_authority: sas_pda_info.key(),
-        freeze_authority: Some(sas_pda_info.key()),
-    }
-    .invoke(TokenProgramVariant::Token2022)?;
+    InitializeMint2::new(mint_info, 0, sas_pda_info.address(), Some(sas_pda_info.address())).invoke()?;
 
     // Initialize Group extension.
     let bump_seed = [sas_pda::BUMP];
@@ -104,7 +95,7 @@ pub fn process_tokenize_schema(
         group: mint_info,
         mint: mint_info,
         mint_authority: sas_pda_info,
-        update_authority: Some(*sas_pda_info.key()),
+        update_authority: sas_pda_info.address(),
         max_size: args.max_size,
     }
     .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;

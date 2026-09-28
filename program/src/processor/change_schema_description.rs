@@ -1,12 +1,11 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
+use pinocchio::Resize;
 use pinocchio::{
-    account_info::AccountInfo,
-    program_error::ProgramError,
-    pubkey::Pubkey,
+    error::ProgramError,
     sysvars::{rent::Rent, Sysvar},
-    ProgramResult,
+    AccountView, Address, ProgramResult,
 };
 use pinocchio_system::instructions::Transfer;
 
@@ -19,8 +18,8 @@ use crate::{
 
 #[inline(always)]
 pub fn process_change_schema_description(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+    program_id: &Address,
+    accounts: &mut [AccountView],
     instruction_data: &[u8],
 ) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
@@ -36,19 +35,19 @@ pub fn process_change_schema_description(
     verify_owner_mutability(schema_info, program_id, true)?;
     verify_system_program(system_program)?;
 
-    let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
+    let credential = &Credential::try_from_bytes(&credential_info.try_borrow()?)?;
 
     // Verify signer matches credential authority.
-    if credential.authority.ne(authority_info.key()) {
+    if credential.authority.ne(authority_info.address()) {
         return Err(ProgramError::IncorrectAuthority);
     }
 
-    let schema_data = schema_info.try_borrow_data()?;
+    let schema_data = schema_info.try_borrow()?;
     let mut schema = Schema::try_from_bytes(&schema_data)?;
     drop(schema_data); // Drop immutable borrow.
 
     // Verify that schema is under the same credential.
-    if schema.credential.ne(credential_info.key()) {
+    if schema.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidSchema.into());
     }
 
@@ -62,12 +61,12 @@ pub fn process_change_schema_description(
     if new_description_len != prev_description_len {
         let previous_space = schema_info.data_len();
         let new_space = previous_space + new_description_len - prev_description_len;
-        schema_info.realloc(new_space, false)?;
+        schema_info.resize(new_space)?;
         let diff = new_space.saturating_sub(previous_space);
         if diff > 0 {
             // top up lamports to account for additional rent.
             let rent = Rent::get()?;
-            let min_rent = rent.minimum_balance(new_space);
+            let min_rent = rent.try_minimum_balance(new_space)?;
             let current_rent = schema_info.lamports();
             let rent_diff = min_rent.saturating_sub(current_rent);
             if rent_diff > 0 {
@@ -77,7 +76,7 @@ pub fn process_change_schema_description(
     }
 
     // Write updated data.
-    let mut schema_data = schema_info.try_borrow_mut_data()?;
+    let mut schema_data = schema_info.try_borrow_mut()?;
     schema_data.copy_from_slice(&schema.to_bytes());
 
     Ok(())

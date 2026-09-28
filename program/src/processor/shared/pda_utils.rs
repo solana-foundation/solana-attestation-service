@@ -1,19 +1,17 @@
 use pinocchio::{
-    account_info::AccountInfo,
-    instruction::{Seed, Signer},
-    pubkey::Pubkey,
+    cpi::{Seed, Signer},
     sysvars::rent::Rent,
-    ProgramResult,
+    AccountView, Address, ProgramResult,
 };
 use pinocchio_system::instructions::{Allocate, Assign, CreateAccount, Transfer};
 
 /// Create a PDA account for the given seeds.
 pub fn create_pda_account<const N: usize>(
-    payer: &AccountInfo,
+    payer: &AccountView,
     rent: &Rent,
     space: usize,
-    owner: &Pubkey,
-    new_pda_account: &AccountInfo,
+    owner: &Address,
+    new_pda_account: &AccountView,
     new_pda_signer_seeds: [Seed; N],
     min_rent_space: Option<usize>,
 ) -> ProgramResult {
@@ -22,7 +20,7 @@ pub fn create_pda_account<const N: usize>(
         Some(min_space) => min_space.max(space),
         None => space,
     };
-    let required_lamports = rent.minimum_balance(rent_space).max(1);
+    let required_lamports = rent.try_minimum_balance(rent_space)?.max(1);
 
     if new_pda_account.lamports() > 0 {
         // someone can transfer lamports to accounts before they're initialized

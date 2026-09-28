@@ -1,8 +1,8 @@
 use bs58;
-use pinocchio::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
+use pinocchio::{error::ProgramError, AccountView, Address};
 use pinocchio_associated_token_account::ID as ATA_PROGRAM_ID;
 use pinocchio_log::log;
-use pinocchio_token::TOKEN_2022_PROGRAM_ID;
+use pinocchio_token_2022::ID as TOKEN_2022_PROGRAM_ID;
 
 use crate::{acc_info_as_str, key_as_str, ID};
 
@@ -15,7 +15,7 @@ use crate::{acc_info_as_str, key_as_str, ID};
 ///
 /// # Returns
 /// * `Result<(), ProgramError>` - The result of the operation
-pub fn verify_signer(info: &AccountInfo, expect_writable: bool) -> Result<(), ProgramError> {
+pub fn verify_signer(info: &AccountView, expect_writable: bool) -> Result<(), ProgramError> {
     if !info.is_signer() {
         log!("Account {} is not a signer", acc_info_as_str!(info));
         return Err(ProgramError::MissingRequiredSignature);
@@ -37,13 +37,13 @@ pub fn verify_signer(info: &AccountInfo, expect_writable: bool) -> Result<(), Pr
 ///
 /// # Returns
 /// * `Result<(), ProgramError>` - The result of the operation
-pub fn verify_system_account(info: &AccountInfo, is_writable: bool) -> Result<(), ProgramError> {
-    if !info.is_owned_by(&pinocchio_system::ID) {
+pub fn verify_system_account(info: &AccountView, is_writable: bool) -> Result<(), ProgramError> {
+    if !info.owned_by(&pinocchio_system::ID) {
         log!("Account {} is not owned by the system program", acc_info_as_str!(info));
         return Err(ProgramError::InvalidAccountOwner);
     }
 
-    if !info.data_is_empty() {
+    if !info.is_data_empty() {
         log!("Account {} data is not empty", acc_info_as_str!(info));
         return Err(ProgramError::AccountAlreadyInitialized);
     }
@@ -63,8 +63,8 @@ pub fn verify_system_account(info: &AccountInfo, is_writable: bool) -> Result<()
 ///
 /// # Returns
 /// * `Result<(), ProgramError>` - The result of the operation
-pub fn verify_system_program(info: &AccountInfo) -> Result<(), ProgramError> {
-    if info.key().ne(&pinocchio_system::ID) {
+pub fn verify_system_program(info: &AccountView) -> Result<(), ProgramError> {
+    if info.address().ne(&pinocchio_system::ID) {
         log!("Account {} is not the system program", acc_info_as_str!(info));
         return Err(ProgramError::IncorrectProgramId);
     }
@@ -79,8 +79,8 @@ pub fn verify_system_program(info: &AccountInfo) -> Result<(), ProgramError> {
 ///
 /// # Returns
 /// * `Result<(), ProgramError>` - The result of the operation
-pub fn verify_token22_program(info: &AccountInfo) -> Result<(), ProgramError> {
-    if info.key().ne(&TOKEN_2022_PROGRAM_ID) {
+pub fn verify_token22_program(info: &AccountView) -> Result<(), ProgramError> {
+    if info.address().ne(&TOKEN_2022_PROGRAM_ID) {
         log!("Account {} is not the Token 2022 program", acc_info_as_str!(info));
         return Err(ProgramError::IncorrectProgramId);
     }
@@ -95,8 +95,8 @@ pub fn verify_token22_program(info: &AccountInfo) -> Result<(), ProgramError> {
 ///
 /// # Returns
 /// * `Result<(), ProgramError>` - The result of the operation
-pub fn verify_ata_program(info: &AccountInfo) -> Result<(), ProgramError> {
-    if info.key().ne(&ATA_PROGRAM_ID) {
+pub fn verify_ata_program(info: &AccountView) -> Result<(), ProgramError> {
+    if info.address().ne(&ATA_PROGRAM_ID) {
         log!("Account {} is not the Associated Token program", acc_info_as_str!(info));
         return Err(ProgramError::IncorrectProgramId);
     }
@@ -111,8 +111,8 @@ pub fn verify_ata_program(info: &AccountInfo) -> Result<(), ProgramError> {
 ///
 /// # Returns
 /// * `Result<(), ProgramError>` - The result of the operation
-pub fn verify_current_program(info: &AccountInfo) -> Result<(), ProgramError> {
-    if info.key().ne(&ID) {
+pub fn verify_current_program(info: &AccountView) -> Result<(), ProgramError> {
+    if info.address().ne(&ID) {
         log!("Account {} is not the current program", acc_info_as_str!(info));
         return Err(ProgramError::IncorrectProgramId);
     }
@@ -129,8 +129,8 @@ pub fn verify_current_program(info: &AccountInfo) -> Result<(), ProgramError> {
 ///
 /// # Returns
 /// * `Result<(), ProgramError>` - The result of the operation
-pub fn verify_owner_mutability(info: &AccountInfo, owner: &Pubkey, expect_writable: bool) -> Result<(), ProgramError> {
-    if !info.is_owned_by(owner) {
+pub fn verify_owner_mutability(info: &AccountView, owner: &Address, expect_writable: bool) -> Result<(), ProgramError> {
+    if !info.owned_by(owner) {
         log!("Owner of {} does not match {}", acc_info_as_str!(info), key_as_str!(owner),);
         return Err(ProgramError::InvalidAccountOwner);
     }

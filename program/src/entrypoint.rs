@@ -1,10 +1,14 @@
-use pinocchio::{account_info::AccountInfo, entrypoint, program_error::ProgramError, pubkey::Pubkey, ProgramResult};
+use pinocchio::{entrypoint, error::ProgramError, AccountView, Address, ProgramResult};
 
 use crate::processor::*;
 
 entrypoint!(process_instruction);
 
-pub fn process_instruction(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
+pub fn process_instruction(
+    program_id: &Address,
+    accounts: &mut [AccountView],
+    instruction_data: &[u8],
+) -> ProgramResult {
     let (discriminator, instruction_data) =
         instruction_data.split_first().ok_or(ProgramError::InvalidInstructionData)?;
 

@@ -1,12 +1,9 @@
 use pinocchio::{
-    account_info::AccountInfo,
-    instruction::Seed,
-    program_error::ProgramError,
-    pubkey::Pubkey,
+    cpi::Seed,
+    error::ProgramError,
     sysvars::{rent::Rent, Sysvar},
-    ProgramResult,
+    AccountView, Address, ProgramResult,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::SCHEMA_SEED,
@@ -20,8 +17,8 @@ use crate::{
 
 #[inline(always)]
 pub fn process_change_schema_version(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+    program_id: &Address,
+    accounts: &mut [AccountView],
     instruction_data: &[u8],
 ) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
@@ -40,18 +37,18 @@ pub fn process_change_schema_version(
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(existing_schema_info, program_id, false)?;
 
-    let credential = &Credential::try_from_bytes(&credential_info.try_borrow_data()?)?;
+    let credential = &Credential::try_from_bytes(&credential_info.try_borrow()?)?;
 
     // Verify signer matches credential authority.
-    if credential.authority.ne(authority_info.key()) {
+    if credential.authority.ne(authority_info.address()) {
         return Err(ProgramError::IncorrectAuthority);
     }
 
-    let existing_schema_data = existing_schema_info.try_borrow_data()?;
+    let existing_schema_data = existing_schema_info.try_borrow()?;
     let existing_schema = Schema::try_from_bytes(&existing_schema_data)?;
 
     // Verify that existing schema is under the same credential.
-    if existing_schema.credential.ne(credential_info.key()) {
+    if existing_schema.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidSchema.into());
     }
 
@@ -59,15 +56,12 @@ pub fn process_change_schema_version(
     let description = existing_schema.description;
     let version = &[existing_schema.version.checked_add(1).unwrap()];
 
-    // NOTE: this could be optimized further by removing the `solana-program` dependency
-    // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
-    // pubkey and associated bump (needed to be added as arg) is valid.
-    let (schema_pda, schema_bump) = SolanaPubkey::find_program_address(
-        &[SCHEMA_SEED, credential_info.key(), name.as_ref(), version],
-        &SolanaPubkey::from(*program_id),
+    let (schema_pda, schema_bump) = Address::find_program_address(
+        &[SCHEMA_SEED, credential_info.address().as_ref(), name.as_ref(), version],
+        program_id,
     );
 
-    if new_schema_info.key().ne(&schema_pda.to_bytes()) {
+    if new_schema_info.address().ne(&schema_pda) {
         // PDA was invalid
         return Err(AttestationServiceError::InvalidCredential.into());
     }
@@ -93,7 +87,7 @@ pub fn process_change_schema_version(
     let bump_seed = [schema_bump];
     let signer_seeds = [
         Seed::from(SCHEMA_SEED),
-        Seed::from(credential_info.key()),
+        Seed::from(credential_info.address().as_ref()),
         Seed::from(name.as_slice()),
         Seed::from(version),
         Seed::from(&bump_seed),
@@ -101,7 +95,7 @@ pub fn process_change_schema_version(
     create_pda_account(payer_info, &rent, space, program_id, new_schema_info, signer_seeds, None)?;
 
     let schema = Schema {
-        credential: *credential_info.key(),
+        credential: *credential_info.address(),
         name: name.to_vec(),
         description,
         layout: args.layout.to_vec(),
@@ -113,7 +107,7 @@ pub fn process_change_schema_version(
     // Checks that layout and field names are valid.
     schema.validate(args.field_names_count)?;
 
-    let mut schema_data = new_schema_info.try_borrow_mut_data()?;
+    let mut schema_data = new_schema_info.try_borrow_mut()?;
     schema_data.copy_from_slice(&schema.to_bytes());
 
     Ok(())

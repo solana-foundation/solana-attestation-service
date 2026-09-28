@@ -1,4 +1,4 @@
-use pinocchio::program_error::ProgramError;
+use pinocchio::error::ProgramError;
 
 /// Errors that may be returned by the Attestation Service program.
 #[derive(Clone, Debug, Eq, PartialEq)]

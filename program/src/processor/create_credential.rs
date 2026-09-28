@@ -2,14 +2,11 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use pinocchio::{
-    account_info::AccountInfo,
-    instruction::Seed,
-    program_error::ProgramError,
-    pubkey::Pubkey,
+    cpi::Seed,
+    error::ProgramError,
     sysvars::{rent::Rent, Sysvar},
-    ProgramResult,
+    AccountView, Address, ProgramResult,
 };
-use solana_program::pubkey::Pubkey as SolanaPubkey;
 
 use crate::{
     constants::CREDENTIAL_SEED,
@@ -21,8 +18,8 @@ use crate::{
 
 #[inline(always)]
 pub fn process_create_credential(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+    program_id: &Address,
+    accounts: &mut [AccountView],
     instruction_data: &[u8],
 ) -> ProgramResult {
     let args = process_instruction_data(instruction_data)?;
@@ -37,15 +34,10 @@ pub fn process_create_credential(
     // Validate: system program
     verify_system_program(system_program)?;
 
-    // NOTE: this could be optimized further by removing the `solana-program` dependency
-    // and using `pubkey::checked_create_program_address` from Pinocchio to verify the
-    // pubkey and associated bump (needed to be added as arg) is valid.
-    let (credential_pda, credential_bump) = SolanaPubkey::find_program_address(
-        &[CREDENTIAL_SEED, authority_info.key(), args.name],
-        &SolanaPubkey::from(*program_id),
-    );
+    let (credential_pda, credential_bump) =
+        Address::find_program_address(&[CREDENTIAL_SEED, authority_info.address().as_ref(), args.name], program_id);
 
-    if credential_info.key().ne(&credential_pda.to_bytes()) {
+    if credential_info.address().ne(&credential_pda) {
         // PDA was invalid
         return Err(AttestationServiceError::InvalidCredential.into());
     }
@@ -59,13 +51,17 @@ pub fn process_create_credential(
 
     let rent = Rent::get()?;
     let bump_seed = [credential_bump];
-    let signer_seeds =
-        [Seed::from(CREDENTIAL_SEED), Seed::from(authority_info.key()), Seed::from(args.name), Seed::from(&bump_seed)];
+    let signer_seeds = [
+        Seed::from(CREDENTIAL_SEED),
+        Seed::from(authority_info.address().as_ref()),
+        Seed::from(args.name),
+        Seed::from(&bump_seed),
+    ];
     create_pda_account(payer_info, &rent, space, program_id, credential_info, signer_seeds, None)?;
 
     let credential =
-        Credential { authority: *authority_info.key(), name: args.name.to_vec(), authorized_signers: args.signers };
-    let mut credential_data = credential_info.try_borrow_mut_data()?;
+        Credential { authority: *authority_info.address(), name: args.name.to_vec(), authorized_signers: args.signers };
+    let mut credential_data = credential_info.try_borrow_mut()?;
     credential_data.copy_from_slice(&credential.to_bytes());
 
     Ok(())
@@ -73,7 +69,7 @@ pub fn process_create_credential(
 
 struct CreateCredentialArgs<'a> {
     name: &'a [u8],
-    signers: Vec<Pubkey>,
+    signers: Vec<Address>,
 }
 
 fn process_instruction_data(data: &[u8]) -> Result<CreateCredentialArgs<'_>, ProgramError> {
@@ -94,7 +90,7 @@ fn process_instruction_data(data: &[u8]) -> Result<CreateCredentialArgs<'_>, Pro
     require_len!(data, offset + signers_len * 32);
     let mut signers = Vec::with_capacity(signers_len);
     for _ in 0..signers_len {
-        let signer: Pubkey = data[offset..offset + 32].try_into().unwrap();
+        let signer: Address = data[offset..offset + 32].try_into().unwrap();
         signers.push(signer);
         offset += 32;
     }

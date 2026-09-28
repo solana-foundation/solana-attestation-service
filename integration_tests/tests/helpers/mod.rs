@@ -1,4 +1,5 @@
 use solana_program_test::{ProgramTest, ProgramTestContext};
+use solana_sdk::rent::Rent;
 
 /// Get ProgramTestContext with SAS program loaded.
 pub async fn program_test_context() -> ProgramTestContext {
@@ -9,5 +10,7 @@ pub async fn program_test_context() -> ProgramTestContext {
         None,
     );
     let ctx = program_test.start_with_context().await;
+    // SIMD-0194 layout with the Agave default rate: pinocchio reads the first field as lamports per byte.
+    ctx.set_sysvar(&Rent { lamports_per_byte_year: 6960, exemption_threshold: 1.0, ..Rent::default() });
     ctx
 }
