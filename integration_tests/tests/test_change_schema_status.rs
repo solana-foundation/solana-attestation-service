@@ -4,16 +4,9 @@ use solana_attestation_service_client::{
     accounts::Schema,
     instructions::{ChangeSchemaStatusBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
 };
-use solana_attestation_service_macros::SchemaStructSerialize;
 use solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer, system_program, transaction::Transaction};
 
 mod helpers;
-
-#[derive(SchemaStructSerialize)]
-struct TestData {
-    _name: String,
-    _location: u8,
-}
 
 #[tokio::test]
 async fn pause_and_unpause_schema_success() {
@@ -45,7 +38,7 @@ async fn pause_and_unpause_schema_success() {
     // Create Schema
     let schema_name = "test_data";
     let description = "schema for test data";
-    let schema_layout = TestData::get_serialized_representation();
+    let schema_layout = vec![12, 0];
     let field_names = vec!["name".into(), "location".into()];
     let (schema_pda, _bump) = Pubkey::find_program_address(
         &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],

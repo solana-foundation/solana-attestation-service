@@ -10,7 +10,7 @@ ts_client_dir := "clients/typescript"
 idl_file := "idl/solana_attestation_service.json"
 sbf_out_dir := justfile_directory() / "target/sbpf-solana-solana/release"
 generated_paths := "idl clients/typescript/src/generated clients/rust/src/generated"
-fmt_packages := "-p solana-attestation-service -p solana-attestation-service-core -p solana-attestation-service-macros -p tests-solana-attestation-service"
+fmt_packages := "-p solana-attestation-service -p tests-solana-attestation-service"
 
 # List available recipes
 default:
@@ -100,7 +100,7 @@ test *args: unit-test (integration-test args) test-client
 
 # Run Rust unit tests
 unit-test:
-    cargo test -p solana-attestation-service -p solana-attestation-service-core --lib
+    cargo test -p solana-attestation-service --lib
 
 # Run Rust integration tests against the built program
 integration-test *args: build-program generate-clients
