@@ -14,7 +14,7 @@ _Promotes the `2.0.0-beta.1` prerelease to a stable release._
 
 ### Changed
 
-- **Breaking** — built on `@solana/kit` v8 and Codama `renderers-js` 2.x. ([#104], [#PR])
+- **Breaking** — built on `@solana/kit` v8 and Codama `renderers-js` 2.x. ([#104], [#129])
 
 ### Fixed
 
@@ -25,4 +25,5 @@ _Promotes the `2.0.0-beta.1` prerelease to a stable release._
 - Generated sources under `src/generated/` are no longer committed. They are produced by `just generate-clients` and bundled into the published `dist/`.
 
 [#104]: https://github.com/solana-foundation/solana-attestation-service/pull/104
+[#129]: https://github.com/solana-foundation/solana-attestation-service/pull/129
 [#109]: https://github.com/solana-foundation/solana-attestation-service/pull/109
