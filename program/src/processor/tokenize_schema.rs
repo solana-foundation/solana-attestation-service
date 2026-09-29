@@ -12,12 +12,13 @@ use pinocchio_token_2022::{
 use crate::{
     constants::{sas_pda, SAS_SEED, SCHEMA_MINT_SEED},
     error::AttestationServiceError,
-    processor::{create_pda_account, token_ext::InitializeGroup, verify_signer, verify_system_program},
+    processor::{
+        create_pda_account, token_ext::InitializeGroup, verify_owner_mutability, verify_sas_pda, verify_signer,
+        verify_system_program, verify_token22_program,
+    },
     require_len,
     state::{Credential, Schema},
 };
-
-use super::{verify_owner_mutability, verify_token22_program};
 
 #[inline(always)]
 pub fn process_tokenize_schema(
@@ -32,40 +33,28 @@ pub fn process_tokenize_schema(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Validate: authority should have signed
-    verify_signer(authority_info, false)?;
-    // Validate Credential and Schema are owned by our program
+    verify_signer(authority_info)?;
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(schema_info, program_id, false)?;
-    // Validate: system program
     verify_system_program(system_program)?;
     verify_token22_program(token_program)?;
 
-    // Verify signer matches credential authority.
-    let credential = &Credential::try_from_bytes(&credential_info.try_borrow()?)?;
-    if credential.authority.ne(authority_info.address()) {
-        return Err(ProgramError::IncorrectAuthority);
-    }
+    let credential = Credential::try_from_bytes(&credential_info.try_borrow()?)?;
+    credential.validate_authority(authority_info.address())?;
 
-    // Validate Schema is owned by Credential
     let schema = Schema::try_from_bytes(&schema_info.try_borrow()?)?;
     if schema.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
-    // Validate that mint to initialize matches expected PDA
     let (mint_pda, mint_bump) =
         Address::find_program_address(&[SCHEMA_MINT_SEED, schema_info.address().as_ref()], program_id);
     if mint_info.address().ne(&mint_pda) {
         return Err(AttestationServiceError::InvalidMint.into());
     }
 
-    // Validate that sas_pda matches
-    if sas_pda_info.address().ne(&sas_pda::ID) {
-        return Err(AttestationServiceError::InvalidProgramSigner.into());
-    }
+    verify_sas_pda(sas_pda_info)?;
 
-    // Initialize new account owned by token_program.
     create_pda_account(
         payer_info,
         &Rent::get()?,
@@ -76,7 +65,6 @@ pub fn process_tokenize_schema(
         Some(318), // Size after Group Extension
     )?;
 
-    // Initialize GroupPointer extension.
     InitializeGroupPointer {
         mint: mint_info,
         authority: Some(sas_pda_info.address()),
@@ -85,10 +73,8 @@ pub fn process_tokenize_schema(
     }
     .invoke()?;
 
-    // Initialize Mint on created account.
     InitializeMint2::new(mint_info, 0, sas_pda_info.address(), Some(sas_pda_info.address())).invoke()?;
 
-    // Initialize Group extension.
     let bump_seed = [sas_pda::BUMP];
     let sas_pda_seeds: [Seed<'_>; 2] = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
     InitializeGroup {

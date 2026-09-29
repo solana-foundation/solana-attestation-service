@@ -5,12 +5,13 @@
         "moduleResolution": "node16",
         "declaration": true,
         "outDir": "./dist",
+        "rootDir": ".",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "types": ["mocha", "node"]
     },
-    "include": ["src/**/*", "test/**/*"],
+    "include": ["src/**/*"],
     "exclude": ["node_modules", "dist"]
 }

@@ -13,15 +13,8 @@ pub enum AttestationAccountDiscriminators {
 }
 
 pub trait AccountSerialize: Discriminator {
-    /// Serialize the struct with the Discriminator prepended.
     fn to_bytes(&self) -> Vec<u8> {
-        let mut data = Vec::new();
-        // Discriminator
-        data.push(Self::DISCRIMINATOR);
-
-        data.extend(self.to_bytes_inner());
-
-        data
+        [&[Self::DISCRIMINATOR], self.to_bytes_inner().as_slice()].concat()
     }
 
     fn to_bytes_inner(&self) -> Vec<u8>;

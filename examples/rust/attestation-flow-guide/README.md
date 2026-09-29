@@ -18,6 +18,14 @@ Clone the repository and navigate to the Rust examples:
 
 ```bash
 git clone https://github.com/solana-foundation/solana-attestation-service
+cd solana-attestation-service
+```
+
+The demos build against the Rust client in `clients/rust`, whose sources are generated. Generate them once from the repository root (requires [pnpm](https://pnpm.io/) and [just](https://just.systems/)):
+
+```bash
+pnpm install
+just generate-clients
 cd examples/rust/attestation-flow-guide
 ```
 

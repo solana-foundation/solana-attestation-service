@@ -12,7 +12,9 @@ use crate::{
     state::{Attestation, Credential},
 };
 
-use super::{verify_current_program, verify_owner_mutability, verify_signer, verify_system_program};
+use super::{
+    verify_current_program, verify_event_authority, verify_owner_mutability, verify_signer, verify_system_program,
+};
 
 #[inline(always)]
 pub fn process_close_attestation(
@@ -26,29 +28,17 @@ pub fn process_close_attestation(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Validate: authority should have signed
-    verify_signer(authorized_signer, false)?;
-
-    // Validate system program
+    verify_signer(authorized_signer)?;
     verify_system_program(system_program)?;
-
-    // Verify attestation program
     verify_current_program(attestation_program)?;
-
-    // Validate Credential and Attestation is owned by our program
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(attestation_info, program_id, true)?;
 
-    // Check that one of credential's authorized signers have signed.
-    let credential_data = credential_info.try_borrow()?;
-    let credential = Credential::try_from_bytes(&credential_data)?;
+    let credential = Credential::try_from_bytes(&credential_info.try_borrow()?)?;
     credential.validate_authorized_signer(authorized_signer.address())?;
 
-    let attestation_data = attestation_info.try_borrow()?;
-    let attestation = Attestation::try_from_bytes(&attestation_data)?;
-    drop(attestation_data); // Drop immutable borrow.
+    let attestation = Attestation::try_from_bytes(&attestation_info.try_borrow()?)?;
 
-    // Verify token_account matches address in Attestation
     if let Some(token_account) = token_account {
         if token_account.ne(&attestation.token_account) {
             return Err(AttestationServiceError::InvalidTokenAccount.into());
@@ -57,23 +47,16 @@ pub fn process_close_attestation(
         return Err(AttestationServiceError::InvalidTokenAccount.into());
     }
 
-    // Check that credential matches attestation's.
-    if !attestation.credential.eq(credential_info.address()) {
+    if attestation.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidCredential.into());
     }
 
-    // Close account and transfer rent to payer.
     let payer_lamports = payer_info.lamports();
     payer_info.set_lamports(payer_lamports.checked_add(attestation_info.lamports()).unwrap());
-    attestation_info.set_lamports(0);
     attestation_info.close()?;
 
-    // Check that event authority PDA is valid.
-    if event_authority_info.address().ne(&event_authority_pda::ID) {
-        return Err(AttestationServiceError::InvalidEventAuthority.into());
-    }
+    verify_event_authority(event_authority_info)?;
 
-    // CPI to emit_event ix on same program to store event data in ix arg.
     let event = CloseAttestationEvent {
         discriminator: EventDiscriminators::CloseEvent as u8,
         schema: attestation.schema,

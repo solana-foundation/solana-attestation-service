@@ -22,3 +22,9 @@ _Not yet deployed. The currently deployed binary predates this version. The prog
 - CI gates on every pull request: build, unit and integration tests, formatting, clippy, IDL and generated-client drift, `cargo audit` and `pnpm audit`.
 - `just` is the single task runner for build, test, lint, format and client generation.
 - Both client publishes are manual (`workflow_dispatch`) and gated on a green test run, a branch guard and a dry-run default. They publish over OIDC instead of a long-lived registry token, and they push a git tag and create a GitHub Release.
+
+### Fixed
+
+- `CreateAttestation` and `CreateTokenizedAttestation` return `InvalidAttestationData` for attestation data shorter than a length prefix the schema layout expects, instead of aborting on an out-of-bounds read.
+- `CreateTokenizedAttestation` passes the token name, symbol and URI through to Token-2022 as bytes, so non-UTF-8 input is rejected by Token-2022 instead of aborting the instruction.
+- `ChangeSchemaVersion` returns `InvalidSchema` rather than `InvalidCredential` when the new schema account is not the next version's PDA, and `ArithmeticOverflow` rather than aborting when the schema is already at version 255.

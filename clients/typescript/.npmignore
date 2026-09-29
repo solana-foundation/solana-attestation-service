@@ -1,6 +1,0 @@
-pnpm-lock.yaml
-src/
-tsconfig.json
-.gitignore
-node_modules/
-*.temp

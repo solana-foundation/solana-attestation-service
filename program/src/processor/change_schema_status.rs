@@ -4,7 +4,6 @@ use pinocchio_log::log;
 use crate::{
     error::AttestationServiceError,
     processor::{verify_owner_mutability, verify_signer},
-    require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
@@ -19,24 +18,15 @@ pub fn process_change_schema_status(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    // Validate: authority should have signed
-    verify_signer(authority_info, false)?;
-
-    // Verify program ownership, mutability and PDAs.
+    verify_signer(authority_info)?;
     verify_owner_mutability(credential_info, program_id, false)?;
     verify_owner_mutability(schema_info, program_id, true)?;
 
-    let credential = &Credential::try_from_bytes(&credential_info.try_borrow()?)?;
-
-    // Verify signer matches credential authority.
-    if credential.authority.ne(authority_info.address()) {
-        return Err(ProgramError::IncorrectAuthority);
-    }
+    let credential = Credential::try_from_bytes(&credential_info.try_borrow()?)?;
+    credential.validate_authority(authority_info.address())?;
 
     let mut schema_data = schema_info.try_borrow_mut()?;
     let mut schema = Schema::try_from_bytes(&schema_data)?;
-
-    // Verify that schema is under the same credential.
     if schema.credential.ne(credential_info.address()) {
         return Err(AttestationServiceError::InvalidSchema.into());
     }
@@ -53,7 +43,6 @@ struct ChangeSchemaStatusArgs {
 }
 
 fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaStatusArgs, ProgramError> {
-    require_len!(data, 1);
     let is_paused = data.first().ok_or(ProgramError::InvalidInstructionData)?.eq(&1);
 
     Ok(ChangeSchemaStatusArgs { is_paused })

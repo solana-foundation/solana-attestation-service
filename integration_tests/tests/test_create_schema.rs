@@ -1,79 +1,34 @@
 use borsh::BorshDeserialize;
-use helpers::program_test_context;
-use solana_address::Address;
-use solana_attestation_service_client::{
-    accounts::Schema,
-    instructions::{CreateCredentialBuilder, CreateSchemaBuilder},
-};
+use helpers::{create_credential, create_schema, program_test_context};
+use solana_attestation_service_client::accounts::Schema;
 use solana_keypair::Keypair;
-use solana_sdk_ids::system_program;
 use solana_signer::Signer;
-use solana_transaction::Transaction;
 
 mod helpers;
 
 #[test]
 fn create_schema_success() {
     let mut ctx = program_test_context();
-
     let authority = Keypair::new();
-    let credential_name = "test";
-    let (credential_pda, _bump) = Address::find_program_address(
-        &[b"credential", &authority.pubkey().to_bytes(), credential_name.as_bytes()],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
-    );
+    let signers = vec![authority.pubkey(), ctx.payer.pubkey()];
+    let credential_pda = create_credential(&mut ctx, &authority, "test", signers);
 
-    let create_credential_ix = CreateCredentialBuilder::new()
-        .payer(ctx.payer.pubkey())
-        .credential(credential_pda)
-        .authority(authority.pubkey())
-        .system_program(system_program::ID)
-        .name(credential_name.to_string())
-        .signers(vec![authority.pubkey(), ctx.payer.pubkey()])
-        .instruction();
-
-    let transaction = Transaction::new_signed_with_payer(
-        &[create_credential_ix],
-        Some(&ctx.payer.pubkey()),
-        &[&ctx.payer, &authority],
-        ctx.svm.latest_blockhash(),
-    );
-    ctx.svm.send_transaction(transaction).unwrap();
-
-    // Create Schema
     let schema_name = "test_data";
     let description = "schema for test data";
     let schema_layout = vec![12, 0];
-    let field_names = vec!["name".into(), "location".into()];
-    let (schema_pda, _bump) = Address::find_program_address(
-        &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[1]],
-        &solana_attestation_service_client::programs::SOLANA_ATTESTATION_SERVICE_ID,
+    let field_names = vec!["name".to_string(), "location".to_string()];
+    let schema_pda = create_schema(
+        &mut ctx,
+        &authority,
+        credential_pda,
+        schema_name,
+        description,
+        schema_layout.clone(),
+        field_names.clone(),
     );
-    let create_schema_ix = CreateSchemaBuilder::new()
-        .payer(ctx.payer.pubkey())
-        .authority(authority.pubkey())
-        .credential(credential_pda)
-        .schema(schema_pda)
-        .system_program(system_program::ID)
-        .description(description.to_string())
-        .name(schema_name.to_string())
-        .layout(schema_layout.clone())
-        .field_names(field_names.clone())
-        .instruction();
-    let transaction = Transaction::new_signed_with_payer(
-        &[create_schema_ix],
-        Some(&ctx.payer.pubkey()),
-        &[&ctx.payer, &authority],
-        ctx.svm.latest_blockhash(),
-    );
-    ctx.svm.send_transaction(transaction).unwrap();
 
-    // Assert schema account
     let schema_account = ctx.svm.get_account(&schema_pda).expect("account not none");
     let schema = Schema::try_from_slice(&schema_account.data).unwrap();
-    println!("**** raw: {:?}", &schema_account.data);
-    println!("**** layout: {:?}", &schema.layout);
-    println!("**** fieldNames: {:?}", &schema.field_names);
     assert_eq!(schema.credential, credential_pda);
     assert_eq!(schema.layout, schema_layout);
     assert_eq!(

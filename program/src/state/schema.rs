@@ -79,18 +79,11 @@ impl From<u8> for SchemaDataTypes {
     }
 }
 
-impl From<SchemaDataTypes> for u8 {
-    fn from(data_type: SchemaDataTypes) -> u8 {
-        data_type as u8
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, CodamaAccount)]
 #[codama(seed(type = string(utf8), value = "schema"))]
 #[codama(seed(name = "credential", type = public_key))]
 #[codama(seed(name = "name", type = string(utf8)))]
 #[codama(seed(name = "version", type = number(u8)))]
-#[repr(C)]
 pub struct Schema {
     /// The Credential that manages this Schema
     pub credential: Address,

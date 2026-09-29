@@ -1,10 +1,5 @@
-# Solana Attestation Service - build automation
-# https://github.com/casey/just
-
-# Use bash for all recipes
 set shell := ["bash", "-uc"]
 
-# Variables
 program_dir := "program"
 ts_client_dir := "clients/typescript"
 idl_file := "idl/solana_attestation_service.json"
@@ -14,10 +9,6 @@ fmt_packages := "-p solana-attestation-service -p tests-solana-attestation-servi
 # List available recipes
 default:
     @just --list
-
-# ============================================
-# Setup and initialization
-# ============================================
 
 # Install dependencies and configure git hooks
 setup: setup-hooks
@@ -43,10 +34,6 @@ setup-hooks:
 # Print program ID from declare_id! in program source
 program-id:
     @sed -n 's/.*declare_id!("\([^"]*\)").*/\1/p' "{{program_dir}}/src/lib.rs"
-
-# ============================================
-# Build recipes
-# ============================================
 
 # Build everything (program + clients)
 build: build-program build-client
@@ -86,10 +73,6 @@ build-client: generate-clients
     cd {{ts_client_dir}} && pnpm run build
     @echo "✓ TypeScript client built"
 
-# ============================================
-# Test recipes
-# ============================================
-
 # Run all tests
 test *args: unit-test (integration-test args) test-client test-surfpool
 
@@ -111,10 +94,6 @@ test-client: generate-clients
 test-surfpool: build-program generate-clients
     cd {{ts_client_dir}} && pnpm run test:surfpool
 
-# ============================================
-# Clean recipes
-# ============================================
-
 # Clean build artifacts and dependencies
 clean:
     #!/usr/bin/env bash
@@ -127,10 +106,6 @@ clean:
     rm -rf {{ts_client_dir}}/dist node_modules {{ts_client_dir}}/node_modules
 
     echo "✓ Clean complete"
-
-# ============================================
-# Format and lint recipes
-# ============================================
 
 # Check formatting without fixing
 fmt-check:
@@ -160,6 +135,7 @@ lint: generate-clients
 lint-check: generate-clients
     @echo "Checking Rust lint..."
     @cargo clippy --workspace --exclude solana-attestation-service-client --all-targets --no-deps -- -D warnings
+    @cargo check -p solana-attestation-service-client --all-features
     @echo "Checking TypeScript lint..."
     @pnpm run lint
     @echo "✓ Lint check passed"

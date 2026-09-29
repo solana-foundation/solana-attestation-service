@@ -37,7 +37,6 @@ jobs:
     name: Run release tests
     needs: guard-allowed-branch
     uses: ./.github/workflows/test.yml
-    secrets: inherit
 
   publish:
     name: Publish solana-attestation-service-client crate
@@ -62,10 +61,6 @@ jobs:
 
       - name: Generate IDL and clients
         run: just generate-clients
-
-      - name: Build Rust client crate
-        working-directory: clients/rust
-        run: cargo build
 
       - name: Publish Rust client crate
         id: cargo_publish
