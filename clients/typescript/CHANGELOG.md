@@ -8,6 +8,14 @@ Releases before 2.0.0 predate this changelog; see the git history and [npm](http
 
 ## [Unreleased]
 
+### Changed
+
+- The package now ships a dual ESM/CJS build behind an `exports` map and sets `sideEffects: false`, so bundlers can tree-shake it. `dist/test` is no longer published.
+
+### Added
+
+- `sas-lib/accounts` and `sas-lib/instructions` subpath entries for consumers that only need account or instruction codecs.
+
 ## [2.0.0] — 2026-09-25
 
 _Promotes the `2.0.0-beta.1` prerelease to a stable release._
