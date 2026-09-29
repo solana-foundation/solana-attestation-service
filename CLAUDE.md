@@ -95,9 +95,6 @@ deployment will not reproduce any prior deployment's build hash.
 call, which is why it is imported rather than called through
 `pinocchio::address::`. Keep it a single literal line.
 
-**ESLint does not cover everything.** `examples/`, `scripts/`, and the
-TypeScript tests are in the ignore list; changes there are unlinted.
-
 ## Conventions
 
 - Pinocchio, never `anchor-lang`.

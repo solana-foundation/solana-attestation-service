@@ -11,10 +11,10 @@
   "scripts": {
     "generate-clients": "node ./scripts/generate-clients.ts",
     "generate-idl": "cd program && GENERATE_IDL=1 cargo check",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix"
   },
   "dependencies": {
     "@codama/renderers-js": "~2.5.0",
@@ -22,10 +22,10 @@
     "codama": "^1.11.0"
   },
   "devDependencies": {
-    "@solana/eslint-config-solana": "^6.0.1",
-    "@solana/prettier-config-solana": "^0.0.5",
-    "eslint": "^9.39.5",
-    "prettier": "^3.9.8",
+    "@solana-config/oxc": "^0.1.1",
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
+    "oxlint-tsgolint": "^7.0.2003",
     "typescript": "^5.9.3"
   }
 }

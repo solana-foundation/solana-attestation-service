@@ -1,5 +1,6 @@
-import { assert } from 'chai';
 import { Address, address, ProgramDerivedAddressBump } from '@solana/kit';
+import { assert } from 'chai';
+
 import {
     findAttestationMintPda,
     findAttestationPda,
