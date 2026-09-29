@@ -1,5 +1,6 @@
-import { assert } from 'chai';
 import { address } from '@solana/kit';
+import { assert } from 'chai';
+
 import { getSchemaDecoder, getSchemaEncoder, Schema, SchemaDataType } from '../src/generated';
 import { deserializeAttestationData, getAttestationDataCodec, serializeAttestationData } from '../src/utils';
 

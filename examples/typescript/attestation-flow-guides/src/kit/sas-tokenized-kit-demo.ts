@@ -1,4 +1,3 @@
-import { Address } from '@solana/kit';
 import {
     ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
     fetchMaybeMint,
@@ -6,6 +5,7 @@ import {
     getMintSize,
     TOKEN_2022_PROGRAM_ADDRESS,
 } from '@solana-program/token-2022';
+import { Address } from '@solana/kit';
 import {
     getCreateCredentialInstruction,
     getCreateSchemaInstruction,

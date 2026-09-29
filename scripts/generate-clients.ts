@@ -1,3 +1,7 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 import { renderVisitor as renderJavaScriptVisitor } from '@codama/renderers-js';
 import { renderVisitor as renderRustVisitor } from '@codama/renderers-rust';
 import {
@@ -17,9 +21,6 @@ import {
     structFieldTypeNode,
     type TypeNode,
 } from 'codama';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 type Codama = ReturnType<typeof createFromJson>;
 
@@ -93,6 +94,7 @@ rustCodama.update(
             select: '[accountNode]',
             transform: node => {
                 assertIsNode(node, 'accountNode');
+                // oxlint-disable-next-line no-unused-vars
                 const { pda: _pda, ...rest } = node;
 
                 return rest;
@@ -248,7 +250,7 @@ tsCodama.update(
 // The renderer takes the package folder, writes to its src/generated, and syncs
 // the dependency ranges below into clients/typescript/package.json on every run —
 // so bumping kit means editing them here rather than in the manifest.
-tsCodama.accept(
+void tsCodama.accept(
     renderJavaScriptVisitor(typescriptClientsDir, {
         deleteFolderBeforeRendering: true,
         // `@solana/kit` re-exports the program client core helpers on a subpath.

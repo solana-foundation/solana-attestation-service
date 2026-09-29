@@ -1,16 +1,37 @@
 {
   "name": "sas-lib",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "sideEffects": false,
+  "main": "./dist/src/index.js",
+  "module": "./dist/src/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/src/index.mjs",
+      "require": "./dist/src/index.js"
+    },
+    "./accounts": {
+      "types": "./dist/types/generated/accounts/index.d.ts",
+      "import": "./dist/src/accounts.mjs",
+      "require": "./dist/src/accounts.js"
+    },
+    "./instructions": {
+      "types": "./dist/types/generated/instructions/index.d.ts",
+      "import": "./dist/src/instructions.mjs",
+      "require": "./dist/src/instructions.js"
+    }
+  },
   "files": [
-    "dist"
+    "./dist/src",
+    "./dist/types",
+    "./src/"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsup && tsc -p ./tsconfig.declarations.json",
     "prepublishOnly": "npm run build",
-    "test": "mocha --require ts-node/register 'test/*.ts'",
+    "test": "pnpm run build && mocha --require ts-node/register 'test/*.{ts,mjs}'",
     "test:surfpool": "mocha --require ts-node/register --timeout 120000 'test/surfpool/**/*.ts'"
   },
   "devDependencies": {
@@ -24,6 +45,7 @@
     "chai": "^4.5.0",
     "mocha": "^12.0.2",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {

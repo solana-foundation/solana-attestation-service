@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { assert } from 'chai';
 import {
     Address,
     createClient,
@@ -11,6 +10,7 @@ import {
     SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
 } from '@solana/kit';
 import { surfpool } from '@solana/surfpool/kit';
+import { assert } from 'chai';
 
 import {
     deserializeAttestationData,
@@ -133,7 +133,7 @@ const createAttestation = async (
     nonce: Address,
     data: Uint8Array,
 ) =>
-    client.sendTransaction(
+    await client.sendTransaction(
         await getCreateAttestationInstructionAsync({
             authority,
             credential,
@@ -167,7 +167,7 @@ describe('Surfpool', () => {
         client?.surfnet.stop();
     });
 
-    it('decodes the metadata, layout and field names the program wrote', async () => {
+    it('decodes the metadata, layout and field names the program wrote', () => {
         assert.equal(onchainSchema.name, SCHEMA_NAME);
         assert.equal(onchainSchema.description, SCHEMA_DESCRIPTION);
         assert.deepEqual(onchainSchema.layout, SCHEMA_LAYOUT);

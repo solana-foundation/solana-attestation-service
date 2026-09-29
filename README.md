@@ -141,7 +141,7 @@ Generated client sources under `clients/*/src/generated/` are not committed. The
 | -------------------------- | ---------------------------------------------- |
 | `just check`               | `fmt-check` plus `lint-check`, run by pre-push |
 | `just fmt` / `fmt-check`   | Format Rust and TypeScript, or check only      |
-| `just lint` / `lint-check` | Clippy and ESLint, with or without autofix     |
+| `just lint` / `lint-check` | Clippy and oxlint, with or without autofix     |
 | `just check-generated`     | Verify the committed IDL is current            |
 | `just clean`               | Remove build artifacts and dependencies        |
 
@@ -178,7 +178,7 @@ End-to-end walkthroughs live in `examples/typescript/attestation-flow-guides` an
 | **Build**      | Compile the program and the TypeScript client              |
 | **Test**       | Rust unit, Rust integration, TypeScript and Surfpool tests |
 | **Format**     | Rust and TypeScript formatting                             |
-| **Lint**       | Clippy and ESLint                                          |
+| **Lint**       | Clippy and oxlint                                          |
 | **IDL Check**  | Fail on drift between the program and the committed IDL    |
 | **Security**   | `cargo audit` and `pnpm audit`                             |
 | **PR hygiene** | Commit signatures, AI disclosure, and AI tool attribution  |
