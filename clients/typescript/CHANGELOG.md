@@ -8,6 +8,8 @@ Releases before 2.0.0 predate this changelog; see the git history and [npm](http
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-09-29
+
 ### Changed
 
 - The package now ships a dual ESM/CJS build behind an `exports` map and sets `sideEffects: false`, so bundlers can tree-shake it. `dist/test` is no longer published.

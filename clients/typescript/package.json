@@ -1,6 +1,6 @@
 {
   "name": "sas-lib",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
   "sideEffects": false,
   "main": "./dist/src/index.js",
@@ -31,7 +31,7 @@
   "scripts": {
     "build": "rm -rf dist && tsup && tsc -p ./tsconfig.declarations.json",
     "prepublishOnly": "npm run build",
-    "test": "mocha --require ts-node/register 'test/*.ts'",
+    "test": "pnpm run build && mocha --require ts-node/register 'test/*.{ts,mjs}'",
     "test:surfpool": "mocha --require ts-node/register --timeout 120000 'test/surfpool/**/*.ts'"
   },
   "devDependencies": {
