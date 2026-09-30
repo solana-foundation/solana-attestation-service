@@ -90,7 +90,7 @@ jobs:
           fi
 
       - name: Create and push tag
-        if: ${{ !inputs.dry-run }}
+        if: ${{ !inputs.dry-run && steps.cargo_publish.outputs.published == 'true' }}
         env:
           TAG: rust-client-v${{ steps.cargo_publish.outputs.version }}
         run: |
@@ -106,8 +106,18 @@ jobs:
             git push origin "$TAG"
           fi
 
+      - name: Require tag for already published version
+        if: ${{ !inputs.dry-run && steps.cargo_publish.outputs.already-published == 'true' }}
+        env:
+          TAG: rust-client-v${{ steps.cargo_publish.outputs.version }}
+        run: |
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Version is already published but $TAG does not exist. Push $TAG from the published commit, then rerun."
+            exit 1
+          fi
+
       - name: Create GitHub Release
-        if: ${{ !inputs.dry-run }}
+        if: ${{ !inputs.dry-run && (steps.cargo_publish.outputs.published == 'true' || steps.cargo_publish.outputs.already-published == 'true') }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           VERSION: ${{ steps.cargo_publish.outputs.version }}

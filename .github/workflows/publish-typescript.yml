@@ -78,7 +78,7 @@ jobs:
           skip-existing: 'true'
 
       - name: Create and push tag
-        if: ${{ !inputs.dry-run }}
+        if: ${{ !inputs.dry-run && steps.npm_publish.outputs.published == 'true' }}
         env:
           TAG: ts-client-v${{ steps.npm_publish.outputs.version }}
         run: |
@@ -94,8 +94,18 @@ jobs:
             git push origin "$TAG"
           fi
 
+      - name: Require tag for already published version
+        if: ${{ !inputs.dry-run && steps.npm_publish.outputs.already-published == 'true' }}
+        env:
+          TAG: ts-client-v${{ steps.npm_publish.outputs.version }}
+        run: |
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Version is already published but $TAG does not exist. Push $TAG from the published commit, then rerun."
+            exit 1
+          fi
+
       - name: Create GitHub Release
-        if: ${{ !inputs.dry-run }}
+        if: ${{ !inputs.dry-run && (steps.npm_publish.outputs.published == 'true' || steps.npm_publish.outputs.already-published == 'true') }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           VERSION: ${{ steps.npm_publish.outputs.version }}
@@ -145,6 +155,8 @@ jobs:
           VERSION: ${{ steps.npm_publish.outputs.version }}
           NPM_TAG: ${{ steps.npm_publish.outputs.tag }}
           DRY_RUN: ${{ inputs.dry-run }}
+          PUBLISHED: ${{ steps.npm_publish.outputs.published }}
+          ALREADY_PUBLISHED: ${{ steps.npm_publish.outputs.already-published }}
         run: |
           echo "## sas-lib" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -153,7 +165,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "$DRY_RUN" == "true" ]; then
             echo "Dry run: OIDC auth validated, no package uploaded, no tag, no release" >> $GITHUB_STEP_SUMMARY
-          else
+          elif [ "$PUBLISHED" == "true" ]; then
             echo "Published to npm: https://www.npmjs.com/package/sas-lib/v/${VERSION}" >> $GITHUB_STEP_SUMMARY
+            echo "**Tag**: \`ts-client-v${VERSION}\`" >> $GITHUB_STEP_SUMMARY
+          elif [ "$ALREADY_PUBLISHED" == "true" ]; then
+            echo "Skipped npm publish; version already exists" >> $GITHUB_STEP_SUMMARY
             echo "**Tag**: \`ts-client-v${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           fi
