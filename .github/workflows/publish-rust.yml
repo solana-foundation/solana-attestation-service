@@ -24,11 +24,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Guard allowed source branch for release publish
+        env:
+          REF: ${{ github.ref }}
         run: |
-          case "${{ github.ref }}" in
+          case "$REF" in
             refs/heads/master|refs/heads/release/*) ;;
             *)
-              echo "::error::Publish Rust Client must be run from master or a release/* branch. Current ref: ${{ github.ref }}"
+              echo "::error::Publish Rust Client must be run from master or a release/* branch. Current ref: $REF"
               exit 1
               ;;
           esac
@@ -75,8 +77,10 @@ jobs:
 
       - name: Check if prerelease
         id: prerelease
+        env:
+          VERSION: ${{ steps.cargo_publish.outputs.version }}
         run: |
-          if [[ "${{ steps.cargo_publish.outputs.version }}" == *"-"* ]]; then
+          if [[ "$VERSION" == *"-"* ]]; then
             echo "is_prerelease=true" >> $GITHUB_OUTPUT
           else
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
@@ -84,8 +88,9 @@ jobs:
 
       - name: Create and push tag
         if: ${{ !inputs.dry-run }}
+        env:
+          TAG: rust-client-v${{ steps.cargo_publish.outputs.version }}
         run: |
-          TAG="rust-client-v${{ steps.cargo_publish.outputs.version }}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists, skipping"
           else
@@ -101,10 +106,13 @@ jobs:
       - name: Create GitHub Release
         if: ${{ !inputs.dry-run }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          VERSION: ${{ steps.cargo_publish.outputs.version }}
+          IS_PRERELEASE: ${{ steps.prerelease.outputs.is_prerelease }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const version = `${{ steps.cargo_publish.outputs.version }}`;
+            const version = process.env.VERSION;
             const tagName = `rust-client-v${version}`;
 
             try {
@@ -126,20 +134,23 @@ jobs:
               name: `Rust Client v${version}`,
               body: `Release of solana-attestation-service-client v${version}\n\n**crates.io:** https://crates.io/crates/solana-attestation-service-client/${version}`,
               draft: false,
-              prerelease: '${{ steps.prerelease.outputs.is_prerelease }}' === 'true',
+              prerelease: process.env.IS_PRERELEASE === 'true',
             });
 
       - name: Publish summary
+        env:
+          VERSION: ${{ steps.cargo_publish.outputs.version }}
+          PUBLISHED: ${{ steps.cargo_publish.outputs.published }}
+          ALREADY_PUBLISHED: ${{ steps.cargo_publish.outputs.already-published }}
         run: |
-          VERSION="${{ steps.cargo_publish.outputs.version }}"
           echo "## solana-attestation-service-client" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Tag**: \`rust-client-v${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.cargo_publish.outputs.published }}" == "true" ]; then
+          if [ "$PUBLISHED" == "true" ]; then
             echo "Published to crates.io: https://crates.io/crates/solana-attestation-service-client/${VERSION}" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ steps.cargo_publish.outputs.already-published }}" == "true" ]; then
+          elif [ "$ALREADY_PUBLISHED" == "true" ]; then
             echo "Skipped crates.io publish; version already exists" >> $GITHUB_STEP_SUMMARY
           else
             echo "Skipped crates.io publish" >> $GITHUB_STEP_SUMMARY

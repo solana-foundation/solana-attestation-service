@@ -24,11 +24,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Guard allowed source branch for release publish
+        env:
+          REF: ${{ github.ref }}
         run: |
-          case "${{ github.ref }}" in
+          case "$REF" in
             refs/heads/master|refs/heads/release/*) ;;
             *)
-              echo "::error::Publish TypeScript Client must be run from master or a release/* branch. Current ref: ${{ github.ref }}"
+              echo "::error::Publish TypeScript Client must be run from master or a release/* branch. Current ref: $REF"
               exit 1
               ;;
           esac
@@ -74,8 +76,9 @@ jobs:
 
       - name: Create and push tag
         if: ${{ !inputs.dry-run }}
+        env:
+          TAG: ts-client-v${{ steps.npm_publish.outputs.version }}
         run: |
-          TAG="ts-client-v${{ steps.npm_publish.outputs.version }}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists, skipping"
           else
@@ -91,10 +94,13 @@ jobs:
       - name: Create GitHub Release
         if: ${{ !inputs.dry-run }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          VERSION: ${{ steps.npm_publish.outputs.version }}
+          NPM_TAG: ${{ steps.npm_publish.outputs.tag }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const version = `${{ steps.npm_publish.outputs.version }}`;
+            const version = process.env.VERSION;
             const tagName = `ts-client-v${version}`;
 
             try {
@@ -128,19 +134,21 @@ jobs:
               name: `TypeScript Client v${version}`,
               body,
               draft: false,
-              prerelease: '${{ steps.npm_publish.outputs.tag }}' === 'beta',
+              prerelease: process.env.NPM_TAG === 'beta',
             });
 
       - name: Publish summary
+        env:
+          VERSION: ${{ steps.npm_publish.outputs.version }}
+          NPM_TAG: ${{ steps.npm_publish.outputs.tag }}
+          DRY_RUN: ${{ inputs.dry-run }}
         run: |
-          VERSION="${{ steps.npm_publish.outputs.version }}"
-          NPM_TAG="${{ steps.npm_publish.outputs.tag }}"
           echo "## sas-lib" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           echo "**npm tag**: \`${NPM_TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ inputs.dry-run }}" == "true" ]; then
+          if [ "$DRY_RUN" == "true" ]; then
             echo "Dry run: OIDC auth validated, no package uploaded, no tag, no release" >> $GITHUB_STEP_SUMMARY
           else
             echo "Published to npm: https://www.npmjs.com/package/sas-lib/v/${VERSION}" >> $GITHUB_STEP_SUMMARY
