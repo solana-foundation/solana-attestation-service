@@ -82,17 +82,16 @@ jobs:
         env:
           TAG: ts-client-v${{ steps.npm_publish.outputs.version }}
         run: |
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists, skipping"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            if [ "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "::error::$TAG already exists on a commit other than the one just published"
+              exit 1
+            fi
           else
             git tag "$TAG"
             echo "Created tag $TAG"
           fi
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
-            echo "Tag $TAG already pushed"
-          else
-            git push origin "$TAG"
-          fi
+          git push origin "refs/tags/$TAG"
 
       - name: Require tag for already published version
         if: ${{ !inputs.dry-run && steps.npm_publish.outputs.already-published == 'true' }}
@@ -144,6 +143,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tagName,
+              target_commitish: context.sha,
               name: `TypeScript Client v${version}`,
               body,
               draft: false,
