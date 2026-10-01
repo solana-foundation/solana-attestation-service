@@ -2,7 +2,7 @@
 
 Fixes #
 
-<!-- Link the issue this change addresses, if there is one. For a typo, broken link, or
+<!-- Required. The issue must be labeled `accepted` by a maintainer. For a typo, broken link, or
 comment-only fix, replace the line above with `Linked issue: trivial`. -->
 
 ## What and why
