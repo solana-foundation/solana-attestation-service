@@ -9,7 +9,10 @@ use crate::{
     error::AttestationServiceError,
     processor::{process_close_attestation, verify_sas_pda, verify_token22_program},
 };
-use pinocchio_token_2022::instructions::{BurnChecked, CloseAccount};
+use pinocchio_token_2022::{
+    instructions::{BurnChecked, CloseAccount},
+    state::Mint,
+};
 
 #[inline(always)]
 pub fn process_close_tokenized_attestation(program_id: &Address, accounts: &mut [AccountView]) -> ProgramResult {
@@ -32,8 +35,11 @@ pub fn process_close_tokenized_attestation(program_id: &Address, accounts: &mut 
     let bump_seed = [sas_pda::BUMP];
     let sas_pda_seeds = [Seed::from(SAS_SEED), Seed::from(&bump_seed)];
 
-    BurnChecked::new(attestation_token_account, attestation_mint_info, sas_pda_info, 1, 0)
-        .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
+    let supply = Mint::from_account_view(attestation_mint_info)?.supply();
+    if supply > 0 {
+        BurnChecked::new(attestation_token_account, attestation_mint_info, sas_pda_info, supply, 0)
+            .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;
+    }
 
     CloseAccount::new(attestation_mint_info, payer_info, sas_pda_info)
         .invoke_signed(&[Signer::from(&sas_pda_seeds)])?;

@@ -20,6 +20,7 @@ use spl_token_2022_interface::{
         mint_close_authority::MintCloseAuthority, non_transferable::NonTransferable,
         permanent_delegate::PermanentDelegate, BaseStateWithExtensions, ExtensionType, StateWithExtensions,
     },
+    instruction::{burn_checked, close_account},
     state::{Account, Mint},
     ID as TOKEN_2022_PROGRAM_ID,
 };
@@ -44,6 +45,7 @@ struct TokenizationFixtures {
     attestation_pda: Address,
     attestation_mint_pda: Address,
     recipient: Address,
+    recipient_keypair: Keypair,
     recipient_token_account: Address,
     nonce: Address,
     expiry: i64,
@@ -63,7 +65,8 @@ fn setup_tokenization() -> TokenizationFixtures {
         &SOLANA_ATTESTATION_SERVICE_ID,
     );
 
-    let recipient = Address::new_unique();
+    let recipient_keypair = Keypair::new();
+    let recipient = recipient_keypair.pubkey();
     let (recipient_token_account, _bump) = Address::find_program_address(
         &[recipient.as_ref(), TOKEN_2022_PROGRAM_ID.as_ref(), attestation_mint_pda.as_ref()],
         &ATA_PROGRAM_ID,
@@ -80,6 +83,7 @@ fn setup_tokenization() -> TokenizationFixtures {
         attestation_pda,
         attestation_mint_pda,
         recipient,
+        recipient_keypair,
         recipient_token_account,
         nonce,
         expiry,
@@ -273,6 +277,41 @@ fn close_tokenized_attestation_success() {
     let token_account = Account::unpack(&recipient_token_account_data.data[..Account::LEN]).unwrap();
     assert_eq!(token_account.mint, attestation_mint_pda);
     assert_eq!(token_account.amount, 0);
+}
+
+fn holder_burn_ix(f: &TokenizationFixtures) -> Instruction {
+    burn_checked(&TOKEN_2022_PROGRAM_ID, &f.recipient_token_account, &f.attestation_mint_pda, &f.recipient, &[], 1, 0)
+        .unwrap()
+}
+
+fn holder_close_token_account_ix(f: &TokenizationFixtures) -> Instruction {
+    close_account(&TOKEN_2022_PROGRAM_ID, &f.recipient_token_account, &f.recipient, &f.recipient, &[]).unwrap()
+}
+
+fn assert_closed_after_holder_actions(holder_ixs: fn(&TokenizationFixtures) -> Vec<Instruction>) {
+    let mut f = setup_tokenization();
+    let TokenizationFixtures { attestation_pda, attestation_mint_pda, .. } = f;
+
+    let ixs = [tokenize_schema_ix(&f, 100), create_tokenized_attestation_ix(&f)];
+    send_ixs(&mut f, &ixs);
+    let ixs = holder_ixs(&f);
+    let recipient_keypair = f.recipient_keypair.insecure_clone();
+    send(&mut f.ctx, &ixs, &[&recipient_keypair]).unwrap();
+    let ix = close_tokenized_attestation_ix(&f);
+    send_ixs(&mut f, &[ix]);
+
+    assert!(f.ctx.svm.get_account(&attestation_pda).is_none());
+    assert!(f.ctx.svm.get_account(&attestation_mint_pda).is_none());
+}
+
+#[test]
+fn close_tokenized_attestation_after_holder_burn() {
+    assert_closed_after_holder_actions(|f| vec![holder_burn_ix(f)]);
+}
+
+#[test]
+fn close_tokenized_attestation_after_holder_burn_and_close() {
+    assert_closed_after_holder_actions(|f| vec![holder_burn_ix(f), holder_close_token_account_ix(f)]);
 }
 
 #[test]
