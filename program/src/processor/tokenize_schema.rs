@@ -68,7 +68,7 @@ pub fn process_tokenize_schema(
     InitializeGroupPointer {
         mint: mint_info,
         authority: Some(sas_pda_info.address()),
-        group_address: Some(sas_pda_info.address()),
+        group_address: Some(mint_info.address()),
         token_program: &TOKEN_2022_PROGRAM_ID,
     }
     .invoke()?;
