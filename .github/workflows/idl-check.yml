@@ -22,7 +22,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          rust-cache-key: 'idl-check'
+          rust-cache-key: 'rust-dev'
 
       - name: Check generated files
         run: just check-generated

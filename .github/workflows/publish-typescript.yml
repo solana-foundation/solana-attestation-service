@@ -62,7 +62,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          rust-cache-key: 'publish-typescript'
+          rust-cache-key: 'rust-dev'
 
       - name: Build TypeScript client
         run: just build-client

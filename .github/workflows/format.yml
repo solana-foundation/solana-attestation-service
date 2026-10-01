@@ -24,7 +24,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          rust-cache-key: 'format'
+          enable-rust-cache: 'false'
 
       - name: Check formatting
         run: just fmt-check

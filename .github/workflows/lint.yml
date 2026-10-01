@@ -24,7 +24,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          rust-cache-key: 'lint'
+          rust-cache-key: 'rust-dev'
 
       - name: Check linting
         run: just lint-check

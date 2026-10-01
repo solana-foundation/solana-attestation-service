@@ -62,7 +62,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          rust-cache-key: 'publish-rust'
+          rust-cache-key: 'rust-dev'
 
       - name: Generate IDL and clients
         run: just generate-clients

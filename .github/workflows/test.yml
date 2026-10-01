@@ -25,7 +25,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          rust-cache-key: 'unit-test'
+          rust-cache-key: 'rust-dev'
 
       - name: Run unit tests
         run: just unit-test
@@ -40,7 +40,8 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          rust-cache-key: 'rust-integration-test'
+          rust-cache-key: 'rust-dev'
+          save-rust-cache: 'true'
 
       - name: Run Rust integration tests
         run: just integration-test
@@ -62,7 +63,7 @@ jobs:
 
       - uses: ./.github/actions/setup
         with:
-          rust-cache-key: 'typescript-test'
+          rust-cache-key: 'rust-dev'
 
       - name: Build TypeScript client
         run: just build-client
