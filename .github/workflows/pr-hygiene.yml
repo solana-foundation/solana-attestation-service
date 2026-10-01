@@ -226,7 +226,7 @@ jobs:
 
           patterns='co-authored-by:.*(claude|copilot|cursor|codex|chatgpt|openai|aider|devin|gemini|windsurf)'
           patterns+='|generated with .*claude code|claude\.ai/code|claude\.com/claude-code'
-          patterns+='|noreply@anthropic\.com|noreply@cursor\.com|made with cursor'
+          patterns+='|noreply@anthropic\.com|noreply@cursor\.com|made with cursor|cursor\.com'
 
           hits=$(grep -iE "$patterns" <<<"$text" || true)
           if [[ "$HEAD_REF" =~ ^(claude|codex|cursor|copilot)/ ]]; then
