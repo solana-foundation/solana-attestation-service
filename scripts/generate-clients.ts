@@ -13,6 +13,8 @@ import {
     definedTypeNode,
     enumEmptyVariantTypeNode,
     enumTypeNode,
+    hiddenPrefixTypeNode,
+    isNodeFilter,
     numberTypeNode,
     prefixedCountNode,
     remainderCountNode,
@@ -82,9 +84,9 @@ function shapeAccounts(codama: Codama) {
 // Rust renderer has no event support, which is what keeps
 // `types::CloseAttestationEvent` available to Rust callers; the event's one-byte
 // type discriminator is already a field of the struct, so the mirrored type matches
-// the wire format on its own. And the account-to-PDA links are dropped, because a
-// generated `find_pda` for a PDA with an unprefixed string seed pulls in the
-// `spl-collections` crate for its `TrailingStr` type. The PDA nodes themselves
+// the wire format after the 8-byte self-CPI tag. And the account-to-PDA links are
+// dropped, because a generated `find_pda` for a PDA with an unprefixed string seed
+// pulls in the `spl-collections` crate for its `TrailingStr` type. The PDA nodes themselves
 // stay, so nothing is lost from the IDL.
 const rustCodama = readIdl();
 shapeAccounts(rustCodama);
@@ -226,6 +228,24 @@ tsCodama.update(
                 };
             },
         })),
+        // Events are written behind their 8-byte self-CPI tag, which the IDL carries
+        // only as a discriminator, so the codecs skip and write it as a hidden prefix.
+        {
+            select: '[eventNode]',
+            transform: node => {
+                assertIsNode(node, 'eventNode');
+
+                return {
+                    ...node,
+                    data: hiddenPrefixTypeNode(
+                        node.data,
+                        (node.discriminators ?? [])
+                            .filter(isNodeFilter('constantDiscriminatorNode'))
+                            .map(discriminator => discriminator.constant),
+                    ),
+                };
+            },
+        },
         {
             select: '[accountNode]schema',
             transform: node => {
