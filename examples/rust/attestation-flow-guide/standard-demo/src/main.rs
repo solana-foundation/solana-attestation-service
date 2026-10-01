@@ -22,6 +22,8 @@ use solana_attestation_service_client::{
     programs::SOLANA_ATTESTATION_SERVICE_ID,
 };
 
+const CLOCK_SYSVAR_ID: Address = solana_address::address!("SysvarC1ock11111111111111111111111111111111");
+
 struct Config {
     pub rpc_url: String,
     pub credential_name: String,
@@ -257,6 +259,12 @@ impl SasDemo {
         self.send_and_confirm_instruction(instruction, &[&self.wallets.issuer], "Authorized signers updated")
     }
 
+    fn chain_now(&self) -> Option<i64> {
+        let clock = self.rpc_client.get_account(&CLOCK_SYSVAR_ID).ok()?;
+        // Clock sysvar layout: slot, epoch_start_timestamp, epoch, leader_schedule_epoch, unix_timestamp.
+        Some(i64::from_le_bytes(clock.data.get(32..40)?.try_into().ok()?))
+    }
+
     fn verify_attestation(
         &self,
         schema_pda: &Address,
@@ -271,7 +279,9 @@ impl SasDemo {
             .get_account(&attestation_pda)
             .ok()
             .and_then(|account| Attestation::from_bytes(&account.data).ok())
-            .is_some_and(|attestation| now() < attestation.expiry);
+            .is_some_and(|attestation| {
+                attestation.expiry == 0 || self.chain_now().is_some_and(|now| now < attestation.expiry)
+            });
 
         println!("    - {} is {}", label, if is_valid { "verified" } else { "not verified" });
 

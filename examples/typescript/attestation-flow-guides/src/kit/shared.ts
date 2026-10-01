@@ -1,6 +1,7 @@
 import { Address, createClient, generateKeyPairSigner, Instruction, lamports } from '@solana/kit';
 import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
 import { generatedPayer } from '@solana/kit-plugin-signer';
+import { fetchSysvarClock } from '@solana/sysvars';
 import {
     deserializeAttestationData,
     fetchMaybeAttestation,
@@ -73,6 +74,9 @@ export async function verifyAttestation({
     }
     const attestationData = deserializeAttestationData(schema.data, attestation.data.data);
     console.log(`    - Attestation data:`, attestationData);
-    const currentTimestamp = BigInt(Math.floor(Date.now() / 1000));
-    return currentTimestamp < attestation.data.expiry;
+    if (attestation.data.expiry === 0n) {
+        return true;
+    }
+    const { unixTimestamp } = await fetchSysvarClock(client.rpc);
+    return unixTimestamp < attestation.data.expiry;
 }

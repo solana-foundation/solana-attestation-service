@@ -31,6 +31,7 @@ use solana_attestation_service_client::{
 };
 
 const ATA_PROGRAM_ID: Address = solana_address::address!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+const CLOCK_SYSVAR_ID: Address = solana_address::address!("SysvarC1ock11111111111111111111111111111111");
 
 struct Config {
     pub rpc_url: String,
@@ -333,6 +334,12 @@ impl SasDemo {
         self.send_and_confirm_instruction(instruction, &[&self.wallets.issuer], "Authorized signers updated")
     }
 
+    fn chain_now(&self) -> Option<i64> {
+        let clock = self.rpc_client.get_account(&CLOCK_SYSVAR_ID).ok()?;
+        // Clock sysvar layout: slot, epoch_start_timestamp, epoch, leader_schedule_epoch, unix_timestamp.
+        Some(i64::from_le_bytes(clock.data.get(32..40)?.try_into().ok()?))
+    }
+
     fn verify_attestation(
         &self,
         schema_pda: &Address,
@@ -347,7 +354,9 @@ impl SasDemo {
             .get_account(&attestation_pda)
             .ok()
             .and_then(|account| Attestation::from_bytes(&account.data).ok())
-            .is_some_and(|attestation| now() < attestation.expiry);
+            .is_some_and(|attestation| {
+                attestation.expiry == 0 || self.chain_now().is_some_and(|now| now < attestation.expiry)
+            });
 
         println!("    - {} is {}", label, if is_valid { "verified" } else { "not verified" });
 
@@ -446,6 +455,9 @@ impl SasDemo {
         user_address: &Address,
         credential_pda: &Address,
     ) -> Result<bool> {
+        if !self.verify_attestation(schema_pda, user_address, credential_pda, "Token holder") {
+            return Ok(false);
+        }
         let (attestation_pda, _bump) = self.derive_attestation_pda(credential_pda, schema_pda, user_address);
         let (attestation_mint_pda, _bump) = self.derive_attestation_mint_pda(&attestation_pda);
         let (schema_mint_pda, _bump) = self.derive_schema_mint_pda(schema_pda);

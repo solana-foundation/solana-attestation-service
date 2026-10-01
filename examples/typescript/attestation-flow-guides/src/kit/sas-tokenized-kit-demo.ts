@@ -39,6 +39,9 @@ async function verifyTokenAttestation({
     schemaPda: Address;
     userAddress: Address;
 }): Promise<boolean> {
+    if (!(await verifyAttestation({ client, schemaPda, userAddress }))) {
+        return false;
+    }
     const schema = await fetchSchema(client.rpc, schemaPda);
 
     const [attestationPda] = await findAttestationPda({
