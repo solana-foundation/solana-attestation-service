@@ -104,7 +104,16 @@ impl Attestation {
                     size
                 }
             };
-            offset = offset.checked_add(size).filter(|&end| end <= data.len()).ok_or_else(invalid_data)?;
+            let end = offset.checked_add(size).filter(|&end| end <= data.len()).ok_or_else(invalid_data)?;
+            let bools = match SchemaDataTypes::from(data_type) {
+                SchemaDataTypes::Bool => &data[offset..end],
+                SchemaDataTypes::VecBool => &data[offset + 4..end],
+                _ => &[],
+            };
+            if bools.iter().any(|&value| value > 1) {
+                return Err(invalid_data());
+            }
+            offset = end;
         }
         if offset != data.len() {
             return Err(invalid_data());
@@ -205,6 +214,18 @@ mod tests {
 
         let layout = alloc::vec![15];
         attestation.data = u32::MAX.to_le_bytes().to_vec();
+        assert!(attestation.validate_data(&layout).is_err());
+
+        let layout = alloc::vec![10];
+        for (value, valid) in [(0, true), (1, true), (2, false), (255, false)] {
+            attestation.data = alloc::vec![value];
+            assert_eq!(attestation.validate_data(&layout).is_ok(), valid);
+        }
+
+        let layout = alloc::vec![23];
+        attestation.data = alloc::vec![2, 0, 0, 0, 1, 0];
+        assert!(attestation.validate_data(&layout).is_ok());
+        attestation.data = alloc::vec![2, 0, 0, 0, 1, 2];
         assert!(attestation.validate_data(&layout).is_err());
     }
 }

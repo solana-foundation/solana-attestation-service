@@ -110,6 +110,19 @@ describe('Utils', () => {
             }
         });
 
+        it('rejects bool data that is neither 0 nor 1', () => {
+            const schema = makeSchema([SchemaDataType.Bool, SchemaDataType.VecBool], ['active', 'flags']);
+
+            assert.throws(
+                () => deserializeAttestationData(schema, Uint8Array.from([2, 0, 0, 0, 0])),
+                'Bool field holds 2, which is neither 0 nor 1',
+            );
+            assert.throws(
+                () => deserializeAttestationData(schema, Uint8Array.from([1, 1, 0, 0, 0, 255])),
+                'Bool field holds 255, which is neither 0 nor 1',
+            );
+        });
+
         it('rejects char values that cannot round trip through Rust', () => {
             const schema = makeSchema([SchemaDataType.Char], ['grade']);
 

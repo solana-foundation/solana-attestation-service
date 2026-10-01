@@ -3,7 +3,6 @@ import {
     type Codec,
     getArrayCodec,
     getBase16Decoder,
-    getBooleanCodec,
     getBytesCodec,
     getI8Codec,
     getI16Codec,
@@ -32,6 +31,22 @@ type AttestationData = Record<string, SchemaOutputTypes>;
  */
 const isUnicodeScalarValue = (codePoint: number): boolean =>
     codePoint <= 0x10ffff && (codePoint < 0xd800 || codePoint > 0xdfff);
+
+/**
+ * Rust decodes a `bool` only from 0 or 1, while kit's boolean codec reads any
+ * other byte as `false`.
+ */
+const getBoolCodec = (): Codec<boolean> =>
+    transformCodec(
+        getU8Codec(),
+        (value: boolean) => (value ? 1 : 0),
+        byte => {
+            if (byte > 1) {
+                throw new Error(`Bool field holds ${byte}, which is neither 0 nor 1`);
+            }
+            return byte === 1;
+        },
+    );
 
 /**
  * Rust encodes a `char` as its 4-byte little-endian Unicode code point.
@@ -102,7 +117,7 @@ const dataTypeCodecs: Record<SchemaDataType, () => Codec<any>> = {
     [SchemaDataType.I32]: getI32Codec,
     [SchemaDataType.I64]: getI64Codec,
     [SchemaDataType.I128]: getI128Codec,
-    [SchemaDataType.Bool]: getBooleanCodec,
+    [SchemaDataType.Bool]: getBoolCodec,
     [SchemaDataType.Char]: getCharCodec,
     [SchemaDataType.String]: getStringCodec,
     [SchemaDataType.VecU8]: () => getArrayCodec(getU8Codec()),
@@ -115,7 +130,7 @@ const dataTypeCodecs: Record<SchemaDataType, () => Codec<any>> = {
     [SchemaDataType.VecI32]: () => getArrayCodec(getI32Codec()),
     [SchemaDataType.VecI64]: () => getArrayCodec(getI64Codec()),
     [SchemaDataType.VecI128]: () => getArrayCodec(getI128Codec()),
-    [SchemaDataType.VecBool]: () => getArrayCodec(getBooleanCodec()),
+    [SchemaDataType.VecBool]: () => getArrayCodec(getBoolCodec()),
     [SchemaDataType.VecChar]: () => getArrayCodec(getCharCodec()),
     [SchemaDataType.VecString]: () => getArrayCodec(getStringCodec()),
 };
