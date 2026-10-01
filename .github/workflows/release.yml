@@ -73,8 +73,8 @@ jobs:
       - name: Configure Solana CLI
         run: solana config set --url "$RPC_URL" --keypair "$HOME/.config/solana/id.json" > /dev/null
 
-      - name: Generate IDL
-        run: just generate-idl
+      - name: Check the committed IDL
+        run: just check-generated
 
       - name: Build verified program
         uses: solana-foundation/github-actions/build-verified@e6ed2eb93c55eca911dbc711fb08683b42926a28

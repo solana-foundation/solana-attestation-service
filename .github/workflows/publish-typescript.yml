@@ -64,8 +64,8 @@ jobs:
           install-solana: 'false'
           rust-cache-key: 'rust-dev'
 
-      - name: Build TypeScript client
-        run: just build-client
+      - name: Check the committed IDL and build TypeScript client
+        run: just check-generated build-client
 
       - name: Publish TypeScript client
         id: npm_publish

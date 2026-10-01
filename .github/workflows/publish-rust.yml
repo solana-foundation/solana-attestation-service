@@ -64,8 +64,8 @@ jobs:
           install-solana: 'false'
           rust-cache-key: 'rust-dev'
 
-      - name: Generate IDL and clients
-        run: just generate-clients
+      - name: Generate clients and check the committed IDL
+        run: just check-generated
 
       - name: Publish Rust client crate
         id: cargo_publish
