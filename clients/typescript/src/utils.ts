@@ -146,6 +146,9 @@ export const getAttestationDataCodec = (schema: Schema): Codec<AttestationData> 
     if (new Set(schema.fieldNames).size !== schema.fieldNames.length) {
         throw new Error('Schema field names must be unique');
     }
+    if (schema.fieldNames.includes('__proto__')) {
+        throw new Error('Schema field name __proto__ is not supported');
+    }
 
     return getStructCodec(
         schema.fieldNames.map((field, index) => {

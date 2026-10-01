@@ -267,5 +267,10 @@ describe('Utils', () => {
             const schema = makeSchema([SchemaDataType.U8, SchemaDataType.U8], ['status', 'status']);
             assert.throws(() => getAttestationDataCodec(schema), 'Schema field names must be unique');
         });
+
+        it('throws when a field is named __proto__', () => {
+            const schema = makeSchema([SchemaDataType.U8], ['__proto__']);
+            assert.throws(() => getAttestationDataCodec(schema), 'Schema field name __proto__ is not supported');
+        });
     });
 });
