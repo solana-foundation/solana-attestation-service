@@ -262,5 +262,10 @@ describe('Utils', () => {
             const schema = makeSchema([SchemaDataType.U8, SchemaDataType.U8], ['only_one']);
             assert.throws(() => getAttestationDataCodec(schema), 'Schema field names and layout do not match');
         });
+
+        it('throws when two fields share a name', () => {
+            const schema = makeSchema([SchemaDataType.U8, SchemaDataType.U8], ['status', 'status']);
+            assert.throws(() => getAttestationDataCodec(schema), 'Schema field names must be unique');
+        });
     });
 });

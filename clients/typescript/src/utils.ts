@@ -143,6 +143,9 @@ export const getAttestationDataCodec = (schema: Schema): Codec<AttestationData> 
     if (schema.fieldNames.length !== schema.layout.length) {
         throw new Error('Schema field names and layout do not match');
     }
+    if (new Set(schema.fieldNames).size !== schema.fieldNames.length) {
+        throw new Error('Schema field names must be unique');
+    }
 
     return getStructCodec(
         schema.fieldNames.map((field, index) => {
