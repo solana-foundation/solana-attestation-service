@@ -2,6 +2,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_account::from_account;
 use solana_address::Address;
 use solana_commitment_config::CommitmentConfig;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
@@ -11,6 +12,7 @@ use solana_message::Message;
 use solana_native_token::LAMPORTS_PER_SOL;
 use solana_rpc_client::rpc_client::RpcClient;
 use solana_signer::Signer;
+use solana_sysvar::clock::{self, Clock};
 use solana_transaction::Transaction;
 
 use solana_attestation_service_client::{
@@ -21,8 +23,6 @@ use solana_attestation_service_client::{
     },
     programs::SOLANA_ATTESTATION_SERVICE_ID,
 };
-
-const CLOCK_SYSVAR_ID: Address = solana_address::address!("SysvarC1ock11111111111111111111111111111111");
 
 struct Config {
     pub rpc_url: String,
@@ -260,9 +260,8 @@ impl SasDemo {
     }
 
     fn chain_now(&self) -> Option<i64> {
-        let clock = self.rpc_client.get_account(&CLOCK_SYSVAR_ID).ok()?;
-        // Clock sysvar layout: slot, epoch_start_timestamp, epoch, leader_schedule_epoch, unix_timestamp.
-        Some(i64::from_le_bytes(clock.data.get(32..40)?.try_into().ok()?))
+        let account = self.rpc_client.get_account(&clock::ID).ok()?;
+        from_account::<Clock, _>(&account).map(|clock| clock.unix_timestamp)
     }
 
     fn verify_attestation(

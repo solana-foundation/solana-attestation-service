@@ -166,7 +166,7 @@ fn tokenize_schema_success() {
 
     let group_pointer = mint_state.get_extension::<GroupPointer>().unwrap();
     assert_eq!(group_pointer.authority.get(), Some(sas_pda));
-    assert_eq!(group_pointer.group_address.get(), Some(schema_mint_pda));
+    assert_eq!(group_pointer.group_address.get(), Some(sas_pda));
 
     let token_group = mint_state.get_extension::<TokenGroup>().unwrap();
     assert_eq!(token_group.update_authority.get(), Some(sas_pda));
