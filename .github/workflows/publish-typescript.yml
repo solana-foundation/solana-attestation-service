@@ -71,7 +71,7 @@ jobs:
         id: npm_publish
         uses: solana-foundation/github-actions/npm-publish@e6ed2eb93c55eca911dbc711fb08683b42926a28 # v0.2.15
         with:
-          package: @solana/attestation
+          package: '@solana/attestation'
           package-directory: clients/typescript
           check-version-available: ${{ !inputs.dry-run }}
           dry-run: ${{ inputs.dry-run }}

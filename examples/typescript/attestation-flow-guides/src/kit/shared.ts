@@ -1,7 +1,3 @@
-import { Address, createClient, generateKeyPairSigner, Instruction, lamports } from '@solana/kit';
-import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
-import { generatedPayer } from '@solana/kit-plugin-signer';
-import { fetchSysvarClock } from '@solana/sysvars';
 import {
     deserializeAttestationData,
     fetchMaybeAttestation,
@@ -9,6 +5,10 @@ import {
     findAttestationPda,
     SchemaDataType,
 } from '@solana/attestation';
+import { Address, createClient, generateKeyPairSigner, Instruction, lamports } from '@solana/kit';
+import { solanaDevnetRpc } from '@solana/kit-plugin-rpc';
+import { generatedPayer } from '@solana/kit-plugin-signer';
+import { fetchSysvarClock } from '@solana/sysvars';
 
 export const CONFIG = {
     HTTP_CONNECTION_URL: 'https://api.devnet.solana.com', // 'http://127.0.0.1:8899',
