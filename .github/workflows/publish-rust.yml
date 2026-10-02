@@ -27,9 +27,9 @@ jobs:
           REF: ${{ github.ref }}
         run: |
           case "$REF" in
-            refs/heads/master|refs/heads/release/*) ;;
+            refs/heads/master) ;;
             *)
-              echo "::error::Publish Rust Client must be run from master or a release/* branch. Current ref: $REF"
+              echo "::error::Publish Rust Client must be run from master. Current ref: $REF"
               exit 1
               ;;
           esac
