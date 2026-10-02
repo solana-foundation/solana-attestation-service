@@ -1,7 +1,7 @@
 use borsh::BorshDeserialize;
 use helpers::{create_attestation, expiry, setup, test_data};
 use solana_address::Address;
-use solana_attestation_service_client::{
+use solana_attestation::{
     instructions::CloseAttestationBuilder, programs::SOLANA_ATTESTATION_SERVICE_ID, types::CloseAttestationEvent,
 };
 use solana_signer::Signer;

@@ -12,11 +12,11 @@
   "packageManager": "pnpm@10.12.3",
   "dependencies": {
     "@solana-program/token-2022": "^0.18.0",
+    "@solana/attestation": "^2.0.0",
     "@solana/kit": "^8.3.0",
     "@solana/kit-plugin-rpc": "^0.18.0",
     "@solana/kit-plugin-signer": "^0.18.0",
-    "@solana/sysvars": "^8.3.0",
-    "sas-lib": "^2.0.0"
+    "@solana/sysvars": "^8.3.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.4",

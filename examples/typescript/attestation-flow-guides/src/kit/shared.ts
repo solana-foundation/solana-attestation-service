@@ -8,7 +8,7 @@ import {
     fetchSchema,
     findAttestationPda,
     SchemaDataType,
-} from 'sas-lib';
+} from '@solana/attestation';
 
 export const CONFIG = {
     HTTP_CONNECTION_URL: 'https://api.devnet.solana.com', // 'http://127.0.0.1:8899',

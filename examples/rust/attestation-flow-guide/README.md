@@ -1,6 +1,6 @@
 # Solana Attestation Service Rust Examples
 
-This repository contains Rust implementation examples for the Solana Attestation Service (SAS) to create, manage, verify, and close digital credentials on Solana. These examples demonstrate the complete attestation lifecycle using the `solana-attestation-service-client` crate. For more detailed explanations and step-by-step walkthroughs, see the comprehensive guides:
+This repository contains Rust implementation examples for the Solana Attestation Service (SAS) to create, manage, verify, and close digital credentials on Solana. These examples demonstrate the complete attestation lifecycle using the `solana-attestation` crate. For more detailed explanations and step-by-step walkthroughs, see the comprehensive guides:
 
 | Title                      | Directory            | Guide                                                                                                                                             | Description                                                |
 | -------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |

@@ -4,9 +4,9 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 
 const ENTRIES = [
-    { exportName: 'findSchemaPda', specifier: 'sas-lib' },
-    { exportName: 'getSchemaDecoder', specifier: 'sas-lib/accounts' },
-    { exportName: 'parseCreateSchemaInstruction', specifier: 'sas-lib/instructions' },
+    { exportName: 'findSchemaPda', specifier: '@solana/attestation' },
+    { exportName: 'getSchemaDecoder', specifier: '@solana/attestation/accounts' },
+    { exportName: 'parseCreateSchemaInstruction', specifier: '@solana/attestation/instructions' },
 ];
 
 describe('published package entries', () => {

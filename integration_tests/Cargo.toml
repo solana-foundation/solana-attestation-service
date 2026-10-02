@@ -7,7 +7,7 @@ edition = { workspace = true }
 borsh = { workspace = true }
 litesvm = { workspace = true }
 solana-address = { workspace = true, features = ["atomic"] }
-solana-attestation-service-client = { workspace = true }
+solana-attestation = { workspace = true }
 solana-clock = { workspace = true }
 solana-instruction-error = { workspace = true }
 solana-keypair = { workspace = true }

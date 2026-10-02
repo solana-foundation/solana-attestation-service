@@ -10,7 +10,7 @@ import {
     findSchemaPda,
     findAttestationPda,
     getCloseAttestationInstruction,
-} from 'sas-lib';
+} from '@solana/attestation';
 
 import { CONFIG, sendInstruction, setupWallets, verifyAttestation } from './shared';
 

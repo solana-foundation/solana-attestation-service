@@ -10,7 +10,7 @@ anyhow = "1.0"
 borsh = { version = "1.5.5", features = ["derive"] }
 solana-account = "3.4"
 solana-address = { version = "2.8.0", features = ["curve25519"] }
-solana-attestation-service-client = { version = "2.0.0", path = "../../../../clients/rust" }
+solana-attestation = { version = "2.0.0", path = "../../../../clients/rust" }
 solana-commitment-config = "3.1"
 solana-compute-budget-interface = "3.1"
 solana-instruction = "3.1"

@@ -15,7 +15,7 @@ use solana_signer::Signer;
 use solana_sysvar::clock::{self, Clock};
 use solana_transaction::Transaction;
 
-use solana_attestation_service_client::{
+use solana_attestation::{
     accounts::Attestation,
     instructions::{
         ChangeAuthorizedSignersBuilder, CloseAttestationBuilder, CreateAttestationBuilder, CreateCredentialBuilder,

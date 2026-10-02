@@ -20,7 +20,7 @@ import {
     findAttestationMintPda,
     getCreateTokenizedAttestationInstruction,
     getCloseTokenizedAttestationInstructionAsync,
-} from 'sas-lib';
+} from '@solana/attestation';
 
 import { Client, CONFIG, sendInstruction, setupWallets, verifyAttestation } from './shared';
 

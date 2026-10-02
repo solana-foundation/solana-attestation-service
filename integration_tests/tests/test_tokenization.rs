@@ -1,7 +1,7 @@
 use borsh::BorshDeserialize;
 use helpers::{attestation_pda, expiry, send, setup, test_data, TestContext, TestFixtures};
 use solana_address::{address, Address};
-use solana_attestation_service_client::{
+use solana_attestation::{
     accounts::Attestation,
     instructions::{CloseTokenizedAttestationBuilder, CreateTokenizedAttestationBuilder, TokenizeSchemaBuilder},
     programs::SOLANA_ATTESTATION_SERVICE_ID,

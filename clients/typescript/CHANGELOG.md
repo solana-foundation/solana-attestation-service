@@ -1,12 +1,16 @@
-# Changelog — `sas-lib`
+# Changelog — `@solana/attestation`
 
 TypeScript SDK for the Solana Attestation Service program. Published to npm; tagged `ts-client-vX.Y.Z`.
 
 Versioning follows [Semantic Versioning](https://semver.org/).
 
-Releases before 2.0.0 predate this changelog; see the git history and [npm](https://www.npmjs.com/package/sas-lib) for that period.
+Releases before 2.0.0 were published as `sas-lib` and predate this changelog; see the git history and [npm](https://www.npmjs.com/package/sas-lib) for that period.
 
 ## [Unreleased]
+
+### Changed
+
+- The package is renamed from `sas-lib` to `@solana/attestation`. `sas-lib` stays at 1.0.10 and receives no further releases.
 
 ## [2.1.0] — 2026-09-29
 
@@ -16,7 +20,7 @@ Releases before 2.0.0 predate this changelog; see the git history and [npm](http
 
 ### Added
 
-- `sas-lib/accounts` and `sas-lib/instructions` subpath entries for consumers that only need account or instruction codecs.
+- `@solana/attestation/accounts` and `@solana/attestation/instructions` subpath entries for consumers that only need account or instruction codecs.
 
 ## [2.0.0] — 2026-09-25
 
