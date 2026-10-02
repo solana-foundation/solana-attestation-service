@@ -181,7 +181,7 @@ jobs:
           fi
 
           if (( used_ai == 1 )) && ! grep -qiE 'Tool and extent:[[:space:]]*[^[:space:]]' <<<"$body"; then
-            echo "::error::State which AI tool was used and to what extent after 'Tool and extent:'."
+            echo "::error::State which AI tool was used and to what extent on the same line as 'Tool and extent:'."
             exit 1
           fi
 
