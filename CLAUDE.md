@@ -55,9 +55,11 @@ TypeScript client until kit is upgraded with it.
 **Only the TypeScript renderer understands events.** `scripts/generate-clients.ts`
 mirrors every event into a defined type for the Rust render, which is what keeps
 `types::CloseAttestationEvent` available to Rust callers; the TypeScript client
-gets real event codecs under `events/`. The event's one-byte type discriminator
-is a struct field rather than a second Codama discriminator, so the mirrored
-type matches the wire format on its own.
+gets real event codecs under `events/`. The 8-byte self-CPI tag is declared
+only as a Codama discriminator, so the TypeScript render wraps each event in a
+hidden prefix of that tag, and the Rust mirrored type starts after it: Rust
+callers decode from byte 8. The event's one-byte type discriminator is a struct
+field rather than a second Codama discriminator.
 
 **The Rust render drops the account-to-PDA links.** A generated `find_pda` for
 a PDA with an unprefixed string seed, which `credential` and `schema` both

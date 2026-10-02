@@ -110,6 +110,19 @@ describe('Utils', () => {
             }
         });
 
+        it('rejects bool data that is neither 0 nor 1', () => {
+            const schema = makeSchema([SchemaDataType.Bool, SchemaDataType.VecBool], ['active', 'flags']);
+
+            assert.throws(
+                () => deserializeAttestationData(schema, Uint8Array.from([2, 0, 0, 0, 0])),
+                'Bool field holds 2, which is neither 0 nor 1',
+            );
+            assert.throws(
+                () => deserializeAttestationData(schema, Uint8Array.from([1, 1, 0, 0, 0, 255])),
+                'Bool field holds 255, which is neither 0 nor 1',
+            );
+        });
+
         it('rejects char values that cannot round trip through Rust', () => {
             const schema = makeSchema([SchemaDataType.Char], ['grade']);
 
@@ -248,6 +261,16 @@ describe('Utils', () => {
         it('throws when field names and layout lengths disagree', () => {
             const schema = makeSchema([SchemaDataType.U8, SchemaDataType.U8], ['only_one']);
             assert.throws(() => getAttestationDataCodec(schema), 'Schema field names and layout do not match');
+        });
+
+        it('throws when two fields share a name', () => {
+            const schema = makeSchema([SchemaDataType.U8, SchemaDataType.U8], ['status', 'status']);
+            assert.throws(() => getAttestationDataCodec(schema), 'Schema field names must be unique');
+        });
+
+        it('throws when a field is named __proto__', () => {
+            const schema = makeSchema([SchemaDataType.U8], ['__proto__']);
+            assert.throws(() => getAttestationDataCodec(schema), 'Schema field name __proto__ is not supported');
         });
     });
 });

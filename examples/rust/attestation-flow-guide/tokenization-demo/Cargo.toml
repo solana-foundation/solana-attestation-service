@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 borsh = { version = "1.5.5", features = ["derive"] }
+solana-account = "3.4"
 solana-address = { version = "2.8.0", features = ["curve25519"] }
 solana-attestation-service-client = { version = "2.0.0", path = "../../../../clients/rust" }
 solana-commitment-config = "3.1"
@@ -18,6 +19,7 @@ solana-message = "3.1"
 solana-native-token = "3.0"
 solana-rpc-client = "3.1.8"
 solana-signer = "3.0"
+solana-sysvar = { version = "3.1", features = ["bincode"] }
 solana-transaction = "3.0"
 spl-token-2022-interface = "3.1.2"
 spl-token-group-interface = "0.7.2"

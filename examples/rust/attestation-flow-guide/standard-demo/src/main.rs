@@ -2,6 +2,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_account::from_account;
 use solana_address::Address;
 use solana_commitment_config::CommitmentConfig;
 use solana_compute_budget_interface::ComputeBudgetInstruction;
@@ -11,6 +12,7 @@ use solana_message::Message;
 use solana_native_token::LAMPORTS_PER_SOL;
 use solana_rpc_client::rpc_client::RpcClient;
 use solana_signer::Signer;
+use solana_sysvar::clock::{self, Clock};
 use solana_transaction::Transaction;
 
 use solana_attestation_service_client::{
@@ -257,6 +259,11 @@ impl SasDemo {
         self.send_and_confirm_instruction(instruction, &[&self.wallets.issuer], "Authorized signers updated")
     }
 
+    fn chain_now(&self) -> Option<i64> {
+        let account = self.rpc_client.get_account(&clock::ID).ok()?;
+        from_account::<Clock, _>(&account).map(|clock| clock.unix_timestamp)
+    }
+
     fn verify_attestation(
         &self,
         schema_pda: &Address,
@@ -271,7 +278,9 @@ impl SasDemo {
             .get_account(&attestation_pda)
             .ok()
             .and_then(|account| Attestation::from_bytes(&account.data).ok())
-            .is_some_and(|attestation| now() < attestation.expiry);
+            .is_some_and(|attestation| {
+                attestation.expiry == 0 || self.chain_now().is_some_and(|now| now < attestation.expiry)
+            });
 
         println!("    - {} is {}", label, if is_valid { "verified" } else { "not verified" });
 

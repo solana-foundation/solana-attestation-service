@@ -146,6 +146,19 @@ impl Schema {
             log!("Field names does not match layout length");
             return Err(AttestationServiceError::InvalidSchema.into());
         }
+
+        let mut names: Vec<&[u8]> = Vec::new();
+        let mut offset = 0;
+        while offset < self.field_names.len() {
+            let len = u32::from_le_bytes(self.field_names[offset..offset + 4].try_into().unwrap()) as usize;
+            let name = &self.field_names[offset + 4..offset + 4 + len];
+            if names.contains(&name) {
+                log!("Field names must be unique");
+                return Err(AttestationServiceError::InvalidSchema.into());
+            }
+            names.push(name);
+            offset += 4 + len;
+        }
         Ok(())
     }
 
@@ -188,5 +201,29 @@ impl Schema {
         let version = data[offset];
 
         Ok(Self { credential, name, description, layout, field_names, is_paused, version })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::processor::to_serialized_vec;
+
+    use super::*;
+
+    #[test]
+    fn schema_validate_rejects_duplicate_field_names() {
+        let schema_with = |names: &[&str]| Schema {
+            credential: Address::default(),
+            name: Vec::new(),
+            description: Vec::new(),
+            layout: alloc::vec![0; names.len()],
+            field_names: names.iter().flat_map(|name| to_serialized_vec(name.as_bytes())).collect(),
+            is_paused: false,
+            version: 1,
+        };
+
+        assert!(schema_with(&["status", "level"]).validate(2).is_ok());
+        assert!(schema_with(&["status", "level", "status"]).validate(3).is_err());
+        assert!(schema_with(&["", ""]).validate(2).is_err());
     }
 }
