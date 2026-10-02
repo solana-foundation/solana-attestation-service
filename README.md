@@ -16,8 +16,8 @@ This repository contains:
 
 - A Rust Solana program built with [Pinocchio](https://github.com/anza-xyz/pinocchio)
 - IDL and client generation via [Codama](https://github.com/codama-idl/codama)
-- A TypeScript client (`sas-lib`) in `clients/typescript`
-- A Rust client (`solana-attestation-service-client`) in `clients/rust`
+- A TypeScript client (`@solana/attestation`) in `clients/typescript`
+- A Rust client (`solana-attestation`) in `clients/rust`
 - Worked examples in `examples/`
 
 ## Program ID
@@ -76,8 +76,8 @@ solana-attestation-service/
 │   │   └── constants.rs     # Seeds and program constants
 ├── idl/                     # Codama-generated IDL (committed)
 ├── clients/
-│   ├── typescript/          # sas-lib SDK + tests
-│   └── rust/                # solana-attestation-service-client
+│   ├── typescript/          # @solana/attestation SDK + tests
+│   └── rust/                # solana-attestation
 ├── integration_tests/       # Rust integration tests
 ├── examples/                # Rust and TypeScript attestation flow guides
 ├── scripts/                 # IDL processing and client generation
@@ -150,11 +150,11 @@ Generated client sources under `clients/*/src/generated/` are not committed. The
 TypeScript:
 
 ```bash
-pnpm add sas-lib
+pnpm add @solana/attestation
 ```
 
 ```typescript
-import { findCredentialPda, findSchemaPda, serializeAttestationData } from 'sas-lib';
+import { findCredentialPda, findSchemaPda, serializeAttestationData } from '@solana/attestation';
 ```
 
 The package re-exports the Codama-generated instruction builders, account decoders, and PDA finders (`findCredentialPda`, `findSchemaPda`, `findAttestationPda`, `findSchemaMintPda`, `findAttestationMintPda`, `findEventAuthorityPda`, `findSasAuthorityPda`), plus hand-written schema-driven codecs (`getAttestationDataCodec`, `serializeAttestationData`, `deserializeAttestationData`). It is built on `@solana/kit` v8, declared as a peer dependency.
@@ -162,11 +162,11 @@ The package re-exports the Codama-generated instruction builders, account decode
 Rust:
 
 ```bash
-cargo add solana-attestation-service-client
+cargo add solana-attestation
 ```
 
 ```rust
-use solana_attestation_service_client::instructions::*;
+use solana_attestation::instructions::*;
 ```
 
 End-to-end walkthroughs live in `examples/typescript/attestation-flow-guides` and `examples/rust/attestation-flow-guide`.

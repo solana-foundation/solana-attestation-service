@@ -40,7 +40,7 @@ jobs:
     uses: ./.github/workflows/test.yml
 
   publish:
-    name: Publish solana-attestation-service-client crate
+    name: Publish solana-attestation crate
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [guard-allowed-branch, test]
@@ -71,7 +71,7 @@ jobs:
         id: cargo_publish
         uses: solana-foundation/github-actions/cargo-publish@e6ed2eb93c55eca911dbc711fb08683b42926a28 # v0.2.15
         with:
-          package: solana-attestation-service-client
+          package: solana-attestation
           working-directory: clients/rust
           allow-dirty: 'true'
           check-version-available: ${{ !inputs.dry-run }}
@@ -145,7 +145,7 @@ jobs:
               tag_name: tagName,
               target_commitish: context.sha,
               name: `Rust Client v${version}`,
-              body: `Release of solana-attestation-service-client v${version}\n\n**crates.io:** https://crates.io/crates/solana-attestation-service-client/${version}`,
+              body: `Release of solana-attestation v${version}\n\n**crates.io:** https://crates.io/crates/solana-attestation/${version}`,
               draft: false,
               prerelease: process.env.IS_PRERELEASE === 'true',
             });
@@ -156,13 +156,13 @@ jobs:
           PUBLISHED: ${{ steps.cargo_publish.outputs.published }}
           ALREADY_PUBLISHED: ${{ steps.cargo_publish.outputs.already-published }}
         run: |
-          echo "## solana-attestation-service-client" >> $GITHUB_STEP_SUMMARY
+          echo "## solana-attestation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Tag**: \`rust-client-v${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "$PUBLISHED" == "true" ]; then
-            echo "Published to crates.io: https://crates.io/crates/solana-attestation-service-client/${VERSION}" >> $GITHUB_STEP_SUMMARY
+            echo "Published to crates.io: https://crates.io/crates/solana-attestation/${VERSION}" >> $GITHUB_STEP_SUMMARY
           elif [ "$ALREADY_PUBLISHED" == "true" ]; then
             echo "Skipped crates.io publish; version already exists" >> $GITHUB_STEP_SUMMARY
           else

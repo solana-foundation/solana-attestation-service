@@ -5,7 +5,6 @@ import {
     getMintSize,
     TOKEN_2022_PROGRAM_ADDRESS,
 } from '@solana-program/token-2022';
-import { Address } from '@solana/kit';
 import {
     getCreateCredentialInstruction,
     getCreateSchemaInstruction,
@@ -20,7 +19,8 @@ import {
     findAttestationMintPda,
     getCreateTokenizedAttestationInstruction,
     getCloseTokenizedAttestationInstructionAsync,
-} from 'sas-lib';
+} from '@solana/attestation';
+import { Address } from '@solana/kit';
 
 import { Client, CONFIG, sendInstruction, setupWallets, verifyAttestation } from './shared';
 

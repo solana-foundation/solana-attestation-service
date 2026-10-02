@@ -40,7 +40,7 @@ jobs:
     uses: ./.github/workflows/test.yml
 
   publish:
-    name: Publish sas-lib package
+    name: Publish @solana/attestation package
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [guard-allowed-branch, test]
@@ -71,7 +71,7 @@ jobs:
         id: npm_publish
         uses: solana-foundation/github-actions/npm-publish@e6ed2eb93c55eca911dbc711fb08683b42926a28 # v0.2.15
         with:
-          package: sas-lib
+          package: '@solana/attestation'
           package-directory: clients/typescript
           check-version-available: ${{ !inputs.dry-run }}
           dry-run: ${{ inputs.dry-run }}
@@ -128,15 +128,15 @@ jobs:
             }
 
             const body = [
-              `## sas-lib v${version}`,
+              `## @solana/attestation v${version}`,
               '',
               '### Installation',
               '',
               '```bash',
-              'pnpm add sas-lib',
+              'pnpm add @solana/attestation',
               '```',
               '',
-              `https://www.npmjs.com/package/sas-lib/v/${version}`,
+              `https://www.npmjs.com/package/@solana/attestation/v/${version}`,
             ].join('\n');
 
             await github.rest.repos.createRelease({
@@ -158,7 +158,7 @@ jobs:
           PUBLISHED: ${{ steps.npm_publish.outputs.published }}
           ALREADY_PUBLISHED: ${{ steps.npm_publish.outputs.already-published }}
         run: |
-          echo "## sas-lib" >> $GITHUB_STEP_SUMMARY
+          echo "## @solana/attestation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           echo "**npm tag**: \`${NPM_TAG}\`" >> $GITHUB_STEP_SUMMARY
@@ -166,7 +166,7 @@ jobs:
           if [ "$DRY_RUN" == "true" ]; then
             echo "Dry run: OIDC auth validated, no package uploaded, no tag, no release" >> $GITHUB_STEP_SUMMARY
           elif [ "$PUBLISHED" == "true" ]; then
-            echo "Published to npm: https://www.npmjs.com/package/sas-lib/v/${VERSION}" >> $GITHUB_STEP_SUMMARY
+            echo "Published to npm: https://www.npmjs.com/package/@solana/attestation/v/${VERSION}" >> $GITHUB_STEP_SUMMARY
             echo "**Tag**: \`ts-client-v${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           elif [ "$ALREADY_PUBLISHED" == "true" ]; then
             echo "Skipped npm publish; version already exists" >> $GITHUB_STEP_SUMMARY

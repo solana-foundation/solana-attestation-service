@@ -1,6 +1,6 @@
 use borsh::BorshDeserialize;
 use helpers::{create_credential, program_test_context, send};
-use solana_attestation_service_client::{accounts::Credential, instructions::ChangeAuthorizedSignersBuilder};
+use solana_attestation::{accounts::Credential, instructions::ChangeAuthorizedSignersBuilder};
 use solana_keypair::Keypair;
 use solana_signer::Signer;
 

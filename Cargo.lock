@@ -3662,23 +3662,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "solana-attestation-service"
-version = "2.0.0"
-dependencies = [
- "bs58 0.4.0",
- "codama",
- "const-crypto",
- "pinocchio",
- "pinocchio-associated-token-account",
- "pinocchio-log",
- "pinocchio-system",
- "pinocchio-token-2022",
- "serde_json",
- "solana-address 2.8.0",
-]
-
-[[package]]
-name = "solana-attestation-service-client"
+name = "solana-attestation"
 version = "2.0.0"
 dependencies = [
  "borsh",
@@ -3694,6 +3678,22 @@ dependencies = [
  "solana-program-error",
  "solana-rpc-client",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "solana-attestation-service"
+version = "2.0.0"
+dependencies = [
+ "bs58 0.4.0",
+ "codama",
+ "const-crypto",
+ "pinocchio",
+ "pinocchio-associated-token-account",
+ "pinocchio-log",
+ "pinocchio-system",
+ "pinocchio-token-2022",
+ "serde_json",
+ "solana-address 2.8.0",
 ]
 
 [[package]]
@@ -5641,7 +5641,7 @@ dependencies = [
  "borsh",
  "litesvm",
  "solana-address 2.8.0",
- "solana-attestation-service-client",
+ "solana-attestation",
  "solana-clock 3.2.1",
  "solana-instruction-error",
  "solana-keypair",

@@ -1,5 +1,5 @@
 {
-  "name": "sas-lib",
+  "name": "@solana/attestation",
   "version": "2.1.0",
   "repository": "git@github.com:solana-foundation/solana-attestation-service.git",
   "sideEffects": false,

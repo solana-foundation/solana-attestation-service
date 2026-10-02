@@ -3,7 +3,7 @@
 use borsh::BorshSerialize;
 use litesvm::LiteSVM;
 use solana_address::Address;
-use solana_attestation_service_client::{
+use solana_attestation::{
     errors::SolanaAttestationServiceError,
     instructions::{CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
     programs::SOLANA_ATTESTATION_SERVICE_ID,

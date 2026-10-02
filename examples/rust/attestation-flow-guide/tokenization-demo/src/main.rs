@@ -22,7 +22,7 @@ use spl_token_2022_interface::{
 use spl_token_group_interface::state::TokenGroupMember;
 use spl_token_metadata_interface::state::TokenMetadata;
 
-use solana_attestation_service_client::{
+use solana_attestation::{
     accounts::Attestation,
     instructions::{
         ChangeAuthorizedSignersBuilder, CloseAttestationBuilder, CloseTokenizedAttestationBuilder,

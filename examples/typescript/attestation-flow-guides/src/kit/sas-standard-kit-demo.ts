@@ -1,4 +1,3 @@
-import { generateKeyPairSigner } from '@solana/kit';
 import {
     getCreateCredentialInstruction,
     getCreateSchemaInstruction,
@@ -10,7 +9,8 @@ import {
     findSchemaPda,
     findAttestationPda,
     getCloseAttestationInstruction,
-} from 'sas-lib';
+} from '@solana/attestation';
+import { generateKeyPairSigner } from '@solana/kit';
 
 import { CONFIG, sendInstruction, setupWallets, verifyAttestation } from './shared';
 

@@ -126,7 +126,7 @@ fmt:
 # Lint with auto-fix
 lint: generate-clients
     @echo "Linting Rust..."
-    @cargo clippy --workspace --exclude solana-attestation-service-client --all-targets --no-deps --fix -- -D warnings
+    @cargo clippy --workspace --exclude solana-attestation --all-targets --no-deps --fix -- -D warnings
     @echo "Linting TypeScript..."
     @pnpm run lint:fix
     @echo "✓ Code linted"
@@ -134,8 +134,8 @@ lint: generate-clients
 # Check linting without fixing
 lint-check: generate-clients
     @echo "Checking Rust lint..."
-    @cargo clippy --workspace --exclude solana-attestation-service-client --all-targets --no-deps -- -D warnings
-    @cargo check -p solana-attestation-service-client --all-features
+    @cargo clippy --workspace --exclude solana-attestation --all-targets --no-deps -- -D warnings
+    @cargo check -p solana-attestation --all-features
     @echo "Checking TypeScript lint..."
     @pnpm run lint
     @echo "✓ Lint check passed"
