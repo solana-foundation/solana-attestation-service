@@ -10,8 +10,7 @@ on:
         type: boolean
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: ts-client-publish
@@ -24,11 +23,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Guard allowed source branch for release publish
+        env:
+          REF: ${{ github.ref }}
         run: |
-          case "${{ github.ref }}" in
-            refs/heads/master|refs/heads/release/*) ;;
+          case "$REF" in
+            refs/heads/master) ;;
             *)
-              echo "::error::Publish TypeScript Client must be run from master or a release/* branch. Current ref: ${{ github.ref }}"
+              echo "::error::Publish TypeScript Client must be run from master. Current ref: $REF"
               exit 1
               ;;
           esac
@@ -43,6 +44,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [guard-allowed-branch, test]
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -57,10 +62,10 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           install-solana: 'false'
-          rust-cache-key: 'publish-typescript'
+          rust-cache-key: 'rust-dev'
 
-      - name: Build TypeScript client
-        run: just build-client
+      - name: Check the committed IDL and build TypeScript client
+        run: just check-generated build-client
 
       - name: Publish TypeScript client
         id: npm_publish
@@ -73,28 +78,41 @@ jobs:
           skip-existing: 'true'
 
       - name: Create and push tag
-        if: ${{ !inputs.dry-run }}
+        if: ${{ !inputs.dry-run && steps.npm_publish.outputs.published == 'true' }}
+        env:
+          TAG: ts-client-v${{ steps.npm_publish.outputs.version }}
         run: |
-          TAG="ts-client-v${{ steps.npm_publish.outputs.version }}"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists, skipping"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            if [ "$(git rev-parse "$TAG^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "::error::$TAG already exists on a commit other than the one just published"
+              exit 1
+            fi
           else
             git tag "$TAG"
             echo "Created tag $TAG"
           fi
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
-            echo "Tag $TAG already pushed"
-          else
-            git push origin "$TAG"
+          git push origin "refs/tags/$TAG"
+
+      - name: Require tag for already published version
+        if: ${{ !inputs.dry-run && steps.npm_publish.outputs.already-published == 'true' }}
+        env:
+          TAG: ts-client-v${{ steps.npm_publish.outputs.version }}
+        run: |
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Version is already published but $TAG does not exist. Push $TAG from the published commit, then rerun."
+            exit 1
           fi
 
       - name: Create GitHub Release
-        if: ${{ !inputs.dry-run }}
+        if: ${{ !inputs.dry-run && (steps.npm_publish.outputs.published == 'true' || steps.npm_publish.outputs.already-published == 'true') }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          VERSION: ${{ steps.npm_publish.outputs.version }}
+          NPM_TAG: ${{ steps.npm_publish.outputs.tag }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const version = `${{ steps.npm_publish.outputs.version }}`;
+            const version = process.env.VERSION;
             const tagName = `ts-client-v${version}`;
 
             try {
@@ -125,24 +143,32 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tagName,
+              target_commitish: context.sha,
               name: `TypeScript Client v${version}`,
               body,
               draft: false,
-              prerelease: '${{ steps.npm_publish.outputs.tag }}' === 'beta',
+              prerelease: process.env.NPM_TAG === 'beta',
             });
 
       - name: Publish summary
+        env:
+          VERSION: ${{ steps.npm_publish.outputs.version }}
+          NPM_TAG: ${{ steps.npm_publish.outputs.tag }}
+          DRY_RUN: ${{ inputs.dry-run }}
+          PUBLISHED: ${{ steps.npm_publish.outputs.published }}
+          ALREADY_PUBLISHED: ${{ steps.npm_publish.outputs.already-published }}
         run: |
-          VERSION="${{ steps.npm_publish.outputs.version }}"
-          NPM_TAG="${{ steps.npm_publish.outputs.tag }}"
           echo "## sas-lib" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: \`${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           echo "**npm tag**: \`${NPM_TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ inputs.dry-run }}" == "true" ]; then
+          if [ "$DRY_RUN" == "true" ]; then
             echo "Dry run: OIDC auth validated, no package uploaded, no tag, no release" >> $GITHUB_STEP_SUMMARY
-          else
+          elif [ "$PUBLISHED" == "true" ]; then
             echo "Published to npm: https://www.npmjs.com/package/sas-lib/v/${VERSION}" >> $GITHUB_STEP_SUMMARY
+            echo "**Tag**: \`ts-client-v${VERSION}\`" >> $GITHUB_STEP_SUMMARY
+          elif [ "$ALREADY_PUBLISHED" == "true" ]; then
+            echo "Skipped npm publish; version already exists" >> $GITHUB_STEP_SUMMARY
             echo "**Tag**: \`ts-client-v${VERSION}\`" >> $GITHUB_STEP_SUMMARY
           fi
