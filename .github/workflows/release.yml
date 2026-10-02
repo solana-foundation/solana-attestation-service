@@ -35,6 +35,15 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - name: Guard source branch
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [[ "$REF" != refs/heads/master ]]; then
+            echo "::error::Release must be run from master. Current ref: $REF"
+            exit 1
+          fi
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -47,9 +56,17 @@ jobs:
       - name: Install solana-verify
         run: cargo install solana-verify --locked
 
-      # Fetch secrets only after all toolchain setup (third-party actions and the
-      # remote Solana installer) has run, so deploy credentials are never present
-      # in the environment while untrusted setup code executes.
+      - name: Check the committed IDL
+        run: just check-generated
+
+      - name: Build verified program
+        uses: solana-foundation/github-actions/build-verified@e6ed2eb93c55eca911dbc711fb08683b42926a28
+        with:
+          program: ${{ env.PROGRAM }}
+
+      # Fetch secrets only after toolchain setup (third-party actions and the remote
+      # Solana installer) and the build have run, so deploy credentials are never
+      # present in the environment while untrusted setup or build code executes.
       - name: Load deploy config from Doppler
         uses: dopplerhq/secrets-fetch-action@451892f16195f9ac360e1a5bcbf0b5fd0e957534 # v2.0.0
         with:
@@ -72,14 +89,6 @@ jobs:
 
       - name: Configure Solana CLI
         run: solana config set --url "$RPC_URL" --keypair "$HOME/.config/solana/id.json" > /dev/null
-
-      - name: Check the committed IDL
-        run: just check-generated
-
-      - name: Build verified program
-        uses: solana-foundation/github-actions/build-verified@e6ed2eb93c55eca911dbc711fb08683b42926a28
-        with:
-          program: ${{ env.PROGRAM }}
 
       - id: write-buffer
         if: inputs.network == 'devnet'
