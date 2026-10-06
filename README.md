@@ -171,6 +171,46 @@ use solana_attestation::instructions::*;
 
 End-to-end walkthroughs live in `examples/typescript/attestation-flow-guides` and `examples/rust/attestation-flow-guide`.
 
+### Verifying an attestation from another program
+
+A program that gates on an attestation receives the `Attestation` account in the transaction and checks it itself. The issuers in this repository's examples pass the subject's wallet as the `nonce`, which makes the attestation for a subject derivable from `(credential, schema, subject)`. The Rust client builds for SBF with default features:
+
+```rust
+use solana_account_info::AccountInfo;
+use solana_address::Address;
+use solana_attestation::{accounts::Attestation, programs::SOLANA_ATTESTATION_SERVICE_ID};
+use solana_program_error::ProgramError;
+
+const ATTESTATION_DISCRIMINATOR: u8 = 2;
+
+pub fn verify_attestation(
+    account: &AccountInfo,
+    credential: &Address,
+    schema: &Address,
+    subject: &Address,
+    now: i64,
+) -> Result<Attestation, ProgramError> {
+    let (expected, _) = Address::find_program_address(
+        &[b"attestation", credential.as_ref(), schema.as_ref(), subject.as_ref()],
+        &SOLANA_ATTESTATION_SERVICE_ID,
+    );
+    if account.key != &expected || account.owner != &SOLANA_ATTESTATION_SERVICE_ID {
+        return Err(ProgramError::InvalidAccountData);
+    }
+    let attestation = Attestation::try_from(account).map_err(|_| ProgramError::InvalidAccountData)?;
+    if attestation.discriminator != ATTESTATION_DISCRIMINATOR
+        || attestation.credential != *credential
+        || attestation.schema != *schema
+        || (attestation.expiry != 0 && attestation.expiry <= now)
+    {
+        return Err(ProgramError::InvalidAccountData);
+    }
+    Ok(attestation)
+}
+```
+
+Pass `Clock::get()?.unix_timestamp` as `now`. The decoder does not check the discriminator, so the caller must. The `credential` you pass is the issuer you trust: anyone can create a credential and schema, so the check is only as strong as that choice. A closed attestation has no account, so revocation needs no extra check. Pausing a schema stops new issuance but does not invalidate existing attestations.
+
 ## CI
 
 | Workflow       | Description                                                |
