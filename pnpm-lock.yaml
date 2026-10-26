@@ -162,8 +162,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       mocha:
-        specifier: ^12.0.2
-        version: 12.0.2
+        specifier: ^12.0.3
+        version: 12.0.3
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.19.43)(typescript@5.9.3)
@@ -1644,8 +1644,8 @@ packages:
   mlly@1.8.2:
     resolution: {integrity: sha512-d+ObxMQFmbt10sretNDytwt85VrbkhhUA/JBGm1MPaWJ65Cl4wOgLaB1NYvJSZ0Ef03MMEU/0xpPMXUIQ29UfA==}
 
-  mocha@12.0.2:
-    resolution: {integrity: sha512-SjAulGHxlMJLCD1bhvJBAiYwYxglydRzA9PDQ5MALq1oLRMMtIhxSQJ0olCFgA7c9YbTdxC0KOV0wl8JEDYVhA==}
+  mocha@12.0.3:
+    resolution: {integrity: sha512-beammieDdiWdkjANWeWPpkxUROYGi5FN88fPOkLiticz7HTg3Y+Pho3EYE6SUdcuWnZ3h2WD8EXCA55JF4o6wg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
@@ -3210,7 +3210,7 @@ snapshots:
       pkg-types: 1.3.1
       ufo: 1.6.4
 
-  mocha@12.0.2:
+  mocha@12.0.3:
     dependencies:
       browser-stdout: 1.3.1
       chokidar: 5.0.0

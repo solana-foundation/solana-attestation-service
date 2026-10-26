@@ -84,9 +84,11 @@ or `InitializeMember`, so they live in `processor/shared/token_ext.rs`. Delete
 each one once upstream ships it; `test_tokenization.rs` re-parses the minted
 state with the SPL interface crates, so an encoding change fails there.
 
-**litesvm is held at 0.12 by the toolchain pin.** litesvm 0.13 and later pull
-Agave 4.x, which uses standard library APIs newer than Rust 1.92. Bumping it
-means bumping `rust-toolchain.toml` and the CI setup action together.
+**litesvm holds `solana-address` at 2.7.** litesvm 0.18 requires
+`solana-address ~2.7.0`, and the program shares the workspace lockfile, so the
+program cannot take 2.8 until a litesvm release relaxes that bound. litesvm
+also sets the Rust floor: bumping it means bumping `rust-toolchain.toml` and
+the CI setup action together.
 
 **The release profile changed the binary.** `overflow-checks` and fat LTO are
 on, so arithmetic that used to wrap now aborts the instruction, and the next
