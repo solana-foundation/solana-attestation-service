@@ -1,0 +1,62 @@
+name: Audit Fix
+
+on:
+  schedule:
+    - cron: '30 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: audit-fix
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  audit-fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+        with:
+          enable-rust-cache: 'false'
+          install-solana: 'false'
+          install-just: 'false'
+          install-pnpm-dependencies: 'false'
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # v2.87.31
+        with:
+          tool: cargo-audit
+
+      - name: Override vulnerable pnpm packages
+        run: |
+          pnpm audit --ignore-unfixable --fix=override || true
+          pnpm install --lockfile-only
+
+      - name: Update vulnerable crates
+        run: |
+          cargo audit --json \
+            | jq -r '.vulnerabilities.list[].package | "--package=\(.name)@\(.version)"' \
+            | sort -u \
+            | xargs -r cargo update
+
+      - name: Verify audits pass
+        run: |
+          pnpm audit --ignore-unfixable
+          cargo audit
+
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: fix/audit-advisories
+          delete-branch: true
+          sign-commits: true
+          commit-message: 'fix(deps): resolve pnpm and cargo audit advisories'
+          title: 'fix(deps): resolve pnpm and cargo audit advisories'
+          body: |
+            Automated by the `Audit Fix` workflow: `pnpm audit --ignore-unfixable --fix=override` for npm advisories and `cargo update -p` for vulnerable crates, then both audits re-run clean.
+
+            Approve the pending workflow runs to start CI, and review forced overrides for major-version jumps before merging.
