@@ -1,108 +1,50 @@
-use borsh::BorshDeserialize;
-use helpers::{create_credential, create_schema, program_error, program_test_context, send, TestContext};
+use helpers::{
+    create_credential, expected_schema, fetch_schema, field_names_bytes, program_error, send, setup, TestFixtures,
+    SCHEMA_NAME,
+};
 use solana_address::Address;
 use solana_attestation::{
     accounts::Schema, errors::SolanaAttestationServiceError, instructions::ChangeSchemaVersionBuilder,
     programs::SOLANA_ATTESTATION_SERVICE_ID,
 };
 use solana_instruction_error::InstructionError;
-use solana_keypair::Keypair;
 use solana_signer::Signer;
 use solana_transaction_error::TransactionError;
 
 mod helpers;
 
-struct TestFixtures {
-    ctx: TestContext,
-    credential: Address,
-    schema: Address,
-    authority: Keypair,
-    schema_name: String,
-    schema_description: String,
-}
-
-fn setup() -> TestFixtures {
-    let mut ctx = program_test_context();
-    let authority = Keypair::new();
-    let signers = vec![authority.pubkey(), ctx.payer.pubkey()];
-    let credential = create_credential(&mut ctx, &authority, "test", signers);
-
-    let schema_name = "test_data";
-    let description = "schema for test data";
-    let schema = create_schema(
-        &mut ctx,
-        &authority,
-        credential,
-        schema_name,
-        description,
-        vec![12, 0],
-        vec!["name".into(), "location".into()],
-    );
-
-    TestFixtures {
-        ctx,
-        credential,
-        schema,
-        authority,
-        schema_name: schema_name.to_string(),
-        schema_description: description.to_string(),
-    }
-}
-
 #[test]
 fn change_schema_version_success() {
-    let TestFixtures {
-        mut ctx,
-        credential: credential_pda,
-        schema: schema_pda,
-        authority,
-        schema_name,
-        schema_description,
-    } = setup();
+    let mut f = setup();
 
     let (schema_pda2, _bump) = Address::find_program_address(
-        &[b"schema", &credential_pda.to_bytes(), schema_name.as_bytes(), &[2]],
+        &[b"schema", &f.credential.to_bytes(), SCHEMA_NAME.as_bytes(), &[2]],
         &SOLANA_ATTESTATION_SERVICE_ID,
     );
-    let schema_layout2 = vec![12, 0, 3];
-    let field_names2 = vec!["name".to_string(), "location".to_string(), "phone".to_string()];
+    let ix = change_schema_version_ix(&f, schema_pda2);
+    send(&mut f.ctx, &[ix], &[&f.authority]).unwrap();
 
-    let change_schema_version_ix = ChangeSchemaVersionBuilder::new()
-        .payer(ctx.payer.pubkey())
-        .authority(authority.pubkey())
-        .credential(credential_pda)
-        .existing_schema(schema_pda)
-        .new_schema(schema_pda2)
-        .layout(schema_layout2.clone())
-        .field_names(field_names2.clone())
-        .instruction();
-    send(&mut ctx, &[change_schema_version_ix], &[&authority]).unwrap();
-
-    let schema_account = ctx.svm.get_account(&schema_pda2).expect("account not none");
-    let schema = Schema::try_from_slice(&schema_account.data).unwrap();
-    assert_eq!(schema.credential, credential_pda);
-    assert_eq!(schema.layout, schema_layout2);
     assert_eq!(
-        schema.field_names,
-        // Schema deserialize doesn't include vec length in data.
-        borsh::to_vec(&field_names2).unwrap()[4..]
+        fetch_schema(&f.ctx, &schema_pda2),
+        Schema {
+            layout: vec![12, 0, 3],
+            field_names: field_names_bytes(&["name", "location", "phone"]),
+            version: 2,
+            ..expected_schema(f.credential)
+        }
     );
-    assert_eq!(schema.description, schema_description.as_bytes());
-    assert!(!schema.is_paused);
-    assert_eq!(schema.version, 2);
-    assert_eq!(schema.name, schema_name.as_bytes());
 }
 
 #[test]
 fn change_schema_version_fail_incorrect_credential() {
-    let TestFixtures { mut ctx, schema: schema_pda, authority, schema_name, .. } = setup();
+    let TestFixtures { mut ctx, schema: schema_pda, authority, .. } = setup();
 
     let signers = vec![authority.pubkey(), ctx.payer.pubkey()];
 
     let credential_pda_2 = create_credential(&mut ctx, &authority, "test-2", signers);
 
     let (schema_pda2, _bump) = Address::find_program_address(
-        &[b"schema", &credential_pda_2.to_bytes(), schema_name.as_bytes(), &[2]],
+        &[b"schema", &credential_pda_2.to_bytes(), SCHEMA_NAME.as_bytes(), &[2]],
         &SOLANA_ATTESTATION_SERVICE_ID,
     );
 
@@ -135,7 +77,7 @@ fn change_schema_version_ix(f: &TestFixtures, new_schema: Address) -> solana_tra
 fn change_schema_version_fail_wrong_new_schema_pda() {
     let mut f = setup();
     let (skipped_version_pda, _bump) = Address::find_program_address(
-        &[b"schema", &f.credential.to_bytes(), f.schema_name.as_bytes(), &[3]],
+        &[b"schema", &f.credential.to_bytes(), SCHEMA_NAME.as_bytes(), &[3]],
         &SOLANA_ATTESTATION_SERVICE_ID,
     );
 

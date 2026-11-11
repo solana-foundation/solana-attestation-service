@@ -1,72 +1,22 @@
-use borsh::BorshDeserialize;
-use helpers::{create_credential, create_schema, program_test_context, send};
+use helpers::{expected_schema, fetch_schema, send, setup};
 use solana_attestation::{accounts::Schema, instructions::ChangeSchemaStatusBuilder};
-use solana_keypair::Keypair;
 use solana_signer::Signer;
 
 mod helpers;
 
 #[test]
 fn pause_and_unpause_schema_success() {
-    let mut ctx = program_test_context();
-    let authority = Keypair::new();
-    let signers = vec![authority.pubkey(), ctx.payer.pubkey()];
-    let credential_pda = create_credential(&mut ctx, &authority, "test", signers);
+    let mut f = setup();
 
-    let schema_name = "test_data";
-    let description = "schema for test data";
-    let schema_layout = vec![12, 0];
-    let field_names = vec!["name".to_string(), "location".to_string()];
-    let schema_pda = create_schema(
-        &mut ctx,
-        &authority,
-        credential_pda,
-        schema_name,
-        description,
-        schema_layout.clone(),
-        field_names.clone(),
-    );
+    for is_paused in [true, false] {
+        let ix = ChangeSchemaStatusBuilder::new()
+            .authority(f.authority.pubkey())
+            .credential(f.credential)
+            .schema(f.schema)
+            .is_paused(is_paused)
+            .instruction();
+        send(&mut f.ctx, &[ix], &[&f.authority]).unwrap();
 
-    let pause_schema_ix = ChangeSchemaStatusBuilder::new()
-        .authority(authority.pubkey())
-        .credential(credential_pda)
-        .schema(schema_pda)
-        .is_paused(true)
-        .instruction();
-    send(&mut ctx, &[pause_schema_ix], &[&authority]).unwrap();
-
-    let schema_account = ctx.svm.get_account(&schema_pda).expect("account not none");
-    let schema = Schema::try_from_slice(&schema_account.data).unwrap();
-    assert_eq!(schema.credential, credential_pda);
-    assert_eq!(schema.layout, schema_layout);
-    assert_eq!(
-        schema.field_names,
-        // Schema deserialize doesn't include vec length in data.
-        borsh::to_vec(&field_names).unwrap()[4..]
-    );
-    assert_eq!(schema.description, description.as_bytes());
-    assert!(schema.is_paused);
-    assert_eq!(schema.name, schema_name.as_bytes());
-
-    let unpause_schema_ix = ChangeSchemaStatusBuilder::new()
-        .authority(authority.pubkey())
-        .credential(credential_pda)
-        .schema(schema_pda)
-        .is_paused(false)
-        .instruction();
-    send(&mut ctx, &[unpause_schema_ix], &[&authority]).unwrap();
-
-    let schema_account = ctx.svm.get_account(&schema_pda).expect("account not none");
-    let schema = Schema::try_from_slice(&schema_account.data).unwrap();
-    assert_eq!(schema.credential, credential_pda);
-    assert_eq!(schema.layout, schema_layout);
-    assert_eq!(
-        schema.field_names,
-        // Schema deserialize doesn't include vec length in data.
-        borsh::to_vec(&field_names).unwrap()[4..]
-    );
-    assert_eq!(schema.description, description.as_bytes());
-    assert!(!schema.is_paused);
-    assert_eq!(schema.version, 1);
-    assert_eq!(schema.name, schema_name.as_bytes());
+        assert_eq!(fetch_schema(&f.ctx, &f.schema), Schema { is_paused, ..expected_schema(f.credential) });
+    }
 }

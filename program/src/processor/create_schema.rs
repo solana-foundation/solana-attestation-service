@@ -9,7 +9,8 @@ use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
     processor::{
-        create_pda_account, verify_owner_mutability, verify_signer, verify_system_account, verify_system_program,
+        create_pda_account, parse_layout_args, verify_owner_mutability, verify_signer, verify_system_account,
+        verify_system_program, LayoutArgs,
     },
     require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
@@ -98,30 +99,7 @@ fn process_instruction_data(data: &[u8]) -> Result<CreateSchemaArgs<'_>, Program
     let description = &data[offset..offset + desc_len];
     offset += desc_len;
 
-    require_len!(data, offset + 4);
-    let layout_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-    offset += 4;
-
-    require_len!(data, offset + layout_len);
-    let layout = &data[offset..offset + layout_len];
-    offset += layout_len;
-
-    require_len!(data, offset + 4);
-    let field_names_count = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap());
-    offset += 4;
-
-    let mut byte_len = 0;
-    for _ in 0..field_names_count {
-        let start = offset + byte_len;
-        let end = start + 4;
-        require_len!(data, end);
-
-        let name_len = u32::from_le_bytes(data[start..end].try_into().unwrap()) as usize;
-        byte_len += 4 + name_len;
-    }
-
-    require_len!(data, offset + byte_len);
-    let field_names_bytes = &data[offset..offset + byte_len];
+    let LayoutArgs { layout, field_names_count, field_names_bytes } = parse_layout_args(data, offset)?;
 
     Ok(CreateSchemaArgs { name, description, layout, field_names_count, field_names_bytes })
 }

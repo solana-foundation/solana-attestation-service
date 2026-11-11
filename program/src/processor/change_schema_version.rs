@@ -9,9 +9,9 @@ use crate::{
     constants::SCHEMA_SEED,
     error::AttestationServiceError,
     processor::{
-        create_pda_account, verify_owner_mutability, verify_signer, verify_system_account, verify_system_program,
+        create_pda_account, parse_layout_args, verify_owner_mutability, verify_signer, verify_system_account,
+        verify_system_program,
     },
-    require_len,
     state::{discriminator::AccountSerialize, Credential, Schema},
 };
 
@@ -21,7 +21,7 @@ pub fn process_change_schema_version(
     accounts: &mut [AccountView],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let args = process_instruction_data(instruction_data)?;
+    let args = parse_layout_args(instruction_data, 0)?;
     let [payer_info, authority_info, credential_info, existing_schema_info, new_schema_info, system_program] = accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -77,41 +77,4 @@ pub fn process_change_schema_version(
     new_schema_info.try_borrow_mut()?.copy_from_slice(&schema_bytes);
 
     Ok(())
-}
-
-struct ChangeSchemaVersionArgs<'a> {
-    layout: &'a [u8],
-    field_names_count: u32,
-    field_names_bytes: &'a [u8],
-}
-
-fn process_instruction_data(data: &[u8]) -> Result<ChangeSchemaVersionArgs<'_>, ProgramError> {
-    let mut offset: usize = 0;
-
-    require_len!(data, 4);
-    let layout_len = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
-    offset += 4;
-
-    require_len!(data, offset + layout_len);
-    let layout = &data[offset..offset + layout_len];
-    offset += layout_len;
-
-    require_len!(data, offset + 4);
-    let field_names_count = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap());
-    offset += 4;
-
-    let mut byte_len = 0;
-    for _ in 0..field_names_count {
-        let start = offset + byte_len;
-        let end = start + 4;
-        require_len!(data, end);
-
-        let name_len = u32::from_le_bytes(data[start..end].try_into().unwrap()) as usize;
-        byte_len += 4 + name_len;
-    }
-
-    require_len!(data, offset + byte_len);
-    let field_names_bytes = &data[offset..offset + byte_len];
-
-    Ok(ChangeSchemaVersionArgs { layout, field_names_count, field_names_bytes })
 }
