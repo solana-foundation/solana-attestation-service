@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 
-use borsh::BorshSerialize;
+use borsh::{BorshDeserialize, BorshSerialize};
 use litesvm::LiteSVM;
 use solana_address::Address;
 use solana_attestation::{
+    accounts::Schema,
     errors::SolanaAttestationServiceError,
     instructions::{CreateAttestationBuilder, CreateCredentialBuilder, CreateSchemaBuilder},
     programs::SOLANA_ATTESTATION_SERVICE_ID,
@@ -25,6 +26,11 @@ struct TestData {
     name: String,
     location: u8,
 }
+
+pub const SCHEMA_NAME: &str = "test_data";
+pub const SCHEMA_DESCRIPTION: &str = "schema for test data";
+pub const SCHEMA_LAYOUT: [u8; 2] = [12, 0];
+pub const SCHEMA_FIELD_NAMES: [&str; 2] = ["name", "location"];
 
 pub struct TestFixtures {
     pub ctx: TestContext,
@@ -103,12 +109,33 @@ pub fn setup() -> TestFixtures {
         &mut ctx,
         &authority,
         credential,
-        "test_data",
-        "schema for test data",
-        vec![12, 0],
-        vec!["name".into(), "location".into()],
+        SCHEMA_NAME,
+        SCHEMA_DESCRIPTION,
+        SCHEMA_LAYOUT.to_vec(),
+        SCHEMA_FIELD_NAMES.map(String::from).to_vec(),
     );
     TestFixtures { ctx, credential, schema, authority }
+}
+
+pub fn fetch_schema(ctx: &TestContext, schema: &Address) -> Schema {
+    Schema::try_from_slice(&ctx.svm.get_account(schema).expect("schema account").data).unwrap()
+}
+
+pub fn field_names_bytes(names: &[&str]) -> Vec<u8> {
+    borsh::to_vec(names).unwrap()[4..].to_vec()
+}
+
+pub fn expected_schema(credential: Address) -> Schema {
+    Schema {
+        discriminator: 1,
+        credential,
+        name: SCHEMA_NAME.as_bytes().to_vec(),
+        description: SCHEMA_DESCRIPTION.as_bytes().to_vec(),
+        layout: SCHEMA_LAYOUT.to_vec(),
+        field_names: field_names_bytes(&SCHEMA_FIELD_NAMES),
+        is_paused: false,
+        version: 1,
+    }
 }
 
 pub fn attestation_pda(credential: &Address, schema: &Address, nonce: &Address) -> Address {
